@@ -16,7 +16,7 @@ const SESSION_TTL_SECONDS = 6 * 60 * 60;
 
 function doGet() {
   return HtmlService
-    .createHtmlOutputFromFile("index")
+    .createTemplateFromFile("index").evaluate()
     .setTitle("Quản lý kho nguyên liệu")
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }

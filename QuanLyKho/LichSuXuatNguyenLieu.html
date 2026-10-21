@@ -1,0 +1,72 @@
+<div class="card report-card">
+  <div class="card-title"><div>
+    <h2>Lịch sử xuất theo nguyên liệu</h2>
+    <p>Dữ liệu đã xuất từ PhieuXuatNguyenLieu và PhieuXuatThuCong, lọc theo ngày duyệt.</p>
+  </div></div>
+  <div class="report-filter-row">
+    <div class="field"><label for="materialHistoryFrom">Từ ngày</label><input id="materialHistoryFrom" type="date"></div>
+    <div class="field"><label for="materialHistoryTo">Đến ngày</label><input id="materialHistoryTo" type="date"></div>
+    <button id="materialHistoryLoad" class="btn btn-primary" onclick="MaterialExportHistory.load()">Tải dữ liệu</button>
+    <button class="btn btn-success" onclick="MaterialExportHistory.download()">Tải Excel</button>
+    <div class="field"><label for="materialHistoryIngredient">Nguyên liệu</label>
+      <select id="materialHistoryIngredient" onchange="MaterialExportHistory.render()"><option value="">Tất cả</option></select>
+    </div>
+  </div>
+  <div id="materialHistoryTable" class="report-table-area" style="overflow-x:auto;max-width:100%">
+    <div class="empty">Chọn khoảng ngày rồi bấm Tải dữ liệu.</div>
+  </div>
+  <div id="materialHistoryMessage" role="status"></div>
+</div>
+<script>
+const MaterialExportHistory = (function() {
+  let rows = [], headers = [], loadedRange = {};
+  const el = id => document.getElementById(id);
+  function filteredRows() {
+    const selected = el("materialHistoryIngredient").value;
+    return rows.filter(row => !selected || String(row["Mã nguyên liệu"]) === selected);
+  }
+  function render() {
+    renderGenericReportTable("materialHistoryTable", headers, filteredRows(), "Không có lịch sử xuất phù hợp với bộ lọc.");
+    const table = el("materialHistoryTable").querySelector("table");
+    if (table) { table.style.minWidth = "1500px"; table.style.whiteSpace = "nowrap"; }
+  }
+  function resetOptions() {
+    const select = el("materialHistoryIngredient");
+    select.replaceChildren(new Option("Tất cả", ""));
+    const ingredients = new Map();
+    rows.forEach(row => {
+      const code = String(row["Mã nguyên liệu"] || "");
+      if (code) ingredients.set(code, row["Tên nguyên liệu"] || "");
+    });
+    [...ingredients].sort((a,b) => a[0].localeCompare(b[0], "vi")).forEach(([code,name]) => select.add(new Option(code + (name ? " - " + name : ""), code)));
+    select.value = "";
+  }
+  function load() {
+    const range = {fromDate: el("materialHistoryFrom").value, toDate: el("materialHistoryTo").value};
+    if (!range.fromDate || !range.toDate || range.fromDate > range.toDate) {
+      showMessage("materialHistoryMessage", "error", "Vui lòng chọn khoảng ngày hợp lệ."); return;
+    }
+    el("materialHistoryLoad").disabled = true;
+    rows = []; headers = []; resetOptions(); render();
+    showMessage("materialHistoryMessage", "info", "Đang tải lịch sử xuất...");
+    function fail(err) {
+      el("materialHistoryLoad").disabled = false;
+      showMessage("materialHistoryMessage", "error", err.message || "Không tải được lịch sử xuất.");
+    }
+    google.script.run.withSuccessHandler(function(res) {
+      if (!res || !res.success) { fail({message:"Không tải được lịch sử xuất."}); return; }
+      rows = res.rows || []; headers = res.headers || []; loadedRange = range;
+      resetOptions(); render(); el("materialHistoryLoad").disabled = false;
+      showMessage("materialHistoryMessage", "success", "Đã tải " + rows.length + " dòng từ " + range.fromDate + " đến " + range.toDate + ".");
+    }).withFailureHandler(fail).getMaterialExportHistory(sessionToken, range);
+  }
+  function download() {
+    exportRowsToExcel("lich-su-xuat-nguyen-lieu_" + loadedRange.fromDate + "_" + loadedRange.toDate + ".xls", headers, filteredRows(), "materialHistoryMessage");
+  }
+  document.addEventListener("DOMContentLoaded", function() {
+    const today = new Intl.DateTimeFormat("en-CA", {timeZone:"Asia/Ho_Chi_Minh", year:"numeric", month:"2-digit", day:"2-digit"}).format(new Date());
+    el("materialHistoryFrom").value = today; el("materialHistoryTo").value = today;
+  });
+  return {load:load, render:render, download:download};
+})();
+</script>
