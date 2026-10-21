@@ -15,8 +15,8 @@ function mktReadSnapshot() {
         const v=row[c];
         obj[h]=/^(MaKeToan\d*|maNguyenLieu|maSanPham|maDinhLuong)$/.test(h) ? String(display[i+1][c]).trim()
           : v instanceof Date ? Utilities.formatDate(v,'Asia/Ho_Chi_Minh','yyyy-MM-dd') : v;
-      });return obj;
-    }).filter(row=>Object.values(row).some(v=>v!==''));
+      });return Object.values(obj).some(v=>v!=='') ? {...obj,__rowNumber:i+2} : null;
+    }).filter(Boolean);
   });
   snapshot.params={};snapshot.parameters.forEach(r=>{if(r.thamSo)snapshot.params[String(r.thamSo).trim()]=r.giaTri;});
   return snapshot;
@@ -50,6 +50,7 @@ function mktBuildInputs(snapshot,options) {
   const required=['MaKeToan1','MaKeToan2','MaKeToan3','SuDung0','SuDung1','SuDung2','SuDung3'];
   const missing=required.filter(h=>!(snapshot.headers.bom||[]).includes(h));
   if(missing.length)throw new Error('DinhLuong thiếu cột: '+missing.join(', '));
+  if(snapshot.headers.stocks && !snapshot.headers.stocks.includes('maNguyenLieu'))throw new Error('TonKho thiếu cột: maNguyenLieu');
   const today=mktDate_(snapshot.today),start=mktMonday_(today),count=visible+reserve;
   const weeks=Array.from({length:count},(_,i)=>({...mktWeek_(mktAddDays_(start,i*7),i),visible:i<visible}));
   const index=date=>Math.floor((Date.parse(mktDate_(date))-Date.parse(start))/604800000);
@@ -67,7 +68,14 @@ function mktBuildInputs(snapshot,options) {
     const cfg=materialConfig[material];if(!cfg.unit)cfg.unit=unit(fallback);return cfg;
   };
   const stocks=[],receipts=[],demands=[],bomBySP=new Map(),bomIds=new Set(),factors=new Map(),factorUnits=new Map(),sourceFactors=new Map();
-  const stockRows=(snapshot.stocks||[]).filter(r=>text(r.trangThai)===text(p.trangThaiTonDuocTinh||'Dat')).sort((a,b)=>text(a.maNguyenLieu).localeCompare(text(b.maNguyenLieu))||text(a.MaKeToan).localeCompare(text(b.MaKeToan))||unit(a.doViTinhToan||a.donViKho||a.donVi).localeCompare(unit(b.doViTinhToan||b.donViKho||b.donVi)));
+  const stockRows=(snapshot.stocks||[]).filter((r,i)=>{
+    if(text(r.trangThai)!==text(p.trangThaiTonDuocTinh||'Dat'))return false;
+    if(!text(r.maNguyenLieu)) {
+      warnings.push('TonKho dòng '+(r.__rowNumber||i+2)+': thiếu maNguyenLieu'+(text(r.MaKeToan)?' (MaKeToan: '+text(r.MaKeToan)+')':'')+'. Dòng này không được tính vào tồn khả dụng; hãy kiểm tra dữ liệu nguồn.');
+      return false;
+    }
+    return true;
+  }).sort((a,b)=>text(a.maNguyenLieu).localeCompare(text(b.maNguyenLieu))||text(a.MaKeToan).localeCompare(text(b.MaKeToan))||unit(a.doViTinhToan||a.donViKho||a.donVi).localeCompare(unit(b.doViTinhToan||b.donViKho||b.donVi)));
   const selectedUnits=new Set();
   // Legacy configuration (safety/pack) is expressed in the stock calculation
   // unit, which takes precedence over the material master unit.
