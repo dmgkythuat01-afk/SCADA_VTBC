@@ -116,3 +116,88 @@ function mktBuildInputs(snapshot,options) {
   });
   return {today,weeks,visibleWeeks:visible,reserveWeeks:reserve,bufferDays:mktNumber_(p.soNgayDuPhongDatHang,'soNgayDuPhongDatHang',3),demands,stocks,receipts,materialConfig,warnings};
 }
+
+/** Physical inventory and hypothetical purchasing are deliberately separate. */
+function mktSimulate(input) {
+  const EPS=1e-9,warnings=[...(input.warnings||[])],demandReport=[],details=[],orders=new Map();
+  const materials=[...new Set([...Object.keys(input.materialConfig),...input.demands.map(d=>d.material),...input.stocks.map(s=>s.material),...input.receipts.map(r=>r.material)])].sort();
+  const copy=s=>s.map(x=>({...x}));
+  const total=(list,key='quantity')=>list.reduce((n,x)=>n+x[key],0);
+  const needs=(week,material)=>input.demands.filter(d=>d.weekIndex===week&&d.material===material);
+  const arrivals=(week,material)=>input.receipts.filter(r=>r.weekIndex===week&&r.material===material);
+  const solve=(stocks,demands)=>mktAllocate({stocks,demands});
+  const balances=(r,material)=>r.balances.map(s=>({...s,material}));
+  const permitted=material=>{
+    const map=new Map();input.demands.filter(d=>d.material===material).forEach(d=>d.choices.forEach(c=>map.set(c.code,Math.min(map.get(c.code)??3,c.priority))));
+    return [...map].map(([code,priority])=>({code,priority})).sort((a,b)=>a.priority-b.priority||(a.code<b.code?-1:a.code>b.code?1:0));
+  };
+  const physical={},virtual={};
+  materials.forEach(material=>{physical[material]=copy(input.stocks.filter(s=>s.material===material));virtual[material]=copy(physical[material]);});
+  input.weeks.forEach(week=>{
+    materials.forEach(material=>{
+      const cfg=input.materialConfig[material],demands=needs(week.index,material),receipts=arrivals(week.index,material),opening=copy(physical[material]);
+      const result=solve(opening.concat(receipts),demands);physical[material]=balances(result,material);
+      const choices=permitted(material),allowed=new Set(demands.flatMap(d=>d.choices.map(c=>c.code)));
+      const available=total(opening.concat(receipts).filter(s=>allowed.has(s.code)));
+      const row={weekIndex:week.index,year:week.year,week:week.week,start:week.start,material,name:cfg.name,unit:cfg.unit,choices,available,demand:result.totals.demand,allocated:result.totals.allocated,shortage:result.totals.shortage,receipts:total(receipts),closing:total(physical[material])};
+      if(week.visible) {
+        demandReport.push(row);
+        details.push({...row,opening,arrivals:receipts,balances:physical[material],demands,allocations:result.allocations,shortages:result.shortages});
+      }
+    });
+  });
+  const scheduled=(week,material)=>[...orders.values()].filter(o=>o.needWeek===week&&o.material===material).map(o=>({material,code:o.code,quantity:o.proposed}));
+  function addOrder(planningWeek,needWeek,material,choice,quantity,kind,products) {
+    if(quantity<=EPS)return;
+    const key=JSON.stringify([needWeek,material,choice.code]),cfg=input.materialConfig[material],week=input.weeks[needWeek];
+    if(!orders.has(key))orders.set(key,{planningWeek,needWeek,material,name:cfg.name,unit:cfg.unit,code:choice.code,priority:choice.priority,baseShortage:0,reserve:0,safety:0,proposed:0,products:[],needDate:week.start,orderDate:mktAddDays_(week.start,-Math.ceil(cfg.leadDays+input.bufferDays)),year:week.year,week:week.week});
+    const order=orders.get(key);order[kind]+=quantity;order.priority=Math.min(order.priority,choice.priority);
+    order.products=[...new Set(order.products.concat(products||[]))].sort();
+    const raw=order.baseShortage+order.reserve+order.safety;
+    order.proposed=Math.ceil((raw-EPS)/cfg.pack)*cfg.pack;
+    order.rounding=order.proposed-raw;order.late=order.orderDate<input.today;
+  }
+  // Rolling look-ahead. Only first week's projected closing becomes next base.
+  for(let planningWeek=0;planningWeek<input.visibleWeeks;planningWeek++) {
+    materials.forEach(material=>{
+      let projected=copy(virtual[material]),firstClosing;
+      const end=Math.min(input.weeks.length-1,planningWeek+input.reserveWeeks);
+      for(let week=planningWeek;week<=end;week++) {
+        const demands=needs(week,material),receipts=arrivals(week,material),before=copy(projected).concat(receipts);
+        let result=solve(before.concat(scheduled(week,material)),demands);
+        const groups=new Map();
+        result.shortages.filter(s=>s.quantity>EPS).forEach(s=>{
+          const d=demands.find(d=>d.id===s.demandId),choice=d.choices.slice().sort((a,b)=>a.priority-b.priority||(a.code<b.code?-1:1))[0];
+          if(!choice) {warnings.push('Không thể đề xuất mã mua: '+d.product+' / '+material+' / '+input.weeks[week].start);return;}
+          if(!groups.has(choice.code))groups.set(choice.code,{choice,quantity:0,products:[]});
+          const group=groups.get(choice.code);group.quantity+=s.quantity;group.products.push(d.product);group.choice={code:choice.code,priority:Math.min(group.choice.priority,choice.priority)};
+        });
+        groups.forEach(g=>addOrder(planningWeek,week,material,g.choice,g.quantity,week===planningWeek?'baseShortage':'reserve',g.products));
+        result=solve(before.concat(scheduled(week,material)),demands);
+        projected=balances(result,material);
+        if(week===end) {
+          const choices=permitted(material),allowed=new Set(choices.map(c=>c.code)),cfg=input.materialConfig[material];
+          const missing=Math.max(0,cfg.safety-total(projected.filter(s=>allowed.has(s.code))));
+          if(missing>EPS) {
+            if(choices.length) {
+              addOrder(planningWeek,week,material,choices[0],missing,'safety',[]);
+              result=solve(before.concat(scheduled(week,material)),demands);projected=balances(result,material);
+            } else warnings.push('Không có mã hợp lệ để bổ sung tồn an toàn: '+material);
+          }
+        }
+        if(week===planningWeek)firstClosing=copy(projected);
+      }
+      virtual[material]=firstClosing;
+    });
+  }
+  const purchaseReport=[...orders.values()].sort((a,b)=>a.needWeek-b.needWeek||a.material.localeCompare(b.material)||a.code.localeCompare(b.code)).map(o=>{
+    const detail=details.find(d=>d.weekIndex===o.needWeek&&d.material===o.material);
+    return {...o,allocated:detail?total(detail.allocations.filter(a=>a.code===o.code)):0,receipts:total(arrivals(o.needWeek,o.material).filter(r=>r.code===o.code)),reason:'Mã được bật có ưu tiên cao nhất của nhu cầu thiếu; tồn an toàn/quy cách dùng cấu hình nguyên liệu.',configurationScope:'Nguyên liệu',assumedReceipt:true};
+  });
+  return {weeks:input.weeks,today:input.today,demandReport,purchaseReport,details,warnings:[...new Set(warnings)],reserveWeeks:input.reserveWeeks};
+}
+
+function mktGetReports(options) {
+  const input=mktBuildInputs(mktReadSnapshot(),options||{});
+  return {success:true,...mktSimulate(input),calculatedAt:new Date().toISOString()};
+}
