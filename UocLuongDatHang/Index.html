@@ -1647,6 +1647,7 @@
   </style>
 
   <?!= include('BaoCao_Style'); ?>
+  <?!= include('BaoCaoMaKeToan_Style'); ?>
 
 </head>
 
@@ -2345,6 +2346,7 @@
       </section>
 
       <?!= include('BaoCao'); ?>
+      <?!= include('BaoCaoMaKeToan'); ?>
 
     </main>
   </div>
@@ -2499,6 +2501,7 @@
       * Xóa toàn bộ dữ liệu frontend.
       */
       USER = null;
+      if (typeof MktReports !== 'undefined') MktReports.reset();
 
       MENU = [];
 
@@ -4023,11 +4026,20 @@
             ${baoCaoItems}
           </div>
         </div>
+        ${typeof MktReports !== 'undefined' ? MktReports.renderMenu() : ''}
       `;
     }
 
     async function showView(key) {
       currentView = key;
+      if (typeof MktReports !== 'undefined') {
+        if (MktReports.isKey(key)) {
+          currentSheet = '';
+          await MktReports.show(key);
+          return;
+        }
+        MktReports.hide();
+      }
 
       /*
       * ==========================
@@ -9642,6 +9654,7 @@
   </script>
 
   <?!= include('JS_BaoCao'); ?>
+  <?!= include('JS_BaoCaoMaKeToan'); ?>
 
   <?!= include('DonDatHang_Style'); ?>
   <?!= include('DonDatHang'); ?>
