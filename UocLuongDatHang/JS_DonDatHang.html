@@ -1,0 +1,5485 @@
+<script>
+  /*******************************************************
+   * MODULE ĐƠN ĐẶT HÀNG - FRONTEND
+   *
+   * Vòng 1:
+   * - Chèn Card vào cuối menu Yêu cầu đặt hàng.
+   * - Đọc CauHinhDonDatHang.
+   * - Map giaTri → các tiêu đề.
+   * - Cho thêm/xóa dòng hàng hóa và tính thành tiền.
+   *******************************************************/
+
+
+  let DON_DAT_HANG_CONFIG =
+    null;
+
+  let DON_DAT_HANG_FIXED_VALUES =
+    null;
+
+  let DON_VI_CHUYEN_TIEN_CACHE =
+    null;
+    
+  let DON_DAT_HANG_ALL_MATERIALS =
+    [];
+
+  let DON_DAT_HANG_CURRENT_MATERIALS =
+    [];
+
+  let DON_DAT_HANG_SELECTED_MATERIAL =
+    null;
+
+  let DON_DAT_HANG_CURRENT_SUPPLIER =
+    '';
+
+  let DON_DAT_HANG_PORTS =
+    [];
+
+  let DON_DAT_HANG_HISTORY_CACHE =
+    [];
+
+  let DON_DAT_HANG_HISTORY_MATERIALS =
+    [];
+
+  let DON_DAT_HANG_EDIT_ID =
+    '';
+
+  /*
+  * Mã PO đang chọn để upload ảnh.
+  */
+  let DON_DAT_HANG_UPLOAD_IMAGE_ID =
+    '';
+
+  /*
+   * ==========================================
+   * KHỞI TẠO
+   * ==========================================
+   */
+
+  async function initDonDatHangCard() {
+
+    mountDonDatHangCard();
+
+    await loadCauHinhDonDatHang();
+
+    await loadDanhSachDonViChuyenTien();
+
+    await loadDanhSachNguyenLieuDonDatHang();
+
+    await loadDanhSachCangDenDonDatHang();
+
+    await initDonDatHangDefaultValues();
+
+    changeDonDatHangMaterialScope();
+
+    /*
+    * Lịch sử đơn hàng.
+    */
+    await loadLichSuDonDatHang();
+
+  }
+
+  async function loadDanhSachCangDenDonDatHang() {
+
+    try {
+
+      const result =
+        await server(
+          'getDanhSachCangDenDonDatHang'
+        );
+
+
+      DON_DAT_HANG_PORTS =
+        Array.isArray(
+          result?.rows
+        )
+          ? result.rows
+          : [];
+
+
+      const select =
+        document.getElementById(
+          'poCangDenSelect'
+        );
+
+
+      if (!select) {
+        return;
+      }
+
+
+      select.innerHTML = `
+        <option value="">
+          Chọn cảng đến
+        </option>
+
+        ${DON_DAT_HANG_PORTS
+          .map(item => `
+            <option
+              value="${escapeDonDatHangHtml(
+                item
+              )}"
+            >
+              ${escapeDonDatHangHtml(
+                item
+              )}
+            </option>
+          `)
+          .join('')}
+      `;
+
+
+    } catch (error) {
+
+      console.error(
+        'Lỗi tải cảng đến:',
+        error
+      );
+
+    }
+
+  }
+
+
+  function onDonDatHangPortChange() {
+
+    const select =
+      document.getElementById(
+        'poCangDenSelect'
+      );
+
+
+    const text =
+      document.getElementById(
+        'poCangDen'
+      );
+
+
+    if (
+      !select ||
+      !text
+    ) {
+      return;
+    }
+
+
+    text.value =
+      select.value ||
+      '';
+
+  }
+
+  function mountDonDatHangCard() {
+
+    const reportView =
+      document.getElementById(
+        'reportView_baoCaoYeuCauDatHang'
+      );
+
+
+    const template =
+      document.getElementById(
+        'donDatHangCardTemplate'
+      );
+
+
+    if (
+      !reportView ||
+      !template
+    ) {
+      return;
+    }
+
+
+    if (
+      document.getElementById(
+        'donDatHangCard'
+      )
+    ) {
+      return;
+    }
+
+
+    reportView.appendChild(
+      template.content.cloneNode(
+        true
+      )
+    );
+
+  }
+
+  async function initDonDatHangDefaultValues() {
+
+    try {
+
+      const result =
+        await server(
+          'getDonDatHangKhoiTao'
+        );
+
+
+      /*
+      * ========================================
+      * NGÀY = HÔM NAY
+      * ========================================
+      */
+
+      const ngayEl =
+        document.getElementById(
+          'poNgay'
+        );
+
+
+      if (ngayEl) {
+
+        ngayEl.value =
+          formatDonDatHangDateVN(
+            result.ngay
+          );
+
+      }
+
+
+      /*
+      * ========================================
+      * SỐ ĐƠN DỰ KIẾN
+      * ========================================
+      */
+
+      const soDonEl =
+        document.getElementById(
+          'poSoDonDatHang'
+        );
+
+
+      if (soDonEl) {
+
+        soDonEl.value =
+          result.soDonDatHang ||
+          '';
+
+      }
+
+
+    } catch (error) {
+
+      console.error(
+        'Không thể khởi tạo đơn đặt hàng:',
+        error
+      );
+
+    }
+
+  }
+
+  function formatDonDatHangDateVN(
+    value
+  ) {
+
+    if (!value) {
+      return '';
+    }
+
+
+    const text =
+      String(value)
+        .trim();
+
+
+    /*
+    * yyyy-mm-dd
+    * →
+    * dd/mm/yyyy
+    */
+    const match =
+      text.match(
+        /^(\d{4})-(\d{2})-(\d{2})$/
+      );
+
+
+    if (match) {
+
+      return (
+        match[3] +
+        '/' +
+        match[2] +
+        '/' +
+        match[1]
+      );
+
+    }
+
+
+    return text;
+
+  }
+
+  function collectDonDatHangItems() {
+
+    const items = [];
+
+
+    document
+      .querySelectorAll(
+        '#poItemsBody tr'
+      )
+      .forEach(
+        (
+          row,
+          index
+        ) => {
+
+          const maHangHoa =
+            row.querySelector(
+              '.po-item-code'
+            )?.value ||
+            '';
+
+
+          const tenHangHoa =
+            row.querySelector(
+              '.po-item-name'
+            )?.value ||
+            '';
+
+
+          /*
+          * Dòng trắng hoàn toàn
+          * thì bỏ qua.
+          */
+          if (
+            !maHangHoa &&
+            !tenHangHoa
+          ) {
+
+            return;
+
+          }
+
+
+          items.push({
+
+            stt:
+              index + 1,
+
+            maHangHoa:
+              maHangHoa,
+
+            tenHangHoa:
+              tenHangHoa,
+
+            donViTinh:
+              row.querySelector(
+                '.po-item-unit'
+              )?.value ||
+              '',
+
+            soLuong:
+              Number(
+                row.querySelector(
+                  '.po-item-qty'
+                )?.value ||
+                0
+              ),
+
+            donGia:
+              Number(
+                row.querySelector(
+                  '.po-item-price'
+                )?.value ||
+                0
+              ),
+
+            thanhTien:
+              (
+                Number(
+                  row.querySelector(
+                    '.po-item-qty'
+                  )?.value ||
+                  0
+                )
+                *
+                Number(
+                  row.querySelector(
+                    '.po-item-price'
+                  )?.value ||
+                  0
+                )
+              ),
+
+            thongSoKyThuat:
+              row.querySelector(
+                '.po-item-spec'
+              )?.value ||
+              ''
+
+          });
+
+        }
+      );
+
+
+    return items;
+
+  }
+
+  async function saveDonDatHangCard() {
+
+    /*
+    * ========================================
+    * GOM DỮ LIỆU FORM
+    * ========================================
+    */
+
+    const items =
+      collectDonDatHangItems();
+
+
+    const tongCong =
+      items.reduce(
+        (
+          sum,
+          item
+        ) =>
+          sum +
+          Number(
+            item.thanhTien ||
+            0
+          ),
+        0
+      );
+
+
+    const payload = {
+
+      ngay:
+        document.getElementById(
+          'poNgay'
+        )?.value ||
+        '',
+
+
+      /*
+      * Client có hiển thị số PO
+      * nhưng backend sẽ tự tính lại khi lưu.
+      */
+      soDonDatHang:
+        document.getElementById(
+          'poSoDonDatHang'
+        )?.value ||
+        '',
+
+      trang:
+        document.getElementById(
+          'poTrang'
+        )?.value ||
+        '1/1',
+
+      loaiDonGia:
+        document.getElementById(
+          'poLoaiDonGia'
+        )?.value ||
+        'coThue',
+
+
+      benMua:
+        document.getElementById(
+          'poBuyerFixed'
+        )?.textContent ||
+        '',
+
+
+      nhaSanXuat:
+        document.getElementById(
+          'poNhaSanXuat'
+        )?.value ||
+        '',
+
+
+      donViVanChuyen:
+        document.getElementById(
+          'poDonViVanChuyenText'
+        )?.textContent ||
+        '',
+
+
+      theoDeNghi:
+        document.getElementById(
+          'poTheoDeNghi'
+        )?.value ||
+        '',
+
+
+      noiDung:
+        document.getElementById(
+          'poNoiDung'
+        )?.value ||
+        '',
+
+
+      nguoiLienHe:
+        document.getElementById(
+          'poNguoiLienHe'
+        )?.value ||
+        '',
+
+
+      phuongThucThanhToan:
+        document.getElementById(
+          'poPhuongThucThanhToan'
+        )?.value ||
+        '',
+
+
+      thoiGianGiaoHang:
+        document.getElementById(
+          'poThoiGianGiaoHang'
+        )?.value ||
+        '',
+
+
+      cangDen:
+        document.getElementById(
+          'poCangDen'
+        )?.value ||
+        '',
+
+
+      tongCong:
+        tongCong,
+
+
+      items:
+        items
+
+    };
+
+
+    /*
+    * ========================================
+    * LƯU
+    * ========================================
+    */
+
+    setLoading(
+      true
+    );
+
+
+    try {
+
+      let result;
+
+
+      /*
+      * ========================================
+      * ĐANG SỬA ĐƠN CŨ
+      * ========================================
+      */
+
+      if (
+        DON_DAT_HANG_EDIT_ID
+      ) {
+
+        result =
+          await server(
+            'updateDonDatHangCardData',
+            DON_DAT_HANG_EDIT_ID,
+            payload
+          );
+
+      }
+
+
+      /*
+      * ========================================
+      * TẠO ĐƠN MỚI
+      * ========================================
+      */
+
+      else {
+
+        result =
+          await server(
+            'saveDonDatHangCardData',
+            payload
+          );
+
+      }
+
+
+      /*
+      * Backend có thể cấp lại số khác
+      * nếu trong lúc đó người khác vừa lưu.
+      */
+      const soDonEl =
+        document.getElementById(
+          'poSoDonDatHang'
+        );
+
+
+      if (soDonEl) {
+
+        soDonEl.value =
+          result.soDonDatHang ||
+          '';
+
+      }
+
+
+      const ngayEl =
+        document.getElementById(
+          'poNgay'
+        );
+
+
+      if (ngayEl) {
+
+        ngayEl.value =
+          formatDonDatHangDateVN(
+            result.ngay
+          );
+      }
+
+
+      toast(
+        'Đã lưu đơn ' +
+        result.soDonDatHang
+      );
+
+      /*
+      * Nếu vừa cập nhật đơn cũ
+      * thì thoát chế độ sửa.
+      */
+      if (
+        DON_DAT_HANG_EDIT_ID
+      ) {
+
+        DON_DAT_HANG_EDIT_ID =
+          '';
+
+        const saveButton =
+          document.getElementById(
+            'poSaveButton'
+          );
+
+        if (saveButton) {
+
+          saveButton.textContent =
+            '💾 Lưu đơn';
+
+        }
+
+
+        document
+          .getElementById(
+            'poCancelEditButton'
+          )
+          ?.classList
+          .add(
+            'hidden'
+          );
+
+      }
+
+
+      /*
+      * Reload lịch sử.
+      */
+      await loadLichSuDonDatHang(
+        true
+      );
+
+
+    } catch (error) {
+
+      console.error(
+        error
+      );
+
+
+      alert(
+        error.message ||
+        error
+      );
+
+
+    } finally {
+
+      setLoading(
+        false
+      );
+
+    }
+
+  }
+
+
+  async function cancelEditDonDatHang() {
+
+    DON_DAT_HANG_EDIT_ID =
+      '';
+
+    DON_DAT_HANG_CURRENT_SUPPLIER =
+      '';
+
+    DON_DAT_HANG_SELECTED_MATERIAL =
+      null;
+
+
+    const saveButton =
+      document.getElementById(
+        'poSaveButton'
+      );
+
+
+    if (saveButton) {
+
+      saveButton.textContent =
+        '💾 Lưu đơn';
+
+    }
+
+
+    document
+      .getElementById(
+        'poCancelEditButton'
+      )
+      ?.classList
+      .add(
+        'hidden'
+      );
+
+
+    /*
+    * Clear bảng hàng hóa.
+    */
+    const body =
+      document.getElementById(
+        'poItemsBody'
+      );
+
+
+    if (body) {
+
+      body.innerHTML =
+        '';
+
+    }
+
+
+    /*
+    * Khởi tạo lại ngày + số đơn mới.
+    */
+    await initDonDatHangDefaultValues();
+
+  }
+
+  function printDonDatHangFromHistory(
+    maDonHangDat
+  ) {
+
+    const order =
+      (
+        DON_DAT_HANG_HISTORY_CACHE ||
+        []
+      )
+        .find(item =>
+          item.maDonHangDat ===
+          maDonHangDat
+        );
+
+
+    if (!order) {
+
+      alert(
+        'Không tìm thấy đơn đặt hàng.'
+      );
+
+      return;
+
+    }
+
+
+    /*
+    * Lưu lại trạng thái hiện tại
+    * của form.
+    */
+    const snapshot =
+      captureDonDatHangFormSnapshot();
+
+
+    /*
+    * Đổ dữ liệu đơn lịch sử vào form.
+    */
+    applyHistoryOrderToDonDatHangForm(
+      order
+    );
+
+
+    /*
+    * Hàm print hiện tại clone form ngay,
+    * nên sau khi gọi xong có thể restore.
+    */
+    printDonDatHangPdf();
+
+
+    setTimeout(
+      () => {
+
+        restoreDonDatHangFormSnapshot(
+          snapshot
+        );
+
+      },
+      100
+    );
+
+  }
+
+  function captureDonDatHangFormSnapshot() {
+
+    return {
+
+      editId:
+        DON_DAT_HANG_EDIT_ID,
+
+      currentSupplier:
+        DON_DAT_HANG_CURRENT_SUPPLIER,
+
+      loaiDonGia:
+        document.getElementById(
+          'poLoaiDonGia'
+        )?.value ||
+        'coThue',
+
+      ngay:
+        document.getElementById(
+          'poNgay'
+        )?.value ||
+        '',
+
+      trang:
+        document.getElementById(
+          'poTrang'
+        )?.value ||
+        '',
+
+      soDon:
+        document.getElementById(
+          'poSoDonDatHang'
+        )?.value ||
+        '',
+
+      buyer:
+        document.getElementById(
+          'poBuyerFixed'
+        )?.textContent ||
+        '',
+
+      nhaSanXuat:
+        document.getElementById(
+          'poNhaSanXuat'
+        )?.value ||
+        '',
+
+      donViChuyenTien:
+        document.getElementById(
+          'poDonViVanChuyenText'
+        )?.textContent ||
+        '',
+
+      theoDeNghi:
+        document.getElementById(
+          'poTheoDeNghi'
+        )?.value ||
+        '',
+
+      noiDung:
+        document.getElementById(
+          'poNoiDung'
+        )?.value ||
+        '',
+
+      nguoiLienHe:
+        document.getElementById(
+          'poNguoiLienHe'
+        )?.value ||
+        '',
+
+      thanhToan:
+        document.getElementById(
+          'poPhuongThucThanhToan'
+        )?.value ||
+        '',
+
+      giaoHang:
+        document.getElementById(
+          'poThoiGianGiaoHang'
+        )?.value ||
+        '',
+
+      cangDen:
+        document.getElementById(
+          'poCangDen'
+        )?.value ||
+        '',
+
+      items:
+        collectDonDatHangItems()
+
+    };
+
+  }
+
+  function restoreDonDatHangFormSnapshot(
+    data
+  ) {
+
+    if (!data) {
+      return;
+    }
+
+
+    DON_DAT_HANG_EDIT_ID =
+      data.editId ||
+      '';
+
+    DON_DAT_HANG_CURRENT_SUPPLIER =
+      data.currentSupplier ||
+      '';
+
+
+    const price =
+      document.getElementById(
+        'poLoaiDonGia'
+      );
+
+
+    if (price) {
+
+      price.value =
+        data.loaiDonGia ||
+        'coThue';
+
+      changeDonDatHangPriceType();
+
+    }
+
+
+    setPoValue_(
+      'poNgay',
+      data.ngay
+    );
+
+    setPoValue_(
+      'poTrang',
+      data.trang
+    );
+
+    setPoValue_(
+      'poSoDonDatHang',
+      data.soDon
+    );
+
+    setPoText_(
+      'poBuyerFixed',
+      data.buyer
+    );
+
+    setPoValue_(
+      'poNhaSanXuat',
+      data.nhaSanXuat
+    );
+
+    setPoText_(
+      'poDonViVanChuyenText',
+      data.donViChuyenTien
+    );
+
+    setPoValue_(
+      'poTheoDeNghi',
+      data.theoDeNghi
+    );
+
+    setPoValue_(
+      'poNoiDung',
+      data.noiDung
+    );
+
+    setPoValue_(
+      'poNguoiLienHe',
+      data.nguoiLienHe
+    );
+
+    setPoValue_(
+      'poPhuongThucThanhToan',
+      data.thanhToan
+    );
+
+    setPoValue_(
+      'poThoiGianGiaoHang',
+      data.giaoHang
+    );
+
+    setPoValue_(
+      'poCangDen',
+      data.cangDen
+    );
+
+
+    const body =
+      document.getElementById(
+        'poItemsBody'
+      );
+
+
+    if (body) {
+
+      body.innerHTML =
+        '';
+
+    }
+
+
+    (
+      data.items ||
+      []
+    ).forEach(item => {
+
+      addDonDatHangItemRow({
+
+        maHangHoa:
+          item.maHangHoa,
+
+        tenHangHoa:
+          item.tenHangHoa,
+
+        donViTinh:
+          item.donViTinh,
+
+        soLuong:
+          item.soLuong,
+
+        donGia:
+          item.donGia,
+
+        thongSoKyThuat:
+          item.thongSoKyThuat
+
+      });
+
+    });
+
+
+    document
+      .querySelectorAll(
+        '#poItemsBody .po-item-qty'
+      )
+      .forEach(input =>
+        updateDonDatHangRowAmount(
+          input
+        )
+      );
+
+  }
+
+  /*
+   * ==========================================
+   * LOAD CẤU HÌNH
+   * ==========================================
+   */
+
+  async function loadCauHinhDonDatHang(
+    forceReload = false
+  ) {
+
+    if (
+      DON_DAT_HANG_CONFIG &&
+      !forceReload
+    ) {
+
+      applyDonDatHangHeaders(
+        DON_DAT_HANG_CONFIG
+      );
+
+      return;
+    }
+
+
+    try {
+
+      const result =
+        await server(
+          'getCauHinhDonDatHang'
+        );
+
+
+      DON_DAT_HANG_CONFIG =
+        result?.config ||
+        {};
+
+      DON_DAT_HANG_FIXED_VALUES =
+        result?.fixedValues ||
+        {};
+
+
+      applyDonDatHangHeaders(
+        DON_DAT_HANG_CONFIG
+      );
+
+      applyDonDatHangFixedValues(
+        DON_DAT_HANG_FIXED_VALUES
+      );
+
+
+    } catch (error) {
+
+      console.error(
+        'Lỗi tải CauHinhDonDatHang:',
+        error
+      );
+
+    }
+
+  }
+
+  /**
+   * ==========================================
+   * LOAD ĐƠN VỊ CHUYỂN TIỀN
+   * ==========================================
+   */
+  async function loadDanhSachDonViChuyenTien(
+    forceReload = false
+  ) {
+
+    /*
+    * Có cache rồi thì chỉ render lại.
+    */
+    if (
+      DON_VI_CHUYEN_TIEN_CACHE &&
+      !forceReload
+    ) {
+
+      renderDanhSachDonViChuyenTien(
+        DON_VI_CHUYEN_TIEN_CACHE
+      );
+
+      return;
+
+    }
+
+
+    try {
+
+      const result =
+        await server(
+          'getDanhSachDonViChuyenTien'
+        );
+
+
+      DON_VI_CHUYEN_TIEN_CACHE =
+        result?.rows ||
+        [];
+
+
+      renderDanhSachDonViChuyenTien(
+        DON_VI_CHUYEN_TIEN_CACHE
+      );
+
+
+    } catch (error) {
+
+      console.error(
+        'Lỗi tải đơn vị chuyển tiền:',
+        error
+      );
+
+    }
+
+  }
+
+
+  /**
+   * ==========================================
+   * RENDER COMBOBOX
+   * ==========================================
+   */
+  function renderDanhSachDonViChuyenTien(
+    rows
+  ) {
+
+    const select =
+      document.getElementById(
+        'poDonViVanChuyen'
+      );
+
+
+    if (!select) {
+      return;
+    }
+
+
+    /*
+    * Giữ lại giá trị đang chọn
+    * nếu render lại.
+    */
+    const currentValue =
+      select.value ||
+      '';
+
+
+    const data =
+      Array.isArray(rows)
+        ? rows
+        : [];
+
+
+    select.innerHTML = `
+      <option value="">
+        Chọn đơn vị chuyển tiền
+      </option>
+
+      ${data
+        .map(item => `
+          <option
+            value="${escapeDonDatHangHtml(
+              item
+            )}"
+          >
+            ${escapeDonDatHangHtml(
+              item
+            )}
+          </option>
+        `)
+        .join('')}
+    `;
+
+
+    /*
+    * Nếu giá trị cũ vẫn còn
+    * trong danh sách thì chọn lại.
+    */
+    if (
+      currentValue &&
+      data.includes(
+        currentValue
+      )
+    ) {
+
+      select.value =
+        currentValue;
+
+    }
+
+    onDonViChuyenTienChange();
+
+  }
+
+
+  /**
+   * Escape text đưa vào HTML option.
+   */
+  function escapeDonDatHangHtml(
+    value
+  ) {
+
+    return String(
+      value === null ||
+      value === undefined
+        ? ''
+        : value
+    )
+      .replace(
+        /&/g,
+        '&amp;'
+      )
+      .replace(
+        /</g,
+        '&lt;'
+      )
+      .replace(
+        />/g,
+        '&gt;'
+      )
+      .replace(
+        /"/g,
+        '&quot;'
+      )
+      .replace(
+        /'/g,
+        '&#039;'
+      );
+
+  }
+
+
+  /*
+   * ==========================================
+   * MAP HEADER
+   * ==========================================
+   */
+
+  function applyDonDatHangHeaders(
+    config
+  ) {
+
+    config =
+      config || {};
+
+
+    /*
+     * Hàm gán text nhưng giữ xuống dòng.
+     */
+    const setText =
+      (
+        id,
+        key,
+        fallback = ''
+      ) => {
+
+        const el =
+          document.getElementById(
+            id
+          );
+
+
+        if (!el) {
+          return;
+        }
+
+
+        const value =
+          config[key] !== undefined
+            ? config[key]
+            : fallback;
+
+
+        el.textContent =
+          value || '';
+
+      };
+
+
+    /*
+     * Phần đầu.
+     */
+    setText(
+      'poHeaderCompany',
+      'tieuDeCongTy'
+    );
+
+    setText(
+      'poHeaderTitle',
+      'tieuDeDonDatHang',
+      'ĐƠN ĐẶT HÀNG'
+    );
+
+    setText(
+      'poLabelNgay',
+      'tieuDeNgay',
+      'Ngày/号'
+    );
+
+    setText(
+      'poLabelTrang',
+      'tieuDeTrang',
+      'Trang/…'
+    );
+
+    setText(
+      'poLabelSoDonDatHang',
+      'tieuDeSoDonDatHang',
+      'Số đơn đặt hàng/订货单：'
+    );
+
+
+    /*
+     * 3 khối thông tin.
+     */
+    setText(
+      'poLabelBenMua',
+      'benMua',
+      'Bên mua:\n买方'
+    );
+
+    setText(
+      'poLabelNhaSanXuat',
+      'tieuDeNhaSanXuat',
+      'Nhà sản xuất:'
+    );
+
+    setText(
+      'poLabelDonViVanChuyen',
+      'tieuDeDonViVanChuyenChoNCC',
+      'Đơn vị chuyển tiền cho NCC:'
+    );
+
+
+    /*
+     * Bảng thông tin.
+     */
+    setText(
+      'poLabelTheoDeNghi',
+      'tieuDeTheoDeNghi',
+      'Theo đề nghị/kế hoạch số:'
+    );
+
+    setText(
+      'poLabelNoiDung',
+      'tieuDeNoiDung',
+      'Nội dung'
+    );
+
+    setText(
+      'poLabelNguoiLienHe',
+      'tieuDeNguoiLienHe',
+      'Người liên hệ'
+    );
+
+    setText(
+      'poLabelPhuongThucThanhToan',
+      'tieuDePhuongThucThanhToan',
+      'Phương thức và thời hạn thanh toán'
+    );
+
+    setText(
+      'poLabelThoiGianGiaoHang',
+      'tieuDeThoiGianGiaoHang',
+      'Thời gian giao hàng'
+    );
+
+    setText(
+      'poLabelCangDen',
+      'tieuDeCangDen',
+      'Cảng đến'
+    );
+
+
+    /*
+     * Bảng hàng hóa.
+     */
+    setText(
+      'poLabelStt',
+      'tieuDeStt',
+      'STT'
+    );
+
+    setText(
+      'poLabelMaHangHoa',
+      'tieuDeMaHangHoa',
+      'Mã hàng hóa'
+    );
+
+    /*
+     * Sheet hiện tại chưa có key tieuDeTenHangHoa.
+     * Có fallback để Card vẫn chạy.
+     * Khi thêm key vào sheet, Card tự dùng giá trị mới.
+     */
+    setText(
+      'poLabelTenHangHoa',
+      'tieuDeTenHangHoa',
+      'Tên hàng hóa\n品名'
+    );
+
+    setText(
+      'poLabelDonViTinh',
+      'tieuDeDonViTinh',
+      'Đơn vị tính'
+    );
+
+    setText(
+      'poLabelSoLuong',
+      'tieuDeSoLuong',
+      'Số lượng'
+    );
+
+    changeDonDatHangPriceType();
+
+    setText(
+      'poLabelThanhTien',
+      'tieuDeThanhTien',
+      'Thành tiền'
+    );
+
+    setText(
+      'poLabelThongSoKyThuat',
+      'tieuDeThongSoKyThuat',
+      'Thông số kỹ thuật cơ bản'
+    );
+
+    setText(
+      'poLabelTongCong',
+      'tieuDeTongCong',
+      'Tổng cộng'
+    );
+
+
+    /*
+     * Phần ký.
+     */
+    setText(
+      'poSignatureCompany',
+      'tenCongTyPhanChuKy',
+      'CÔNG TY TNHH ĐỨC MINH ĐỒNG NAI'
+    );
+
+  }
+
+  function applyDonDatHangFixedValues(
+    fixedValues
+  ) {
+
+    fixedValues =
+      fixedValues || {};
+
+
+    /*
+    * ==========================================
+    * BÊN MUA
+    * ==========================================
+    */
+
+    const buyerEl =
+      document.getElementById(
+        'poBuyerFixed'
+      );
+
+
+    if (buyerEl) {
+
+      buyerEl.textContent =
+        fixedValues.benMua ||
+        '';
+
+    }
+
+
+    /*
+    * ==========================================
+    * NGƯỜI LIÊN HỆ
+    * ==========================================
+    */
+
+    const contactEl =
+      document.getElementById(
+        'poNguoiLienHe'
+      );
+
+
+    if (contactEl) {
+
+      contactEl.value =
+        fixedValues.tieuDeNguoiLienHe ||
+        '';
+
+    }
+
+  }
+
+
+  /*
+   * ==========================================
+   * THÊM DÒNG HÀNG HÓA
+   * ==========================================
+   */
+
+  function addDonDatHangItemRow(
+    data = {}
+  ) {
+
+    const body =
+      document.getElementById(
+        'poItemsBody'
+      );
+
+
+    if (!body) {
+      return;
+    }
+
+
+    /*
+    * Nếu mới mount card,
+    * dòng trắng đầu tiên có thể tồn tại.
+    *
+    * Khi thêm nguyên liệu thực,
+    * nếu chỉ có 1 dòng trắng thì dùng lại.
+    */
+    let tr = null;
+
+
+    const rows =
+      [
+        ...body.querySelectorAll(
+          'tr'
+        )
+      ];
+
+
+    if (
+      rows.length === 1
+    ) {
+
+      const first =
+        rows[0];
+
+
+      const code =
+        first.querySelector(
+          '.po-item-code'
+        )?.value ||
+        '';
+
+
+      const name =
+        first.querySelector(
+          '.po-item-name'
+        )?.value ||
+        '';
+
+
+      if (
+        !code &&
+        !name
+      ) {
+
+        tr =
+          first;
+
+      }
+
+    }
+
+
+    if (!tr) {
+
+      tr =
+        document.createElement(
+          'tr'
+        );
+
+
+      body.appendChild(
+        tr
+      );
+
+    }
+
+
+    tr.innerHTML = `
+      <td
+        class="
+          po-item-stt
+          po-center
+        "
+      >
+      </td>
+
+
+      <td>
+        <input
+          type="text"
+          class="
+            po-table-input
+            po-item-code
+          "
+          value="${escapeDonDatHangHtml(
+            data.maHangHoa ||
+            ''
+          )}"
+        >
+      </td>
+
+
+      <td>
+        <textarea
+          class="
+            po-table-input
+            po-item-name
+          "
+        >${escapeDonDatHangHtml(
+          data.tenHangHoa ||
+          ''
+        )}</textarea>
+      </td>
+
+
+      <td>
+        <input
+          type="text"
+          class="
+            po-table-input
+            po-item-unit
+            po-center
+          "
+          value="${escapeDonDatHangHtml(
+            data.donViTinh ||
+            ''
+          )}"
+        >
+      </td>
+
+
+      <td>
+        <input
+          type="number"
+          step="any"
+          class="
+            po-table-input
+            po-item-qty
+            po-number
+          "
+          value="${
+            data.soLuong ??
+            ''
+          }"
+          oninput="
+            updateDonDatHangRowAmount(this)
+          "
+        >
+      </td>
+
+
+      <td>
+        <input
+          type="number"
+          step="any"
+          class="
+            po-table-input
+            po-item-price
+            po-number
+          "
+          value="${
+            data.donGia ??
+            ''
+          }"
+          oninput="
+            updateDonDatHangRowAmount(this)
+          "
+        >
+      </td>
+
+
+      <td>
+        <input
+          type="text"
+          class="
+            po-table-input
+            po-item-amount
+            po-number
+          "
+          readonly
+        >
+      </td>
+
+
+      <td>
+        <textarea
+          class="
+            po-table-input
+            po-item-spec
+          "
+        >${escapeDonDatHangHtml(
+          data.thongSoKyThuat ||
+          ''
+        )}</textarea>
+      </td>
+
+
+      <td class="po-center">
+
+        <button
+          type="button"
+          class="
+            btn
+            btn-danger
+            btn-small
+          "
+          onclick="
+            removeDonDatHangItemRow(this)
+          "
+        >
+          Xóa
+        </button>
+
+      </td>
+    `;
+
+
+    refreshDonDatHangItemStt();
+
+    updateDonDatHangTotal();
+
+  }
+
+
+  function removeDonDatHangItemRow(
+    button
+  ) {
+
+    const row =
+      button.closest(
+        'tr'
+      );
+
+
+    if (row) {
+      row.remove();
+    }
+
+
+    refreshDonDatHangItemStt();
+
+    updateDonDatHangTotal();
+
+  }
+
+
+  function refreshDonDatHangItemStt() {
+
+    document
+      .querySelectorAll(
+        '#poItemsBody tr'
+      )
+      .forEach(
+        (
+          row,
+          index
+        ) => {
+
+          const cell =
+            row.querySelector(
+              '.po-item-stt'
+            );
+
+
+          if (cell) {
+            cell.textContent =
+              index + 1;
+          }
+
+        }
+      );
+
+  }
+
+
+  /*
+   * ==========================================
+   * TÍNH THÀNH TIỀN
+   *
+   * Vòng đầu:
+   * Thành tiền =
+   * Số lượng × Đơn giá gồm thuế.
+   * Prompt sau có thể sửa nghiệp vụ giá.
+   * ==========================================
+   */
+
+  function updateDonDatHangRowAmount(
+    input
+  ) {
+
+    const row =
+      input.closest(
+        'tr'
+      );
+
+
+    if (!row) {
+      return;
+    }
+
+
+    const qty =
+      Number(
+        row.querySelector(
+          '.po-item-qty'
+        )?.value || 0
+      );
+
+
+    const price =
+      Number(
+        row.querySelector(
+          '.po-item-price'
+        )?.value || 0
+      );
+
+
+    const amount =
+      qty *
+      price;
+
+
+    const amountInput =
+      row.querySelector(
+        '.po-item-amount'
+      );
+
+
+    if (amountInput) {
+
+      amountInput.value =
+        amount
+          ? formatDonDatHangNumber(
+              amount
+            )
+          : '';
+
+    }
+
+
+    updateDonDatHangTotal();
+
+  }
+
+
+  function updateDonDatHangTotal() {
+
+    let total = 0;
+
+
+    document
+      .querySelectorAll(
+        '#poItemsBody tr'
+      )
+      .forEach(row => {
+
+        const qty =
+          Number(
+            row.querySelector(
+              '.po-item-qty'
+            )?.value || 0
+          );
+
+
+        const price =
+          Number(
+            row.querySelector(
+              '.po-item-price'
+            )?.value || 0
+          );
+
+
+        total +=
+          qty *
+          price;
+
+      });
+
+
+    const totalEl =
+      document.getElementById(
+        'poTongTien'
+      );
+
+
+    if (totalEl) {
+
+      totalEl.textContent =
+        total
+          ? formatDonDatHangNumber(
+              total
+            )
+          : '';
+
+    }
+
+  }
+
+
+  function formatDonDatHangNumber(
+    value
+  ) {
+
+    return new Intl.NumberFormat(
+      'vi-VN',
+      {
+        maximumFractionDigits: 3
+      }
+    ).format(
+      Number(value || 0)
+    );
+
+  }
+
+
+  /*
+   * ==========================================
+   * AUTO INIT
+   * ==========================================
+   */
+
+  if (
+    document.readyState ===
+    'loading'
+  ) {
+
+    document.addEventListener(
+      'DOMContentLoaded',
+      initDonDatHangCard
+    );
+
+  } else {
+
+    initDonDatHangCard();
+
+  }
+
+  function changeDonDatHangPriceType() {
+
+    const select =
+      document.getElementById(
+        'poLoaiDonGia'
+      );
+
+    const label =
+      document.getElementById(
+        'poLabelDonGia'
+      );
+
+
+    if (
+      !select ||
+      !label
+    ) {
+      return;
+    }
+
+
+    const config =
+      DON_DAT_HANG_CONFIG ||
+      {};
+
+
+    /*
+    * ==========================================
+    * FORM CÓ THUẾ
+    * ==========================================
+    */
+    if (
+      select.value ===
+      'coThue'
+    ) {
+
+      label.textContent =
+        config.tieuDeDonGiaGomThue ||
+        'Đơn giá gồm thuế VAT';
+
+    }
+
+
+    /*
+    * ==========================================
+    * FORM KHÔNG THUẾ
+    * ==========================================
+    */
+    else {
+
+      label.textContent =
+        config.tieuDeDonGiaChuaGomThue ||
+        'Đơn giá không thuế VAT';
+
+    }
+
+  }
+
+  function onDonViChuyenTienChange() {
+
+    const select =
+      document.getElementById(
+        'poDonViVanChuyen'
+      );
+
+
+    const textEl =
+      document.getElementById(
+        'poDonViVanChuyenText'
+      );
+
+
+    if (
+      !select ||
+      !textEl
+    ) {
+      return;
+    }
+
+
+    const value =
+      select.value ||
+      '';
+
+
+    textEl.textContent =
+      value;
+
+  }
+
+  /**
+   * ==========================================
+   * LOAD TẤT CẢ NGUYÊN LIỆU
+   * ==========================================
+   */
+  async function loadDanhSachNguyenLieuDonDatHang() {
+
+    try {
+
+      const result =
+        await server(
+          'getDanhSachNguyenLieuDonDatHang'
+        );
+
+
+      DON_DAT_HANG_ALL_MATERIALS =
+        Array.isArray(
+          result?.rows
+        )
+          ? result.rows
+          : [];
+
+
+    } catch (error) {
+
+      console.error(
+        'Lỗi tải danh sách nguyên liệu:',
+        error
+      );
+
+
+      DON_DAT_HANG_ALL_MATERIALS =
+        [];
+
+    }
+
+  }
+
+  /**
+   * ==========================================
+   * ĐỔI PHẠM VI NGUYÊN LIỆU
+   *
+   * needOrder:
+   * lấy từ Card Yêu cầu đặt hàng phía trên
+   *
+   * all:
+   * lấy toàn bộ từ TonKho
+   * ==========================================
+   */
+  function changeDonDatHangMaterialScope() {
+
+    const scopeEl =
+      document.getElementById(
+        'poNguyenLieuScope'
+      );
+
+
+    const searchEl =
+      document.getElementById(
+        'poNguyenLieuSearch'
+      );
+
+
+    if (!scopeEl) {
+      return;
+    }
+
+
+    const scope =
+      scopeEl.value ||
+      'needOrder';
+
+
+    /*
+    * Xóa nguyên liệu đang chọn cũ.
+    */
+    if (searchEl) {
+
+      searchEl.value =
+        '';
+
+    }
+
+
+    /*
+    * ==========================================
+    * 1. TẤT CẢ NGUYÊN LIỆU
+    * ==========================================
+    *
+    * Nguồn:
+    * sheet TonKho
+    */
+    if (
+      scope ===
+      'all'
+    ) {
+
+      DON_DAT_HANG_CURRENT_MATERIALS =
+        [
+          ...(
+            DON_DAT_HANG_ALL_MATERIALS ||
+            []
+          )
+        ];
+
+
+      renderDonDatHangMaterialOptions();
+
+      return;
+
+    }
+
+
+    /*
+    * ==========================================
+    * 2. NGUYÊN LIỆU CẦN ĐẶT
+    * ==========================================
+    *
+    * Lấy trực tiếp từ cache của
+    * Card Yêu cầu đặt hàng phía trên.
+    *
+    * Cache thực tế:
+    * YEU_CAU_DAT_HANG_CACHE[cacheKey]
+    * ==========================================
+    */
+
+
+    /*
+    * Lấy số tuần hiện đang chọn
+    * ở Card Yêu cầu đặt hàng.
+    */
+    const weekCountEl =
+      document.getElementById(
+        'orderRequestWeekCount'
+      );
+
+
+    const soTuan =
+      Number(
+        weekCountEl?.value ||
+        4
+      );
+
+
+    /*
+    * Dùng chính helper của module Báo cáo.
+    */
+    const cacheKey =
+      getOrderRequestCacheKey(
+        soTuan
+      );
+
+
+    /*
+    * Dữ liệu gốc của Card
+    * Yêu cầu đặt hàng.
+    */
+    const originalData =
+      (
+        typeof YEU_CAU_DAT_HANG_CACHE !==
+          'undefined'
+        &&
+        YEU_CAU_DAT_HANG_CACHE
+      )
+        ? YEU_CAU_DAT_HANG_CACHE[
+            cacheKey
+          ]
+        : null;
+
+
+    /*
+    * Nếu Card phía trên chưa load dữ liệu.
+    */
+    if (
+      !originalData
+    ) {
+
+      DON_DAT_HANG_CURRENT_MATERIALS =
+        [];
+
+
+      renderDonDatHangMaterialOptions();
+
+
+      console.warn(
+        'Chưa có dữ liệu Yêu cầu đặt hàng trong cache.'
+      );
+
+      return;
+
+    }
+
+
+    /*
+    * Chỉ lấy những dòng cần đặt.
+    */
+    const needOrderRows =
+      (
+        originalData.rows ||
+        []
+      )
+        .filter(row =>
+          Boolean(
+            row.canDat
+          )
+        );
+
+
+    /*
+    * Chuẩn hóa về cùng cấu trúc
+    * với dữ liệu lấy từ TonKho.
+    */
+    DON_DAT_HANG_CURRENT_MATERIALS =
+      needOrderRows
+        .map(row => ({
+
+          maNguyenLieu:
+            row.maNguyenLieu ||
+            '',
+
+          MaKeToan:
+            row.MaKeToan ||
+            '',
+
+          tenNguyenLieu:
+            row.tenNguyenLieu ||
+            row.maNguyenLieu ||
+            '',
+
+          donVi:
+            row.donVi ||
+            '',
+
+
+          /*
+          * Giữ luôn các thông tin
+          * của yêu cầu đặt hàng
+          * cho bước tiếp theo.
+          */
+          canDat:
+            Boolean(
+              row.canDat
+            ),
+
+          soLuongThieu:
+            Number(
+              row.soLuongThieu ||
+              0
+            ),
+
+          ngayCanDat:
+            row.ngayCanDat ||
+            '',
+
+          ngayNhapKhoDuKien:
+            row.ngayNhapKhoDuKien ||
+            '',
+
+          tuanKichHoatDat:
+            row.tuanKichHoatDat ||
+            '',
+
+          tuanThieuSomNhat:
+            row.tuanThieuSomNhat ||
+            ''
+
+        }))
+        .filter(row =>
+          row.tenNguyenLieu
+        );
+
+
+    /*
+    * ==========================================
+    * BỎ TRÙNG
+    * ==========================================
+    */
+
+    const uniqueMap = {};
+
+
+    DON_DAT_HANG_CURRENT_MATERIALS
+      .forEach(row => {
+
+        const key =
+          row.maNguyenLieu ||
+          row.MaKeToan ||
+          row.tenNguyenLieu;
+
+
+        if (
+          !uniqueMap[key]
+        ) {
+
+          uniqueMap[key] =
+            row;
+
+        }
+
+      });
+
+
+    DON_DAT_HANG_CURRENT_MATERIALS =
+      Object.values(
+        uniqueMap
+      );
+
+
+    /*
+    * Render lại danh sách tìm kiếm.
+    */
+    renderDonDatHangMaterialOptions();
+
+
+    console.log(
+      'Nguyên liệu cần đặt:',
+      DON_DAT_HANG_CURRENT_MATERIALS
+    );
+
+  }
+
+  /**
+   * ==========================================
+   * RENDER DATALIST NGUYÊN LIỆU
+   * ==========================================
+   */
+  function renderDonDatHangMaterialOptions() {
+
+    const dataList =
+      document.getElementById(
+        'poNguyenLieuDataList'
+      );
+
+
+    if (!dataList) {
+      return;
+    }
+
+
+    const rows =
+      Array.isArray(
+        DON_DAT_HANG_CURRENT_MATERIALS
+      )
+        ? DON_DAT_HANG_CURRENT_MATERIALS
+        : [];
+
+
+    dataList.innerHTML =
+      rows
+        .sort(
+          (
+            a,
+            b
+          ) =>
+            String(
+              a.tenNguyenLieu ||
+              ''
+            ).localeCompare(
+              String(
+                b.tenNguyenLieu ||
+                ''
+              ),
+              'vi'
+            )
+        )
+        .map(row => {
+
+          const ten =
+            row.tenNguyenLieu ||
+            '';
+
+
+          return `
+            <option
+              value="${escapeDonDatHangHtml(
+                ten
+              )}"
+            >
+            </option>
+          `;
+
+        })
+        .join('');
+
+  }
+
+  /**
+   * ==========================================
+   * KHI CHỌN NGUYÊN LIỆU
+   *
+   * Prompt hiện tại:
+   * mới chỉ xác định nguyên liệu.
+   *
+   * Prompt tiếp theo sẽ dùng selectedMaterial
+   * để tự điền vào bảng PO.
+   * ==========================================
+   */
+  async function onDonDatHangMaterialSelected() {
+
+    const input =
+      document.getElementById(
+        'poNguyenLieuSearch'
+      );
+
+
+    if (!input) {
+      return;
+    }
+
+
+    const selectedName =
+      String(
+        input.value ||
+        ''
+      ).trim();
+
+
+    if (!selectedName) {
+
+      DON_DAT_HANG_SELECTED_MATERIAL =
+        null;
+
+      return;
+
+    }
+
+
+    const exists =
+      (
+        DON_DAT_HANG_CURRENT_MATERIALS ||
+        []
+      )
+        .some(row =>
+          String(
+            row.tenNguyenLieu ||
+            ''
+          ).trim() ===
+          selectedName
+        );
+
+
+    if (!exists) {
+
+      DON_DAT_HANG_SELECTED_MATERIAL =
+        null;
+
+      return;
+
+    }
+
+
+    try {
+
+      setLoading(
+        true
+      );
+
+
+      const result =
+        await server(
+          'getThongTinXuatNhapKhauTheoNguyenLieu',
+          selectedName
+        );
+
+
+      DON_DAT_HANG_SELECTED_MATERIAL =
+        result?.data ||
+        null;
+
+
+      /*
+      * Khi vừa chọn nguyên liệu,
+      * chưa thêm vào bảng ngay.
+      *
+      * Nhưng có thể dựng trước
+      * danh sách NCC để người dùng chọn.
+      */
+      renderDonDatHangSupplierOptions(
+        DON_DAT_HANG_SELECTED_MATERIAL
+      );
+
+
+    } catch (error) {
+
+      DON_DAT_HANG_SELECTED_MATERIAL =
+        null;
+
+
+      alert(
+        error.message ||
+        error
+      );
+
+
+    } finally {
+
+      setLoading(
+        false
+      );
+
+    }
+
+  }
+
+  function renderDonDatHangSupplierOptions(
+    material
+  ) {
+
+    const select =
+      document.getElementById(
+        'poNhaSanXuatSelect'
+      );
+
+
+    if (
+      !select ||
+      !material
+    ) {
+      return;
+    }
+
+
+    const suppliers =
+      [
+        {
+          index: 1,
+          name:
+            material.nhaCungCap1 ||
+            '',
+          payment:
+            material.phuongThucTTNCC1 ||
+            ''
+        },
+        {
+          index: 2,
+          name:
+            material.nhaCungCap2 ||
+            '',
+          payment:
+            material.phuongThucTTNCC2 ||
+            ''
+        },
+        {
+          index: 3,
+          name:
+            material.nhaCungCap3 ||
+            '',
+          payment:
+            material.phuongThucTTNCC3 ||
+            ''
+        }
+      ]
+        .filter(item =>
+          item.name
+        );
+
+
+    /*
+    * Nếu PO đã có NCC thì chỉ giữ
+    * đúng NCC của PO hiện tại.
+    */
+    const allowed =
+      DON_DAT_HANG_CURRENT_SUPPLIER
+        ? suppliers.filter(item =>
+            item.name ===
+            DON_DAT_HANG_CURRENT_SUPPLIER
+          )
+        : suppliers;
+
+
+    select.innerHTML = `
+      <option value="">
+        Chọn nhà sản xuất
+      </option>
+
+      ${allowed
+        .map(item => `
+          <option
+            value="${item.index}"
+          >
+            ${escapeDonDatHangHtml(
+              firstLineDonDatHang(
+                item.name
+              )
+            )}
+          </option>
+        `)
+        .join('')}
+    `;
+
+    if (
+      DON_DAT_HANG_CURRENT_SUPPLIER
+    ) {
+
+      if (
+        allowed.length === 0
+      ) {
+
+        alert(
+          'Nguyên liệu này không cùng nhà sản xuất với đơn hiện tại.\n' +
+          'Vui lòng lập đơn riêng.'
+        );
+
+
+        document.getElementById(
+          'poNguyenLieuSearch'
+        ).value =
+          '';
+
+
+        DON_DAT_HANG_SELECTED_MATERIAL =
+          null;
+
+        return;
+
+      }
+
+
+      /*
+      * Có đúng NCC của đơn
+      * → tự chọn luôn.
+      */
+      select.value =
+        String(
+          allowed[0].index
+        );
+
+
+      onDonDatHangSupplierChange();
+
+    }
+
+  }
+
+  function firstLineDonDatHang(
+    text
+  ) {
+
+    return String(
+      text || ''
+    )
+      .split(/\r?\n/)[0]
+      .trim();
+
+  }
+
+  function onDonDatHangSupplierChange() {
+
+    const select =
+      document.getElementById(
+        'poNhaSanXuatSelect'
+      );
+
+
+    if (
+      !select ||
+      !DON_DAT_HANG_SELECTED_MATERIAL
+    ) {
+      return;
+    }
+
+
+    const index =
+      Number(
+        select.value ||
+        0
+      );
+
+
+    if (!index) {
+      return;
+    }
+
+
+    const material =
+      DON_DAT_HANG_SELECTED_MATERIAL;
+
+
+    const supplier =
+      material[
+        'nhaCungCap' +
+        index
+      ] || '';
+
+
+    const payment =
+      material[
+        'phuongThucTTNCC' +
+        index
+      ] || '';
+
+
+    const supplierText =
+      document.getElementById(
+        'poNhaSanXuat'
+      );
+
+
+    const paymentText =
+      document.getElementById(
+        'poPhuongThucThanhToan'
+      );
+
+
+    if (supplierText) {
+
+      supplierText.value =
+        supplier;
+
+    }
+
+
+    if (paymentText) {
+
+      paymentText.value =
+        payment;
+
+    }
+
+  }
+
+  async function addSelectedMaterialToOrder() {
+
+    /*
+    * ==========================================
+    * 1. XÁC ĐỊNH NGUYÊN LIỆU ĐANG CHỌN
+    * ==========================================
+    */
+
+    const materialInput =
+      document.getElementById(
+        'poNguyenLieuSearch'
+      );
+
+
+    const selectedName =
+      String(
+        materialInput?.value ||
+        ''
+      ).trim();
+
+
+    if (!selectedName) {
+
+      alert(
+        'Vui lòng chọn nguyên liệu trước.'
+      );
+
+      return;
+
+    }
+
+
+    let material =
+      DON_DAT_HANG_SELECTED_MATERIAL;
+
+
+    /*
+    * Nếu onchange chưa chạy xong,
+    * hoặc cache đang null,
+    * thì tải lại trực tiếp tại đây.
+    *
+    * Như vậy nút Thêm luôn hoạt động ổn định.
+    */
+    if (
+      !material ||
+      String(
+        material.tenNguyenLieu ||
+        ''
+      ).trim() !==
+        selectedName
+    ) {
+
+      try {
+
+        setLoading(
+          true
+        );
+
+
+        const result =
+          await server(
+            'getThongTinXuatNhapKhauTheoNguyenLieu',
+            selectedName
+          );
+
+
+        material =
+          result?.data ||
+          null;
+
+
+        DON_DAT_HANG_SELECTED_MATERIAL =
+          material;
+
+
+      } catch (error) {
+
+        alert(
+          error.message ||
+          error
+        );
+
+        return;
+
+
+      } finally {
+
+        setLoading(
+          false
+        );
+
+      }
+
+    }
+
+
+    if (!material) {
+
+      alert(
+        'Không lấy được thông tin nguyên liệu từ XuatNhapKhau.'
+      );
+
+      return;
+
+    }
+
+
+    /*
+    * ==========================================
+    * 2. NHÀ SẢN XUẤT
+    * ==========================================
+    */
+
+    const supplierSelect =
+      document.getElementById(
+        'poNhaSanXuatSelect'
+      );
+
+
+    const supplierIndex =
+      Number(
+        supplierSelect?.value ||
+        0
+      );
+
+
+    if (!supplierIndex) {
+
+      alert(
+        'Vui lòng chọn nhà sản xuất trước khi thêm nguyên liệu.'
+      );
+
+      return;
+
+    }
+
+
+    const supplier =
+      material[
+        'nhaCungCap' +
+        supplierIndex
+      ] || '';
+
+
+    if (!supplier) {
+
+      alert(
+        'Nguyên liệu chưa có thông tin nhà sản xuất.'
+      );
+
+      return;
+
+    }
+
+
+    /*
+    * ==========================================
+    * 3. KIỂM TRA CÙNG NCC
+    * ==========================================
+    */
+
+    if (
+      DON_DAT_HANG_CURRENT_SUPPLIER &&
+      supplier !==
+        DON_DAT_HANG_CURRENT_SUPPLIER
+    ) {
+
+      alert(
+        'Nguyên liệu này không cùng nhà sản xuất với đơn hiện tại.\n\n' +
+        'Nhà sản xuất của đơn:\n' +
+        firstLineDonDatHang(
+          DON_DAT_HANG_CURRENT_SUPPLIER
+        ) +
+        '\n\nVui lòng lập đơn riêng.'
+      );
+
+      return;
+
+    }
+
+
+    /*
+    * Nguyên liệu đầu tiên
+    * sẽ khóa NCC cho PO.
+    */
+    if (
+      !DON_DAT_HANG_CURRENT_SUPPLIER
+    ) {
+
+      DON_DAT_HANG_CURRENT_SUPPLIER =
+        supplier;
+
+    }
+
+
+    /*
+    * ==========================================
+    * 4. TÊN HÀNG HÓA
+    *
+    * tenNguyenLieu
+    * tenTiengTrung
+    * ==========================================
+    */
+
+    const tenHangHoa =
+      [
+        material.tenNguyenLieu ||
+          '',
+
+        material.tenTiengTrung ||
+          ''
+      ]
+        .filter(Boolean)
+        .join('\n');
+
+
+    /*
+    * ==========================================
+    * 5. ĐƠN GIÁ
+    * ==========================================
+    */
+
+    const loaiDonGia =
+      document.getElementById(
+        'poLoaiDonGia'
+      )?.value ||
+      'coThue';
+
+
+    let donGia = 0;
+
+
+    if (
+      loaiDonGia ===
+      'coThue'
+    ) {
+
+      donGia =
+        Number(
+          material.donGiaBaoGomVAT ||
+          0
+        );
+
+    } else {
+
+      donGia =
+        Number(
+          material.donGiaKhongBaoGomVAT ||
+          0
+        );
+
+    }
+
+
+    /*
+    * ==========================================
+    * 6. THÊM DÒNG HÀNG HÓA
+    * ==========================================
+    */
+
+    addDonDatHangItemRow({
+
+      /*
+      * Mã hàng hóa
+      * = MaKeToan của XuatNhapKhau
+      */
+      maHangHoa:
+        material.MaKeToan ||
+        '',
+
+
+      /*
+      * Tên NL
+      * + xuống dòng
+      * + tiếng Trung
+      */
+      tenHangHoa:
+        tenHangHoa,
+
+
+      /*
+      * Đơn vị kho.
+      */
+      donViTinh:
+        material.donViKho ||
+        '',
+
+
+      /*
+      * Để người dùng nhập.
+      */
+      soLuong:
+        '',
+
+
+      /*
+      * Theo loại VAT đang chọn.
+      */
+      donGia:
+        donGia,
+
+
+      /*
+      * Thông số kỹ thuật.
+      */
+      thongSoKyThuat:
+        material.thongSoKyThuat ||
+        ''
+
+    });
+
+
+    /*
+    * ==========================================
+    * 7. NHÀ SẢN XUẤT
+    * ==========================================
+    */
+
+    const supplierText =
+      document.getElementById(
+        'poNhaSanXuat'
+      );
+
+
+    if (supplierText) {
+
+      supplierText.value =
+        supplier;
+
+    }
+
+
+    /*
+    * ==========================================
+    * 8. PHƯƠNG THỨC THANH TOÁN
+    * ==========================================
+    */
+
+    const payment =
+      material[
+        'phuongThucTTNCC' +
+        supplierIndex
+      ] || '';
+
+
+    const paymentText =
+      document.getElementById(
+        'poPhuongThucThanhToan'
+      );
+
+
+    if (paymentText) {
+
+      paymentText.value =
+        payment;
+
+    }
+
+
+    /*
+    * ==========================================
+    * 9. THỜI GIAN GIAO HÀNG
+    *
+    * Công thức:
+    *
+    * Hôm nay
+    * +
+    * XuatNhapKhau.ngayDuKienGiaoHangTaiXuong
+    * ==========================================
+    */
+
+    const deliveryEl =
+      document.getElementById(
+        'poThoiGianGiaoHang'
+      );
+
+
+    if (deliveryEl) {
+
+      deliveryEl.value =
+        addDaysDonDatHangVN(
+          new Date(),
+          Number(
+            material
+              .ngayDuKienGiaoHangTaiXuong ||
+            0
+          )
+        );
+
+    }
+
+
+    /*
+    * ==========================================
+    * 10. XÓA Ô CHỌN NGUYÊN LIỆU
+    * ==========================================
+    */
+
+    if (materialInput) {
+
+      materialInput.value =
+        '';
+
+    }
+
+
+    DON_DAT_HANG_SELECTED_MATERIAL =
+      null;
+
+
+    refreshDonDatHangItemStt();
+
+
+    /*
+    * Đưa con trỏ luôn vào Số lượng
+    * của dòng vừa thêm.
+    */
+    const itemRows =
+      document.querySelectorAll(
+        '#poItemsBody tr'
+      );
+
+
+    if (
+      itemRows.length
+    ) {
+
+      const lastRow =
+        itemRows[
+          itemRows.length - 1
+        ];
+
+
+      lastRow
+        .querySelector(
+          '.po-item-qty'
+        )
+        ?.focus();
+
+    }
+
+  }
+
+  function addDaysDonDatHangVN(
+    date,
+    days
+  ) {
+
+    const d =
+      new Date(
+        date
+      );
+
+
+    d.setDate(
+      d.getDate() +
+      Number(
+        days || 0
+      )
+    );
+
+
+    const dd =
+      String(
+        d.getDate()
+      ).padStart(
+        2,
+        '0'
+      );
+
+
+    const mm =
+      String(
+        d.getMonth() + 1
+      ).padStart(
+        2,
+        '0'
+      );
+
+
+    const yyyy =
+      d.getFullYear();
+
+
+    return (
+      dd +
+      '/' +
+      mm +
+      '/' +
+      yyyy
+    );
+
+  }
+
+  /**
+   * ==================================================
+   * XUẤT PDF / IN ĐƠN ĐẶT HÀNG
+   * ==================================================
+   *
+   * - Không bắt buộc phải lưu đơn trước.
+   * - Lấy dữ liệu trực tiếp từ form hiện tại.
+   * - Chuyển input / textarea / select thành text.
+   * - Ẩn cột thao tác.
+   * - Mở cửa sổ print A4 ngang.
+   *
+   * Người dùng có thể:
+   * - Print trực tiếp
+   * - hoặc chọn "Save as PDF"
+   * ==================================================
+   */
+  function printDonDatHangPdf() {
+
+    const source =
+      document.getElementById(
+        'poFormSheet'
+      );
+
+
+    if (!source) {
+
+      alert(
+        'Không tìm thấy form đơn đặt hàng.'
+      );
+
+      return;
+
+    }
+
+
+    /*
+    * ==========================================
+    * 1. KIỂM TRA CÓ HÀNG HÓA CHƯA
+    * ==========================================
+    */
+
+    const itemRows =
+      source.querySelectorAll(
+        '#poItemsBody tr'
+      );
+
+
+    if (
+      !itemRows.length
+    ) {
+
+      alert(
+        'Đơn đặt hàng chưa có hàng hóa để in.'
+      );
+
+      return;
+
+    }
+
+
+    /*
+    * ==========================================
+    * 2. CLONE FORM
+    * ==========================================
+    *
+    * Không sửa trực tiếp form người dùng
+    * đang nhập.
+    */
+
+    const clone =
+      source.cloneNode(
+        true
+      );
+
+
+    /*
+    * ==========================================
+    * 3. ĐỔI INPUT/TEXTAREA/SELECT THÀNH TEXT
+    * ==========================================
+    */
+
+    prepareDonDatHangPrintForm(
+      source,
+      clone
+    );
+
+
+    /*
+    * ==========================================
+    * 4. XÓA CỘT THAO TÁC
+    * ==========================================
+    */
+
+    removeDonDatHangPrintActionColumn(
+      clone
+    );
+
+
+    /*
+    * ==========================================
+    * 5. TẠO CỬA SỔ IN
+    * ==========================================
+    */
+
+    const printWindow =
+      window.open(
+        '',
+        '_blank',
+        'width=1400,height=900'
+      );
+
+
+    if (!printWindow) {
+
+      alert(
+        'Trình duyệt đang chặn cửa sổ in.\n' +
+        'Vui lòng cho phép popup rồi thử lại.'
+      );
+
+      return;
+
+    }
+
+
+    /*
+    * ==========================================
+    * 6. LẤY STYLE HIỆN TẠI
+    * ==========================================
+    *
+    * Copy các <style> hiện tại để form
+    * giữ được giao diện gần giống màn hình.
+    */
+
+    const currentStyles =
+      Array
+        .from(
+          document.querySelectorAll(
+            'style'
+          )
+        )
+        .map(style =>
+          style.outerHTML
+        )
+        .join('\n');
+
+
+    /*
+    * ==========================================
+    * 7. HTML CỬA SỔ IN
+    * ==========================================
+    */
+
+    printWindow.document.open();
+
+
+    printWindow.document.write(`
+      <!DOCTYPE html>
+
+      <html>
+
+        <head>
+
+          <meta charset="UTF-8">
+
+          <title>
+            ${escapeDonDatHangHtml(
+              getDonDatHangPrintTitle()
+            )}
+          </title>
+
+
+          ${currentStyles}
+
+
+          <style>
+
+            /* ==========================================
+              CẤU HÌNH TRANG IN
+              ========================================== */
+
+            @page {
+              size: A4 landscape;
+              margin: 4mm;
+            }
+
+
+            html,
+            body {
+              margin: 0;
+              padding: 0;
+
+              background: white;
+
+              color: #000;
+            }
+
+
+            body {
+              width: 100%;
+
+              font-family:
+                Arial,
+                "Microsoft YaHei",
+                "Noto Sans SC",
+                sans-serif;
+
+              -webkit-print-color-adjust: exact;
+              print-color-adjust: exact;
+            }
+
+
+            /*
+            * Form PO phải ăn toàn trang.
+            */
+            .po-form-sheet {
+              width: 100% !important;
+              min-width: 0 !important;
+              max-width: none !important;
+
+              margin: 0 !important;
+              padding: 0 !important;
+
+              font-size: 10.5px !important;
+              line-height: 1.25 !important;
+
+              background: white !important;
+            }
+
+            /* ==================================================
+              NÉN FORM VỪA 1 TRANG A4 NGANG
+              Chỉ áp dụng cho bản in
+              ================================================== */
+
+
+            /* PHẦN ĐẦU */
+            .po-top-grid {
+              min-height: 78px !important;
+            }
+
+            .po-company-block {
+              padding: 5px 7px !important;
+              line-height: 1.25 !important;
+              font-size: 10px !important;
+            }
+
+            .po-company-block::first-line {
+              font-size: 14px !important;
+            }
+
+            .po-main-title {
+              padding: 5px !important;
+              font-size: 16px !important;
+              line-height: 1.2 !important;
+            }
+
+            .po-label {
+              padding: 3px 4px !important;
+              font-size: 10px !important;
+            }
+
+
+            /* BÊN MUA / NHÀ SX / ĐƠN VỊ CHUYỂN TIỀN */
+            .po-party-grid {
+              margin-top: 3px !important;
+            }
+
+            .po-party-grid .po-box {
+              min-height: 110px !important;
+              height: auto !important;
+
+              padding: 5px 6px !important;
+            }
+
+            .po-section-title {
+              margin-bottom: 3px !important;
+              font-size: 11px !important;
+              line-height: 1.2 !important;
+            }
+
+            .po-preline,
+            .po-party-selected-text {
+              font-size: 10px !important;
+              line-height: 1.25 !important;
+
+              white-space: pre-wrap !important;
+              overflow-wrap: anywhere !important;
+              word-break: break-word !important;
+            }
+
+            .po-party-selected-text {
+              margin-top: 3px !important;
+              padding: 1px !important;
+            }
+
+
+            /* BẢNG THÔNG TIN */
+            .po-info-table-wrap {
+              margin-top: 3px !important;
+            }
+
+            .po-info-table th {
+              height: auto !important;
+
+              padding: 5px 4px !important;
+
+              font-size: 10px !important;
+              line-height: 1.2 !important;
+
+              white-space: normal !important;
+              overflow-wrap: anywhere !important;
+            }
+
+            .po-info-table td {
+              height: auto !important;
+              min-height: 58px !important;
+
+              vertical-align: top !important;
+            }
+
+            .po-info-table .po-print-value {
+              min-height: 52px !important;
+
+              padding: 5px !important;
+
+              font-size: 10px !important;
+              line-height: 1.25 !important;
+
+              white-space: pre-wrap !important;
+              overflow-wrap: anywhere !important;
+              word-break: break-word !important;
+            }
+
+
+            /* BẢNG HÀNG HÓA */
+            .po-items-wrap {
+              margin-top: 3px !important;
+            }
+
+            .po-items-table th {
+              padding: 5px 4px !important;
+
+              font-size: 10px !important;
+              line-height: 1.2 !important;
+
+              white-space: normal !important;
+              overflow-wrap: anywhere !important;
+            }
+
+            .po-items-table td {
+              height: auto !important;
+              min-height: 0 !important;
+
+              vertical-align: middle !important;
+            }
+
+            .po-items-table .po-print-value {
+              min-height: 34px !important;
+
+              padding: 5px !important;
+
+              font-size: 10px !important;
+              line-height: 1.25 !important;
+
+              white-space: pre-wrap !important;
+              overflow-wrap: anywhere !important;
+              word-break: break-word !important;
+            }
+
+            .po-total-label,
+            .po-total-value {
+              height: 34px !important;
+
+              padding: 5px !important;
+
+              font-size: 11px !important;
+              line-height: 1.25 !important;
+
+              font-weight: 800 !important;
+            }
+  
+
+            /* ==================================================
+              KHUNG KÝ
+              ================================================== */
+
+            .po-signature-row {
+              margin-top: 6px !important;
+
+              grid-template-columns:
+                1fr minmax(390px, 42%) !important;
+
+              break-inside: avoid !important;
+              page-break-inside: avoid !important;
+            }
+
+            .po-signature-company {
+              min-height: 34px !important;
+
+              padding: 5px !important;
+
+              font-size: 12px !important;
+            }
+
+            .po-signature-head > div {
+              min-height: 32px !important;
+
+              padding: 4px !important;
+
+              font-size: 10px !important;
+            }
+
+            .po-signature-body > div {
+              min-height: 70px !important;
+            }
+
+
+            /*
+            * Không cần scroll khi in.
+            */
+            .po-info-table-wrap,
+            .po-items-wrap {
+              overflow: visible !important;
+            }
+
+
+            /*
+            * Bảng hàng hóa không được ép
+            * min-width 1300px như màn hình.
+            */
+            .po-items-table {
+              width: 100% !important;
+
+              min-width: 0 !important;
+
+              table-layout: fixed !important;
+            }
+
+
+            /*
+            * Text được chuyển từ input.
+            */
+            .po-print-value {
+              width: 100%;
+
+              min-height: 18px;
+
+              padding: 4px 5px;
+
+              color: #000;
+
+              background: transparent;
+
+              white-space: pre-wrap;
+
+              overflow-wrap: anywhere;
+
+              word-break: break-word;
+
+              line-height: 1.3;
+
+              box-sizing: border-box;
+            }
+
+
+            .po-print-center {
+              text-align: center;
+            }
+
+
+            .po-print-right {
+              text-align: right;
+
+              font-variant-numeric:
+                tabular-nums;
+            }
+
+
+            /*
+            * Giữ màu header xanh.
+            */
+            .po-info-table th,
+            .po-items-table th {
+              -webkit-print-color-adjust: exact;
+              print-color-adjust: exact;
+            }
+
+
+            /*
+            * Đảm bảo border rõ.
+            */
+            .po-box,
+            .po-info-table th,
+            .po-info-table td,
+            .po-items-table th,
+            .po-items-table td,
+            .po-signature-box,
+            .po-signature-company,
+            .po-signature-head > div,
+            .po-signature-body > div {
+              border-color: #111 !important;
+            }
+
+
+            /*
+            * Không hiện cột Xóa.
+            */
+            .po-print-hide {
+              display: none !important;
+            }
+
+
+            /*
+            * Cân lại 8 cột sau khi bỏ cột Xóa.
+            */
+
+            .po-items-table th:nth-child(1),
+            .po-items-table td:nth-child(1) {
+              width: 4% !important;
+            }
+
+            .po-items-table th:nth-child(2),
+            .po-items-table td:nth-child(2) {
+              width: 8% !important;
+            }
+
+            .po-items-table th:nth-child(3),
+            .po-items-table td:nth-child(3) {
+              width: 23% !important;
+            }
+
+            .po-items-table th:nth-child(4),
+            .po-items-table td:nth-child(4) {
+              width: 7% !important;
+            }
+
+            .po-items-table th:nth-child(5),
+            .po-items-table td:nth-child(5) {
+              width: 9% !important;
+            }
+
+            .po-items-table th:nth-child(6),
+            .po-items-table td:nth-child(6) {
+              width: 12% !important;
+            }
+
+            .po-items-table th:nth-child(7),
+            .po-items-table td:nth-child(7) {
+              width: 12% !important;
+            }
+
+            .po-items-table th:nth-child(8),
+            .po-items-table td:nth-child(8) {
+              width: 25% !important;
+            }
+
+
+            /*
+            * Footer bảng.
+            */
+            .po-total-label {
+              font-weight: 800 !important;
+            }
+
+            .po-total-value {
+              text-align: right !important;
+              font-weight: 800 !important;
+            }
+
+
+            /*
+            * Tránh tách một dòng hàng hóa
+            * sang hai trang.
+            */
+            .po-items-table tr {
+              break-inside: avoid;
+              page-break-inside: avoid;
+            }
+ 
+
+            /*
+            * Không cho textarea/input/select
+            * sót lại trên bản in.
+            */
+            input,
+            textarea,
+            select,
+            button {
+              display: none !important;
+            }
+
+
+            /*
+            * Bỏ shadow/radius của card.
+            */
+            .po-form-sheet,
+            .po-box {
+              box-shadow: none !important;
+            }
+
+
+            /*
+            * Print.
+            */
+            @media print {
+
+              html,
+              body {
+                width: 100%;
+              }
+
+            }
+
+          </style>
+
+        </head>
+
+
+        <body>
+
+          ${clone.outerHTML}
+
+        </body>
+
+      </html>
+    `);
+
+
+    printWindow.document.close();
+
+
+    /*
+    * ==========================================
+    * 8. CHỜ RENDER RỒI IN
+    * ==========================================
+    */
+
+    printWindow.focus();
+
+
+    setTimeout(
+      () => {
+
+        printWindow.print();
+
+      },
+      350
+    );
+
+  }
+
+  /**
+   * ==========================================
+   * CHUYỂN CONTROL → TEXT TRƯỚC KHI IN
+   * ==========================================
+   */
+  function prepareDonDatHangPrintForm(
+    source,
+    clone
+  ) {
+
+    const sourceControls =
+      source.querySelectorAll(
+        'input, textarea, select'
+      );
+
+
+    const cloneControls =
+      clone.querySelectorAll(
+        'input, textarea, select'
+      );
+
+
+    sourceControls.forEach(
+      (
+        sourceControl,
+        index
+      ) => {
+
+        const cloneControl =
+          cloneControls[
+            index
+          ];
+
+
+        if (!cloneControl) {
+          return;
+        }
+
+
+        let value = '';
+
+
+        /*
+        * ======================================
+        * SELECT
+        * ======================================
+        */
+
+        if (
+          sourceControl.tagName ===
+          'SELECT'
+        ) {
+
+          const selectedOption =
+            sourceControl.options[
+              sourceControl.selectedIndex
+            ];
+
+
+          value =
+            selectedOption
+              ? selectedOption.text
+              : '';
+
+        }
+
+
+        /*
+        * ======================================
+        * INPUT / TEXTAREA
+        * ======================================
+        */
+
+        else {
+
+          value =
+            sourceControl.value ||
+            '';
+
+        }
+
+
+        /*
+        * ======================================
+        * Một số combobox chỉ dùng để chọn,
+        * phía dưới đã có text đầy đủ.
+        *
+        * Không in combobox để tránh lặp.
+        * ======================================
+        */
+
+        const id =
+          sourceControl.id ||
+          '';
+
+
+        if (
+          id ===
+            'poNhaSanXuatSelect'
+          ||
+          id ===
+            'poDonViVanChuyen'
+          ||
+          id ===
+            'poCangDenSelect'
+        ) {
+
+          cloneControl.remove();
+
+          return;
+
+        }
+
+
+        /*
+        * ======================================
+        * TẠO TEXT THAY CONTROL
+        * ======================================
+        */
+
+        const div =
+          document.createElement(
+            'div'
+          );
+
+
+        div.className =
+          'po-print-value';
+
+
+        /*
+        * Căn giữa.
+        */
+        if (
+          sourceControl.classList.contains(
+            'po-center'
+          )
+          ||
+          sourceControl.classList.contains(
+            'po-input-center'
+          )
+          ||
+          sourceControl.classList.contains(
+            'po-cell-center'
+          )
+        ) {
+
+          div.classList.add(
+            'po-print-center'
+          );
+
+        }
+
+
+        /*
+        * Căn số về bên phải.
+        */
+        if (
+          sourceControl.classList.contains(
+            'po-number'
+          )
+        ) {
+
+          div.classList.add(
+            'po-print-right'
+          );
+
+        }
+
+
+        div.textContent =
+          value;
+
+
+        cloneControl.replaceWith(
+          div
+        );
+
+      }
+    );
+
+
+    /*
+    * ==========================================
+    * ĐƠN VỊ CHUYỂN TIỀN
+    * ==========================================
+    *
+    * div text hiện có trong form,
+    * giữ nguyên full nội dung.
+    */
+
+    const transferText =
+      clone.querySelector(
+        '#poDonViVanChuyenText'
+      );
+
+
+    if (transferText) {
+
+      transferText.style.whiteSpace =
+        'pre-wrap';
+
+    }
+
+
+    /*
+    * ==========================================
+    * NHÀ SẢN XUẤT
+    * ==========================================
+    *
+    * textarea đã được convert thành text.
+    */
+
+
+    /*
+    * ==========================================
+    * CẢNG ĐẾN
+    * ==========================================
+    *
+    * textarea đã được convert thành text.
+    */
+
+  }
+
+  /**
+   * ==========================================
+   * XÓA CỘT THAO TÁC KHỎI BẢN IN
+   * ==========================================
+   */
+  function removeDonDatHangPrintActionColumn(
+    clone
+  ) {
+
+    /*
+    * Header cuối cùng.
+    */
+    clone
+      .querySelectorAll(
+        '.po-items-table tr'
+      )
+      .forEach(row => {
+
+        const cells =
+          row.children;
+
+
+        if (!cells.length) {
+          return;
+        }
+
+
+        /*
+        * Cột cuối cùng chính là thao tác.
+        */
+        const lastCell =
+          cells[
+            cells.length - 1
+          ];
+
+
+        if (lastCell) {
+
+          lastCell.remove();
+
+        }
+
+      });
+
+
+    /*
+    * ==========================================
+    * FOOTER
+    * ==========================================
+    *
+    * Sau khi bỏ cột Xóa:
+    *
+    * 1-6  Tổng cộng
+    * 7    Thành tiền
+    * 8    Thông số KT
+    */
+
+  }
+
+  /**
+   * ==========================================
+   * TITLE CỬA SỔ PRINT
+   * ==========================================
+   */
+  function getDonDatHangPrintTitle() {
+
+    const soDon =
+      document.getElementById(
+        'poSoDonDatHang'
+      )?.value ||
+      'Don-dat-hang';
+
+
+    return (
+      'Don-dat-hang-' +
+      soDon
+    );
+
+  }
+
+  async function loadLichSuDonDatHang(
+    forceReload = false
+  ) {
+
+    const tbody =
+      document.querySelector(
+        '#poHistoryTable tbody'
+      );
+
+
+    if (!tbody) {
+      return;
+    }
+
+
+    tbody.innerHTML = `
+      <tr>
+        <td
+          colspan="12"
+          class="empty"
+        >
+          Đang tải dữ liệu...
+        </td>
+      </tr>
+    `;
+
+
+    const filters = {
+
+      fromDate:
+        document.getElementById(
+          'poHistoryFromDate'
+        )?.value ||
+        '',
+
+      toDate:
+        document.getElementById(
+          'poHistoryToDate'
+        )?.value ||
+        '',
+
+      material:
+        document.getElementById(
+          'poHistoryMaterialSearch'
+        )?.value ||
+        ''
+
+    };
+
+
+    try {
+
+      const result =
+        await server(
+          'getLichSuDonDatHang',
+          filters
+        );
+
+
+      DON_DAT_HANG_HISTORY_CACHE =
+        Array.isArray(
+          result?.orders
+        )
+          ? result.orders
+          : [];
+
+
+      DON_DAT_HANG_HISTORY_MATERIALS =
+        Array.isArray(
+          result?.materials
+        )
+          ? result.materials
+          : [];
+
+
+      renderLichSuDonDatHangMaterials();
+
+      renderLichSuDonDatHang();
+
+
+    } catch (error) {
+
+      console.error(
+        error
+      );
+
+
+      tbody.innerHTML = `
+        <tr>
+          <td
+            colspan="12"
+            class="empty"
+          >
+            ${escapeDonDatHangHtml(
+              error.message ||
+              String(error)
+            )}
+          </td>
+        </tr>
+      `;
+
+    }
+
+  }
+
+  function renderLichSuDonDatHangMaterials() {
+
+    const list =
+      document.getElementById(
+        'poHistoryMaterialList'
+      );
+
+
+    if (!list) {
+      return;
+    }
+
+
+    list.innerHTML =
+      DON_DAT_HANG_HISTORY_MATERIALS
+        .map(name => `
+          <option
+            value="${escapeDonDatHangHtml(
+              name
+            )}"
+          >
+          </option>
+        `)
+        .join('');
+
+  }
+
+  function renderLichSuDonDatHang() {
+
+    const tbody =
+      document.querySelector(
+        '#poHistoryTable tbody'
+      );
+
+
+    const summary =
+      document.getElementById(
+        'poHistorySummary'
+      );
+
+
+    if (!tbody) {
+      return;
+    }
+
+
+    const rows =
+      DON_DAT_HANG_HISTORY_CACHE ||
+      [];
+
+
+    if (summary) {
+
+      summary.textContent =
+        rows.length +
+        ' đơn đặt hàng';
+
+    }
+
+
+    if (!rows.length) {
+
+      tbody.innerHTML = `
+        <tr>
+          <td
+            colspan="12"
+            class="empty"
+          >
+            Không có đơn đặt hàng phù hợp.
+          </td>
+        </tr>
+      `;
+
+      return;
+
+    }
+
+
+    tbody.innerHTML =
+      rows.map(order => {
+
+        const materials =
+          (
+            order.items ||
+            []
+          )
+            .map(item =>
+              item.tenNguyenLieu ||
+              ''
+            )
+            .filter(Boolean)
+            .join('\n');
+
+
+        const totalQty =
+          (
+            order.items ||
+            []
+          )
+            .reduce(
+              (
+                sum,
+                item
+              ) =>
+                sum +
+                Number(
+                  item.soLuong ||
+                  0
+                ),
+              0
+            );
+
+
+        return `
+          <tr>
+
+            <!-- THAO TÁC -->
+            <td
+              class="
+                po-history-actions
+              "
+            >
+
+              <button
+                type="button"
+                class="
+                  btn
+                  btn-ghost
+                  btn-small
+                "
+                onclick="
+                  printDonDatHangFromHistory(
+                    '${escapeDonDatHangHtml(
+                      order.maDonHangDat
+                    )}'
+                  )
+                "
+                title="In đơn"
+              >
+                🖨 In
+              </button>
+
+
+              <button
+                type="button"
+                class="
+                  btn
+                  btn-primary
+                  btn-small
+                "
+                onclick="
+                  editDonDatHangFromHistory(
+                    '${escapeDonDatHangHtml(
+                      order.maDonHangDat
+                    )}'
+                  )
+                "
+                title="Sửa đơn"
+              >
+                ✏ Sửa
+              </button>
+
+              <button
+                type="button"
+                class="
+                  btn
+                  btn-ghost
+                  btn-small
+                  po-history-upload-btn
+                "
+                onclick="
+                  chooseAnhPODonDatHang(
+                    '${escapeDonDatHangHtml(
+                      order.maDonHangDat
+                    )}'
+                  )
+                "
+                title="Upload ảnh PO đã ký"
+              >
+                📷 Ảnh PO
+              </button>
+
+            </td>
+
+            <!-- TRẠNG THÁI PO -->
+            <td
+              class="
+                po-history-status
+                ${
+                  order.trangThaiPO ===
+                  'Đã ký duyệt'
+                    ? 'po-history-status-approved'
+                    : 'po-history-status-created'
+                }
+              "
+            >
+              ${escapeDonDatHangHtml(
+                order.trangThaiPO ||
+                'Đã tạo'
+              )}
+            </td>
+
+
+            <!-- XEM ẢNH PO -->
+            <td
+              class="
+                po-history-image
+              "
+            >
+              ${
+                order.anhPO
+                  ? `
+                    <button
+                      type="button"
+                      class="
+                        btn
+                        btn-ghost
+                        btn-small
+                      "
+                      onclick="
+                        openAnhPODonDatHang(
+                          '${escapeDonDatHangHtml(
+                            order.anhPO
+                          )}'
+                        )
+                      "
+                    >
+                      👁 Xem ảnh
+                    </button>
+                  `
+                  : `
+                    <span
+                      class="
+                        po-history-no-image
+                      "
+                    >
+                      Chưa có
+                    </span>
+                  `
+              }
+            </td>
+
+
+            <td>
+              ${escapeDonDatHangHtml(
+                order.tieuDeNgay ||
+                ''
+              )}
+            </td>
+
+
+            <td
+              class="
+                po-history-po-number
+              "
+            >
+              ${escapeDonDatHangHtml(
+                order.tieuDeSoDonDatHang ||
+                ''
+              )}
+            </td>
+
+
+            <td
+              class="
+                po-history-preline
+              "
+            >
+              ${escapeDonDatHangHtml(
+                order.tieuDeNhaSanXuat ||
+                ''
+              )}
+            </td>
+
+
+            <td
+              class="
+                po-history-preline
+              "
+            >
+              ${escapeDonDatHangHtml(
+                materials
+              )}
+            </td>
+
+
+            <td
+              class="
+                po-history-number
+              "
+            >
+              ${formatDonDatHangNumber(
+                totalQty
+              )}
+            </td>
+
+
+            <td
+              class="
+                po-history-number
+                po-history-total
+              "
+            >
+              ${formatDonDatHangNumber(
+                order.tieuDeTongCong ||
+                0
+              )}
+            </td>
+
+
+            <td>
+              ${escapeDonDatHangHtml(
+                order.tieuDeThoiGianGiaoHang ||
+                ''
+              )}
+            </td>
+
+
+            <td>
+              ${escapeDonDatHangHtml(
+                order.tieuDeCangDen ||
+                ''
+              )}
+            </td>
+
+
+            <td>
+              ${escapeDonDatHangHtml(
+                order.thoiGianTao ||
+                ''
+              )}
+            </td>
+
+          </tr>
+        `;
+
+      }).join('');
+
+  }
+
+  function resetLichSuDonDatHangFilter() {
+
+    const from =
+      document.getElementById(
+        'poHistoryFromDate'
+      );
+
+
+    const to =
+      document.getElementById(
+        'poHistoryToDate'
+      );
+
+
+    const material =
+      document.getElementById(
+        'poHistoryMaterialSearch'
+      );
+
+
+    if (from) {
+      from.value = '';
+    }
+
+
+    if (to) {
+      to.value = '';
+    }
+
+
+    if (material) {
+      material.value = '';
+    }
+
+
+    loadLichSuDonDatHang(
+      true
+    );
+
+  }
+
+  function editDonDatHangFromHistory(
+    maDonHangDat
+  ) {
+
+    const order =
+      (
+        DON_DAT_HANG_HISTORY_CACHE ||
+        []
+      )
+        .find(item =>
+          item.maDonHangDat ===
+          maDonHangDat
+        );
+
+
+    if (!order) {
+
+      alert(
+        'Không tìm thấy đơn đặt hàng.'
+      );
+
+      return;
+
+    }
+
+
+    applyHistoryOrderToDonDatHangForm(
+      order
+    );
+
+
+    DON_DAT_HANG_EDIT_ID =
+      order.maDonHangDat;
+
+
+    /*
+    * Nút lưu đổi thành cập nhật.
+    */
+    const saveButton =
+      document.getElementById(
+        'poSaveButton'
+      );
+
+
+    if (saveButton) {
+
+      saveButton.textContent =
+        '💾 Cập nhật đơn';
+
+    }
+
+
+    const cancelButton =
+      document.getElementById(
+        'poCancelEditButton'
+      );
+
+
+    if (cancelButton) {
+
+      cancelButton.classList
+        .remove(
+          'hidden'
+        );
+
+    }
+
+
+    /*
+    * Cuộn lên form.
+    */
+    document
+      .getElementById(
+        'donDatHangCard'
+      )
+      ?.scrollIntoView({
+
+        behavior:
+          'smooth',
+
+        block:
+          'start'
+
+      });
+
+  }
+
+  function applyHistoryOrderToDonDatHangForm(
+    order
+  ) {
+
+    if (!order) {
+      return;
+    }
+
+
+    /*
+    * ==========================================
+    * LOẠI GIÁ
+    * ==========================================
+    */
+
+    const priceType =
+      document.getElementById(
+        'poLoaiDonGia'
+      );
+
+
+    if (priceType) {
+
+      priceType.value =
+        order.loaiDonGia ||
+        'coThue';
+
+      changeDonDatHangPriceType();
+
+    }
+
+
+    /*
+    * ==========================================
+    * THÔNG TIN CHUNG
+    * ==========================================
+    */
+
+    setPoValue_(
+      'poNgay',
+      order.tieuDeNgay
+    );
+
+    setPoValue_(
+      'poTrang',
+      order.tieuDeTrang
+    );
+
+    setPoValue_(
+      'poSoDonDatHang',
+      order.tieuDeSoDonDatHang
+    );
+
+    setPoText_(
+      'poBuyerFixed',
+      order.benMua
+    );
+
+    setPoValue_(
+      'poNhaSanXuat',
+      order.tieuDeNhaSanXuat
+    );
+
+    setPoText_(
+      'poDonViVanChuyenText',
+      order.tieuDeDonViVanChuyenChoNCC
+    );
+
+    setPoValue_(
+      'poTheoDeNghi',
+      order.tieuDeTheoDeNghi
+    );
+
+    setPoValue_(
+      'poNoiDung',
+      order.tieuDeNoiDung
+    );
+
+    setPoValue_(
+      'poNguoiLienHe',
+      order.tieuDeNguoiLienHe
+    );
+
+    setPoValue_(
+      'poPhuongThucThanhToan',
+      order.tieuDePhuongThucThanhToan
+    );
+
+    setPoValue_(
+      'poThoiGianGiaoHang',
+      order.tieuDeThoiGianGiaoHang
+    );
+
+    setPoValue_(
+      'poCangDen',
+      order.tieuDeCangDen
+    );
+
+
+    /*
+    * ==========================================
+    * KHÓA NCC HIỆN TẠI
+    * ==========================================
+    */
+
+    DON_DAT_HANG_CURRENT_SUPPLIER =
+      order.tieuDeNhaSanXuat ||
+      '';
+
+
+    /*
+    * ==========================================
+    * XÓA HÀNG HÓA HIỆN TẠI
+    * ==========================================
+    */
+
+    const body =
+      document.getElementById(
+        'poItemsBody'
+      );
+
+
+    if (body) {
+
+      body.innerHTML =
+        '';
+
+    }
+
+
+    /*
+    * ==========================================
+    * THÊM HÀNG HÓA CỦA ĐƠN
+    * ==========================================
+    */
+
+    (
+      order.items ||
+      []
+    )
+      .sort(
+        (
+          a,
+          b
+        ) =>
+          Number(
+            a.stt || 0
+          )
+          -
+          Number(
+            b.stt || 0
+          )
+      )
+      .forEach(item => {
+
+        addDonDatHangItemRow({
+
+          maHangHoa:
+            item.maHangHoa,
+
+          tenHangHoa:
+            item.tenHangHoa,
+
+          donViTinh:
+            item.donViTinh,
+
+          soLuong:
+            item.soLuong,
+
+          donGia:
+            item.donGia,
+
+          thongSoKyThuat:
+            item.thongSoKyThuat
+
+        });
+
+      });
+
+
+    /*
+    * Tính lại thành tiền.
+    */
+    document
+      .querySelectorAll(
+        '#poItemsBody .po-item-qty'
+      )
+      .forEach(input => {
+
+        updateDonDatHangRowAmount(
+          input
+        );
+
+      });
+
+  }
+
+  function setPoValue_(
+    id,
+    value
+  ) {
+
+    const el =
+      document.getElementById(
+        id
+      );
+
+
+    if (el) {
+
+      el.value =
+        value ||
+        '';
+
+    }
+
+  }
+
+
+  function setPoText_(
+    id,
+    value
+  ) {
+
+    const el =
+      document.getElementById(
+        id
+      );
+
+
+    if (el) {
+
+      el.textContent =
+        value ||
+        '';
+
+    }
+
+  }
+
+  function chooseAnhPODonDatHang(
+    maDonHangDat
+  ) {
+
+    DON_DAT_HANG_UPLOAD_IMAGE_ID =
+      String(
+        maDonHangDat ||
+        ''
+      );
+
+
+    if (
+      !DON_DAT_HANG_UPLOAD_IMAGE_ID
+    ) {
+
+      alert(
+        'Không xác định được mã đơn hàng.'
+      );
+
+      return;
+
+    }
+
+
+    const input =
+      document.getElementById(
+        'poHistoryImageInput'
+      );
+
+
+    if (!input) {
+
+      alert(
+        'Không tìm thấy control upload ảnh.'
+      );
+
+      return;
+
+    }
+
+
+    /*
+    * Reset để có thể chọn lại
+    * cùng một file lần thứ hai.
+    */
+    input.value =
+      '';
+
+
+    input.click();
+
+  }
+
+  async function uploadSelectedAnhPODonDatHang(
+    input
+  ) {
+
+    const file =
+      input?.files?.[0];
+
+
+    if (!file) {
+      return;
+    }
+
+
+    const maDonHangDat =
+      DON_DAT_HANG_UPLOAD_IMAGE_ID;
+
+
+    if (!maDonHangDat) {
+
+      alert(
+        'Không xác định được đơn cần upload ảnh.'
+      );
+
+      return;
+
+    }
+
+
+    /*
+    * ==========================================
+    * KIỂM TRA ĐỊNH DẠNG
+    * ==========================================
+    */
+
+    if (
+      !String(
+        file.type ||
+        ''
+      ).startsWith(
+        'image/'
+      )
+    ) {
+
+      alert(
+        'Vui lòng chọn file ảnh.'
+      );
+
+      return;
+
+    }
+
+
+    /*
+    * ==========================================
+    * GIỚI HẠN SIZE
+    * ==========================================
+    *
+    * Có thể đổi sau.
+    */
+    const maxSize =
+      8 *
+      1024 *
+      1024;
+
+
+    if (
+      file.size >
+      maxSize
+    ) {
+
+      alert(
+        'Ảnh quá lớn. Vui lòng chọn ảnh nhỏ hơn 8 MB.'
+      );
+
+      return;
+
+    }
+
+
+    const ok =
+      confirm(
+        'Upload ảnh PO đã ký?\n\n' +
+        'Sau khi upload thành công, trạng thái PO sẽ chuyển thành "Đã ký duyệt".'
+      );
+
+
+    if (!ok) {
+      return;
+    }
+
+
+    setLoading(
+      true
+    );
+
+
+    try {
+
+      const base64 =
+        await readPoFileAsBase64_(
+          file
+        );
+
+
+      const result =
+        await server(
+          'uploadAnhPODonDatHang',
+
+          maDonHangDat,
+
+          {
+            name:
+              file.name,
+
+            mimeType:
+              file.type,
+
+            base64:
+              base64
+          }
+        );
+
+
+      const incomingResult =
+        result?.keHoachHangVe ||
+        null;
+
+
+      let message =
+        'Đã upload ảnh PO và chuyển trạng thái sang Đã ký duyệt.';
+
+
+      if (
+        incomingResult
+      ) {
+
+        if (
+          Number(
+            incomingResult.added ||
+            0
+          ) > 0
+        ) {
+
+          message +=
+            ' Đã thêm ' +
+            incomingResult.added +
+            ' dòng vào Kế hoạch hàng về.';
+
+        }
+
+
+        if (
+          Number(
+            incomingResult.skipped ||
+            0
+          ) > 0
+        ) {
+
+          message +=
+            ' Bỏ qua ' +
+            incomingResult.skipped +
+            ' dòng đã tồn tại.';
+
+        }
+
+      }
+
+
+      toast(
+        message
+      );
+
+
+      /*
+      * Refresh lịch sử ngay.
+      */
+      await loadLichSuDonDatHang(
+        true
+      );
+
+
+    } catch (error) {
+
+      console.error(
+        error
+      );
+
+
+      alert(
+        'Không thể upload ảnh PO:\n' +
+        (
+          error.message ||
+          error
+        )
+      );
+
+
+    } finally {
+
+      setLoading(
+        false
+      );
+
+
+      DON_DAT_HANG_UPLOAD_IMAGE_ID =
+        '';
+
+
+      if (input) {
+
+        input.value =
+          '';
+
+      }
+
+    }
+
+  }
+
+  function readPoFileAsBase64_(
+    file
+  ) {
+
+    return new Promise(
+      (
+        resolve,
+        reject
+      ) => {
+
+        const reader =
+          new FileReader();
+
+
+        reader.onload =
+          () => {
+
+            const result =
+              String(
+                reader.result ||
+                ''
+              );
+
+
+            /*
+            * Data URL:
+            *
+            * data:image/jpeg;base64,/9j/...
+            *
+            * Backend chỉ cần phần sau dấu phẩy.
+            */
+            const commaIndex =
+              result.indexOf(
+                ','
+              );
+
+
+            if (
+              commaIndex < 0
+            ) {
+
+              reject(
+                new Error(
+                  'Không đọc được dữ liệu ảnh.'
+                )
+              );
+
+              return;
+
+            }
+
+
+            resolve(
+              result.substring(
+                commaIndex + 1
+              )
+            );
+
+          };
+
+
+        reader.onerror =
+          () => {
+
+            reject(
+              new Error(
+                'Không thể đọc file ảnh.'
+              )
+            );
+
+          };
+
+
+        reader.readAsDataURL(
+          file
+        );
+
+      }
+    );
+
+  }
+
+  function openAnhPODonDatHang(
+    url
+  ) {
+
+    url =
+      String(
+        url ||
+        ''
+      ).trim();
+
+
+    if (!url) {
+
+      alert(
+        'Đơn này chưa có ảnh PO.'
+      );
+
+      return;
+
+    }
+
+
+    window.open(
+      url,
+      '_blank',
+      'noopener'
+    );
+
+  }
+
+</script>

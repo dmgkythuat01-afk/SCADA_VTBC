@@ -1,0 +1,5360 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+  <base target="_top">
+
+  <meta charset="UTF-8">
+
+  <title>Công nhân xuất kho thủ công</title>
+
+
+
+  <style>
+
+    :root {
+
+      --primary:#2563eb;
+
+      --primary-dark:#1d4ed8;
+
+      --success:#16a34a;
+
+      --success-dark:#15803d;
+
+      --danger:#dc2626;
+
+      --warning:#f59e0b;
+
+      --text:#111827;
+
+      --muted:#6b7280;
+
+      --border:#e5e7eb;
+
+      --soft:#f8fafc;
+
+      --card:#ffffff;
+
+      --shadow:0 12px 30px rgba(15,23,42,.08);
+
+      --radius:18px;
+
+    }
+
+
+
+    * { box-sizing:border-box; }
+
+
+
+    body {
+
+      margin:0;
+
+      font-family:Arial, Helvetica, sans-serif;
+
+      color:var(--text);
+
+      background:
+
+        radial-gradient(circle at top left, rgba(37,99,235,.10), transparent 32%),
+
+        linear-gradient(135deg,#f8fafc 0%,#eef2ff 100%);
+
+      min-height:100vh;
+
+    }
+
+
+
+    .hidden { display:none !important; }
+
+
+
+    .login-page {
+
+      min-height:100vh;
+
+      display:flex;
+
+      align-items:center;
+
+      justify-content:center;
+
+      padding:32px;
+
+    }
+
+
+
+    .login-card {
+
+      width:430px;
+
+      background:white;
+
+      border:1px solid var(--border);
+
+      border-radius:24px;
+
+      padding:34px;
+
+      box-shadow:var(--shadow);
+
+    }
+
+
+
+    .logo {
+
+      width:62px;
+
+      height:62px;
+
+      border-radius:18px;
+
+      background:linear-gradient(135deg,#2563eb,#16a34a);
+
+      color:white;
+
+      display:flex;
+
+      align-items:center;
+
+      justify-content:center;
+
+      font-size:22px;
+
+      font-weight:900;
+
+      margin-bottom:18px;
+
+    }
+
+
+
+    h1,h2,h3 { margin:0; }
+
+
+
+    .sub {
+
+      color:var(--muted);
+
+      font-size:13px;
+
+      line-height:1.5;
+
+      margin-top:6px;
+
+    }
+
+
+
+    label {
+
+      display:block;
+
+      margin-bottom:7px;
+
+      font-size:13px;
+
+      font-weight:800;
+
+      color:#374151;
+
+    }
+
+
+
+    input,select {
+
+      width:100%;
+
+      height:42px;
+
+      border:1px solid var(--border);
+
+      border-radius:12px;
+
+      padding:0 12px;
+
+      font-size:14px;
+
+      background:white;
+
+      outline:none;
+
+    }
+
+
+
+    input:focus,select:focus {
+
+      border-color:var(--primary);
+
+      box-shadow:0 0 0 4px rgba(37,99,235,.10);
+
+    }
+
+
+
+    input[readonly] {
+
+      background:#f3f4f6;
+
+      color:#4b5563;
+
+    }
+
+
+
+    .field { min-width:0; }
+
+
+
+    .btn {
+
+      height:42px;
+
+      border:0;
+
+      border-radius:12px;
+
+      padding:0 17px;
+
+      font-weight:800;
+
+      cursor:pointer;
+
+      display:inline-flex;
+
+      align-items:center;
+
+      justify-content:center;
+
+      gap:7px;
+
+      white-space:nowrap;
+
+    }
+
+
+
+    .btn:disabled {
+
+      opacity:.55;
+
+      cursor:not-allowed;
+
+    }
+
+
+
+    .btn-primary { background:var(--primary); color:white; }
+
+    .btn-primary:hover { background:var(--primary-dark); }
+
+
+
+    .btn-success { background:var(--success); color:white; }
+
+    .btn-success:hover { background:var(--success-dark); }
+
+
+
+    .btn-danger { background:var(--danger); color:white; }
+
+
+
+    .btn-light {
+
+      background:#eef2ff;
+
+      color:#1e40af;
+
+    }
+
+
+
+    .btn-block {
+
+      width:100%;
+
+      margin-top:20px;
+
+    }
+
+
+
+    .app {
+
+      width:100%;
+
+      padding:16px;
+
+    }
+
+
+
+    .topbar {
+
+      background:rgba(255,255,255,.94);
+
+      border:1px solid var(--border);
+
+      border-radius:22px;
+
+      padding:18px 22px;
+
+      display:flex;
+
+      align-items:center;
+
+      justify-content:space-between;
+
+      gap:20px;
+
+      box-shadow:var(--shadow);
+
+      margin-bottom:18px;
+
+    }
+
+
+
+    .topbar h1 { font-size:24px; }
+
+
+
+    .user-box {
+
+      display:flex;
+
+      align-items:center;
+
+      gap:10px;
+
+    }
+
+
+
+    .badge {
+
+      padding:7px 11px;
+
+      border-radius:999px;
+
+      background:#dcfce7;
+
+      color:#166534;
+
+      font-size:12px;
+
+      font-weight:900;
+
+    }
+
+
+
+    .shell {
+
+      display:grid;
+
+      grid-template-columns:270px minmax(0,1fr);
+
+      gap:18px;
+
+      align-items:start;
+
+    }
+
+
+
+    .sidebar {
+
+      position:sticky;
+
+      top:16px;
+
+      height:calc(100vh - 32px);
+
+      background:rgba(255,255,255,.95);
+
+      border:1px solid var(--border);
+
+      border-radius:22px;
+
+      padding:16px;
+
+      box-shadow:var(--shadow);
+
+    }
+
+
+
+    .sidebar-title {
+
+      font-size:16px;
+
+      font-weight:900;
+
+      margin:4px 4px 6px;
+
+    }
+
+
+
+    .sidebar-sub {
+
+      font-size:12px;
+
+      color:var(--muted);
+
+      line-height:1.45;
+
+      margin:0 4px 15px;
+
+    }
+
+
+
+    .menu {
+
+      display:flex;
+
+      flex-direction:column;
+
+      gap:8px;
+
+    }
+
+
+
+    .menu-btn {
+
+      width:100%;
+
+      min-height:48px;
+
+      border:1px solid transparent;
+
+      border-radius:14px;
+
+      background:transparent;
+
+      color:#374151;
+
+      font-size:14px;
+
+      font-weight:800;
+
+      text-align:left;
+
+      padding:11px 12px;
+
+      cursor:pointer;
+
+      display:flex;
+
+      align-items:center;
+
+      gap:10px;
+
+    }
+
+
+
+    .menu-btn:hover {
+
+      background:#eef2ff;
+
+      color:#1e40af;
+
+    }
+
+
+
+    .menu-btn.active {
+
+      background:var(--primary);
+
+      color:white;
+
+      box-shadow:0 10px 20px rgba(37,99,235,.20);
+
+    }
+
+
+
+    .icon {
+
+      width:29px;
+
+      height:29px;
+
+      border-radius:9px;
+
+      background:rgba(37,99,235,.10);
+
+      display:inline-flex;
+
+      align-items:center;
+
+      justify-content:center;
+
+      flex:0 0 auto;
+
+    }
+
+
+
+    .menu-btn.active .icon {
+
+      background:rgba(255,255,255,.20);
+
+    }
+
+
+
+    .content { min-width:0; }
+
+
+
+    .page { display:none; }
+
+    .page.active { display:block; }
+
+
+
+    .card {
+
+      background:rgba(255,255,255,.96);
+
+      border:1px solid var(--border);
+
+      border-radius:var(--radius);
+
+      box-shadow:var(--shadow);
+
+      padding:22px;
+
+      margin-bottom:18px;
+
+      min-width:0;
+
+    }
+
+
+
+    .card-title {
+
+      display:flex;
+
+      align-items:flex-start;
+
+      justify-content:space-between;
+
+      gap:14px;
+
+      margin-bottom:16px;
+
+    }
+
+
+
+    .card-title h2 { font-size:20px; }
+
+
+
+    .row-3 {
+
+      display:grid;
+
+      grid-template-columns:1.1fr 1.45fr 1.5fr;
+
+      gap:14px;
+
+      align-items:end;
+
+    }
+
+
+
+    .row-6 {
+
+      display:grid;
+
+      grid-template-columns:repeat(6,minmax(130px,1fr));
+
+      gap:14px;
+
+      align-items:end;
+
+      margin-top:14px;
+
+    }
+
+
+
+    .row-5 {
+
+      display:grid;
+
+      grid-template-columns:repeat(5,minmax(140px,1fr));
+
+      gap:14px;
+
+      align-items:end;
+
+      margin-top:14px;
+
+    }
+
+
+
+    .row-actions {
+
+      display:flex;
+
+      gap:10px;
+
+      flex-wrap:wrap;
+
+      margin-top:16px;
+
+    }
+
+
+
+    .message {
+
+      margin-top:14px;
+
+      padding:12px 14px;
+
+      border-radius:13px;
+
+      font-size:14px;
+
+      line-height:1.45;
+
+    }
+
+
+
+    .message.success {
+
+      background:#f0fdf4;
+
+      color:#166534;
+
+      border:1px solid #bbf7d0;
+
+    }
+
+
+
+    .message.error {
+
+      background:#fef2f2;
+
+      color:#991b1b;
+
+      border:1px solid #fecaca;
+
+    }
+
+
+
+    .message.info {
+
+      background:#eff6ff;
+
+      color:#1e40af;
+
+      border:1px solid #bfdbfe;
+
+    }
+
+
+
+    .table-area {
+
+      width:100%;
+
+      overflow:auto;
+
+      border:1px solid var(--border);
+
+      border-radius:15px;
+
+      background:white;
+
+      min-height:190px;
+
+      max-height:520px;
+
+    }
+
+
+
+    table {
+
+      width:100%;
+
+      min-width:1200px;
+
+      border-collapse:collapse;
+
+    }
+
+
+
+    th {
+
+      position:sticky;
+
+      top:0;
+
+      z-index:2;
+
+      background:#f8fafc;
+
+      color:#374151;
+
+      padding:11px 10px;
+
+      text-align:left;
+
+      font-size:12px;
+
+      text-transform:uppercase;
+
+      white-space:nowrap;
+
+      border-bottom:1px solid var(--border);
+
+    }
+
+
+
+    td {
+
+      padding:10px;
+
+      font-size:13px;
+
+      white-space:nowrap;
+
+      border-bottom:1px solid var(--border);
+
+      vertical-align:middle;
+
+    }
+
+
+
+    .empty {
+
+      padding:28px;
+
+      color:var(--muted);
+
+      text-align:center;
+
+    }
+
+
+
+    .mini-btn {
+
+      height:30px;
+
+      padding:0 10px;
+
+      border-radius:9px;
+
+      font-size:12px;
+
+    }
+
+
+
+    .status {
+
+      display:inline-flex;
+
+      padding:5px 9px;
+
+      border-radius:999px;
+
+      font-size:11px;
+
+      font-weight:900;
+
+    }
+
+
+
+    .status-created {
+
+      background:#fef3c7;
+
+      color:#92400e;
+
+      border:1px solid #fde68a;
+
+    }
+
+
+
+    .status-approved {
+
+      background:#dcfce7;
+
+      color:#166534;
+
+      border:1px solid #bbf7d0;
+
+    }
+
+
+
+    .status-cancelled {
+
+      background:#fee2e2;
+
+      color:#991b1b;
+
+      border:1px solid #fecaca;
+
+    }
+
+
+
+    .plan-filter {
+
+      display:grid;
+
+      grid-template-columns:220px minmax(380px,1fr) auto;
+
+      gap:14px;
+
+      align-items:end;
+
+    }
+
+
+
+    .plan-info {
+
+      margin-top:14px;
+
+      padding:12px 14px;
+
+      border-radius:13px;
+
+      background:#eff6ff;
+
+      color:#1e40af;
+
+      border:1px solid #bfdbfe;
+
+      line-height:1.5;
+
+      font-size:13px;
+
+    }
+
+
+
+    .plan-actual-input {
+
+      width:115px;
+
+      height:34px;
+
+      text-align:right;
+
+      border-radius:9px;
+
+    }
+
+
+
+    .bad-row {
+
+      background:#fff7ed;
+
+    }
+
+
+
+    .history-filter {
+
+      display:grid;
+
+      grid-template-columns:180px 180px auto;
+
+      gap:12px;
+
+      align-items:end;
+
+      margin-bottom:14px;
+
+    }
+
+
+
+    .overlay {
+
+      position:fixed;
+
+      inset:0;
+
+      z-index:9999;
+
+      background:rgba(15,23,42,.42);
+
+      backdrop-filter:blur(4px);
+
+      display:flex;
+
+      align-items:center;
+
+      justify-content:center;
+
+    }
+
+
+
+    .loading {
+
+      min-width:330px;
+
+      background:white;
+
+      border-radius:20px;
+
+      padding:26px;
+
+      text-align:center;
+
+      box-shadow:var(--shadow);
+
+    }
+
+
+
+    .spinner {
+
+      width:44px;
+
+      height:44px;
+
+      border-radius:50%;
+
+      border:5px solid #dbeafe;
+
+      border-top-color:var(--primary);
+
+      margin:0 auto 14px;
+
+      animation:spin .9s linear infinite;
+
+    }
+
+
+
+    @keyframes spin {
+
+      to { transform:rotate(360deg); }
+
+    }
+
+
+
+    @media(max-width:1200px) {
+
+      .shell {
+
+        grid-template-columns:1fr;
+
+      }
+
+
+
+      .sidebar {
+
+        position:relative;
+
+        top:auto;
+
+        height:auto;
+
+      }
+
+
+
+      .menu {
+
+        display:grid;
+
+        grid-template-columns:repeat(3,1fr);
+
+      }
+
+
+
+      .row-6,.row-5 {
+
+        grid-template-columns:repeat(3,1fr);
+
+      }
+
+    }
+
+
+
+    @media(max-width:800px) {
+
+      .menu,
+
+      .row-3,
+
+      .row-6,
+
+      .row-5,
+
+      .plan-filter,
+
+      .history-filter {
+
+        grid-template-columns:1fr;
+
+      }
+
+
+
+      .topbar {
+
+        align-items:flex-start;
+
+        flex-direction:column;
+
+      }
+
+    }
+
+  </style>
+
+</head>
+
+
+
+<body>
+
+
+
+<div id="loadingOverlay" class="overlay hidden">
+
+  <div class="loading">
+
+    <div class="spinner"></div>
+
+    <strong id="loadingTitle">Đang xử lý...</strong>
+
+    <div class="sub" id="loadingText">Vui lòng chờ</div>
+
+  </div>
+
+</div>
+
+
+
+<section id="loginPage" class="login-page">
+
+  <div class="login-card">
+
+    <div class="logo">XK</div>
+
+    <h1>Công nhân xuất kho thủ công</h1>
+
+    <div class="sub">
+
+      Đăng nhập bằng tài khoản có role <b>worker</b>.
+
+      Công nhân chỉ tạo phiếu; hệ thống <b>chưa trừ kho</b>
+
+      cho đến khi thủ kho phê duyệt.
+
+    </div>
+
+
+
+    <div class="field" style="margin-top:18px;">
+
+      <label>Tài khoản</label>
+
+      <input id="loginUseName"
+
+             type="text"
+
+             autocomplete="username"
+
+             placeholder="Nhập tài khoản">
+
+    </div>
+
+
+
+    <div class="field" style="margin-top:14px;">
+
+      <label>Mật khẩu</label>
+
+      <input id="loginPassWord"
+
+             type="password"
+
+             autocomplete="current-password"
+
+             placeholder="Nhập mật khẩu">
+
+    </div>
+
+
+
+    <button class="btn btn-primary btn-block"
+
+            onclick="handleLogin()">
+
+      Đăng nhập
+
+    </button>
+
+
+
+    <div id="loginMessage"></div>
+
+  </div>
+
+</section>
+
+
+
+<section id="appPage" class="app hidden">
+
+
+
+  <div class="topbar">
+
+    <div>
+
+      <h1>Công nhân xuất kho thủ công</h1>
+
+      <div class="sub">
+
+        Tạo yêu cầu xuất từng nguyên liệu hoặc theo kế hoạch sản xuất.
+
+        Phiếu lưu vào <b>PhieuXuatThuCong</b> với trạng thái <b>Đã tạo</b>.
+
+      </div>
+
+    </div>
+
+
+
+    <div class="user-box">
+
+      <span id="userInfo" class="badge">worker</span>
+
+
+
+      <button class="btn btn-light"
+
+              onclick="reloadAllData()">
+
+        Tải lại
+
+      </button>
+
+
+
+      <button class="btn btn-light"
+
+              onclick="handleLogout()">
+
+        Đăng xuất
+
+      </button>
+
+    </div>
+
+  </div>
+
+
+
+  <div class="shell">
+
+
+
+    <aside class="sidebar">
+
+      <div class="sidebar-title">
+
+        Chức năng
+
+      </div>
+
+
+
+      <div class="sidebar-sub">
+
+        Chọn chức năng xuất kho cần thực hiện.
+
+      </div>
+
+
+
+      <div class="menu">
+
+        <button id="menuSingle"
+
+                class="menu-btn active"
+
+                onclick="showPage('pageSingle', this)">
+
+          <span class="icon">📦</span>
+
+          <span>Xuất từng nguyên liệu</span>
+
+        </button>
+
+
+
+        <button id="menuPlan"
+
+                class="menu-btn"
+
+                onclick="showPage('pagePlan', this)">
+
+          <span class="icon">📋</span>
+
+          <span>Xuất theo kế hoạch</span>
+
+        </button>
+
+
+
+        <button id="menuHistory"
+
+                class="menu-btn"
+
+                onclick="showPage('pageHistory', this)">
+
+          <span class="icon">🕘</span>
+
+          <span>Phiếu đã tạo</span>
+
+        </button>
+
+      </div>
+
+    </aside>
+
+
+
+    <main class="content">
+
+
+
+      <!-- =================================================
+
+           PAGE 1 - XUẤT TỪNG NGUYÊN LIỆU
+
+           ================================================= -->
+
+      <div id="pageSingle" class="page active">
+
+
+
+        <div class="card">
+
+          <div class="card-title">
+
+            <div>
+
+              <h2>Xuất kho thủ công</h2>
+
+              <div class="sub">
+
+                Chọn nguyên liệu và Id kho.
+
+                Bấm Tạo phiếu chỉ ghi yêu cầu vào PhieuXuatThuCong,
+
+                <b>không trừ tồn kho</b>.
+
+              </div>
+
+            </div>
+
+
+
+            <button class="btn btn-light"
+
+                    onclick="loadStock(false)">
+
+              Tải lại tồn
+
+            </button>
+
+          </div>
+
+
+
+          <div class="row-3">
+
+            <div class="field">
+
+              <label>Mã nguyên liệu</label>
+
+              <input id="manualMa"
+
+                     list="manualMaList"
+
+                     type="text"
+
+                     placeholder="Gõ mã nguyên liệu..."
+
+                     oninput="handleManualMaChange()">
+
+              <datalist id="manualMaList"></datalist>
+
+            </div>
+
+
+
+            <div class="field">
+
+              <label>Id kho</label>
+
+              <select id="manualId"
+
+                      onchange="handleManualIdChange()">
+
+                <option value="">-- Chọn Id kho --</option>
+
+              </select>
+
+            </div>
+
+
+
+            <div class="field">
+
+              <label>Tên nguyên liệu</label>
+
+              <input id="manualName"
+
+                     type="text"
+
+                     readonly>
+
+            </div>
+
+          </div>
+
+
+
+          <div class="row-6">
+
+            <div class="field">
+
+              <label>Quy cách</label>
+
+              <input id="manualPack"
+
+                     readonly>
+
+            </div>
+
+
+
+            <div class="field">
+
+              <label>LotNo</label>
+
+              <input id="manualLot"
+
+                     readonly>
+
+            </div>
+
+
+
+            <div class="field">
+
+              <label>Ngày sản xuất</label>
+
+              <input id="manualNsx"
+
+                     readonly>
+
+            </div>
+
+
+
+            <div class="field">
+
+              <label>Hạn sử dụng</label>
+
+              <input id="manualHsd"
+
+                     readonly>
+
+            </div>
+
+
+
+            <div class="field">
+
+              <label>Nhà sản xuất</label>
+
+              <input id="manualSupplier"
+
+                     readonly>
+
+            </div>
+
+
+
+            <div class="field">
+
+              <label>Ngày nhập</label>
+
+              <input id="manualInbound"
+
+                     readonly>
+
+            </div>
+
+          </div>
+
+
+
+          <div class="row-5">
+
+            <div class="field">
+
+              <label>Trạng thái kho</label>
+
+              <input id="manualStockStatus"
+
+                     readonly>
+
+            </div>
+
+
+
+            <div class="field">
+
+              <label>Trạng thái NL</label>
+
+              <input id="manualMaterialStatus"
+
+                     readonly>
+
+            </div>
+
+
+
+            <div class="field">
+
+              <label>Tồn hiện tại</label>
+
+              <input id="manualStockQty"
+
+                     readonly>
+
+            </div>
+
+
+
+            <div class="field">
+
+              <label>Đơn vị</label>
+
+              <input id="manualUnit"
+
+                     readonly>
+
+            </div>
+
+
+
+            <div class="field">
+
+              <label>Mã kế toán</label>
+
+              <input id="manualAccounting"
+
+                     readonly>
+
+            </div>
+
+            <div class="field">
+              <label>Nhà cung cấp</label>
+              <input id="manualSupplierCap" readonly>
+            </div>
+
+          </div>
+
+
+
+          <div class="row-3" style="margin-top:14px;">
+
+            <div class="field">
+
+              <label>
+
+                Khối lượng xuất
+
+                <span style="color:red">*</span>
+
+              </label>
+
+
+
+              <input id="manualQty"
+
+                     type="number"
+
+                     min="0"
+
+                     step="0.001"
+
+                     placeholder="Nhập KL xuất">
+
+            </div>
+
+
+
+            <div class="field">
+
+              <label>Ghi chú</label>
+
+
+
+              <input id="manualNote"
+
+                     type="text"
+
+                     placeholder="Ví dụ: xuất thử nghiệm, xuất bù...">
+
+            </div>
+
+
+
+            <div>
+
+              <button id="manualAddBtn"
+
+                      class="btn btn-primary"
+
+                      onclick="addOrUpdateManualItem()">
+
+                Thêm nguyên liệu vào phiếu
+
+              </button>
+
+            </div>
+
+          </div>
+
+
+
+          <div class="row-actions">
+
+            <button class="btn btn-success"
+
+                    onclick="createManualVoucher()">
+
+              Tạo phiếu chờ duyệt
+
+            </button>
+
+
+
+            <button class="btn btn-light"
+
+                    onclick="resetManualForm()">
+
+              Làm mới dòng nhập
+
+            </button>
+
+
+
+            <button class="btn btn-danger"
+
+                    onclick="clearManualDraft()">
+
+              Xóa phiếu đang tạo
+
+            </button>
+
+          </div>
+
+
+
+          <div id="manualMessage"></div>
+
+
+
+          <div id="manualDraftBox"
+
+               class="table-area"
+
+               style="margin-top:16px;">
+
+          </div>
+
+        </div>
+
+      </div>
+
+
+
+      <!-- =================================================
+
+           PAGE 2 - XUẤT THEO KẾ HOẠCH
+
+           ================================================= -->
+
+      <div id="pagePlan" class="page">
+
+
+
+        <div class="card">
+
+          <div class="card-title">
+
+            <div>
+
+              <h2>Xuất kho theo kế hoạch sản xuất</h2>
+
+              <div class="sub">
+
+                Chọn ngày → chọn kế hoạch.
+
+                Hệ thống tính nguyên liệu và gợi ý Id kho theo HSD/ngày nhập.
+
+                Công nhân được sửa KL xuất thực tế trước khi tạo phiếu.
+
+              </div>
+
+            </div>
+
+
+
+            <button class="btn btn-light"
+
+                    onclick="loadPlans(false)">
+
+              Tải lại kế hoạch
+
+            </button>
+
+          </div>
+
+
+
+          <div class="plan-filter">
+
+            <div class="field">
+
+              <label>Ngày sản xuất</label>
+
+              <input id="planDate"
+
+                     type="date"
+
+                     onchange="handlePlanDateChange()">
+
+            </div>
+
+
+
+            <div class="field">
+
+              <label>Kế hoạch sản xuất</label>
+
+              <select id="planSelect"
+
+                      onchange="handlePlanChange()">
+
+                <option value="">
+
+                  -- Chọn ngày sản xuất trước --
+
+                </option>
+
+              </select>
+
+            </div>
+
+
+
+            <div>
+
+              <button class="btn btn-primary"
+
+                      onclick="loadPlanDetail()">
+
+                Xem nguyên liệu cần xuất
+
+              </button>
+
+            </div>
+
+          </div>
+
+
+
+          <div id="planInfo">
+
+            <div class="empty"
+
+                 style="margin-top:14px;">
+
+              Chưa chọn kế hoạch sản xuất.
+
+            </div>
+
+          </div>
+
+
+
+          <div id="planItemsBox"
+
+               class="table-area"
+
+               style="margin-top:14px;">
+
+            <div class="empty">
+
+              Chọn kế hoạch rồi bấm Xem nguyên liệu cần xuất.
+
+            </div>
+
+          </div>
+
+
+
+          <div class="row-actions">
+
+            <button id="planCreateBtn"
+
+                    class="btn btn-success"
+
+                    disabled
+
+                    onclick="createPlanVoucher()">
+
+              Tạo phiếu theo kế hoạch
+
+            </button>
+
+          </div>
+
+
+
+          <div id="planMessage"></div>
+
+        </div>
+
+      </div>
+
+
+
+      <!-- =================================================
+
+           PAGE 3 - HISTORY
+
+           ================================================= -->
+
+      <div id="pageHistory" class="page">
+
+
+
+        <div class="card">
+
+          <div class="card-title">
+
+            <div>
+
+              <h2>Phiếu xuất thủ công đã tạo</h2>
+
+              <div class="sub">
+
+                Chỉ hiển thị phiếu do tài khoản đang đăng nhập tạo.
+
+              </div>
+
+            </div>
+
+          </div>
+
+
+
+          <div class="history-filter">
+
+            <div class="field">
+
+              <label>Từ ngày</label>
+
+              <input id="historyFrom"
+
+                     type="date">
+
+            </div>
+
+
+
+            <div class="field">
+
+              <label>Đến ngày</label>
+
+              <input id="historyTo"
+
+                     type="date">
+
+            </div>
+
+
+
+            <div>
+
+              <button class="btn btn-primary"
+
+                      onclick="loadHistory(false)">
+
+                Lọc / Tải lại
+
+              </button>
+
+            </div>
+
+          </div>
+
+
+
+          <div id="historyBox"
+
+               class="table-area">
+
+            <div class="empty">
+
+              Chưa có dữ liệu.
+
+            </div>
+
+          </div>
+
+
+
+          <div id="historyMessage"></div>
+
+        </div>
+
+      </div>
+
+
+
+    </main>
+
+  </div>
+
+</section>
+
+
+
+<script>
+
+  let sessionToken = "";
+
+  let currentUser = null;
+
+
+
+  let stockItems = [];
+
+
+
+  let manualDraft = [];
+
+  let manualEditingIndex = -1;
+
+
+
+  let productionPlans = [];
+
+  let selectedPlan = null;
+
+  let planItems = [];
+
+  let planCanCreate = false;
+
+
+
+  let historyRows = [];
+
+
+
+  document.addEventListener(
+
+    "DOMContentLoaded",
+
+    function() {
+
+      setDefaultDates();
+
+      renderManualDraft();
+
+      renderHistory();
+
+
+
+      const token =
+
+        localStorage.getItem(
+
+          "WORKER_MANUAL_EXPORT_TOKEN"
+
+        );
+
+
+
+      if (token) {
+
+        sessionToken = token;
+
+        loadInitialData(true);
+
+      }
+
+    }
+
+  );
+
+
+
+  function showLoading(title, text) {
+
+    document.getElementById(
+
+      "loadingTitle"
+
+    ).innerText =
+
+      title || "Đang xử lý...";
+
+
+
+    document.getElementById(
+
+      "loadingText"
+
+    ).innerText =
+
+      text || "Vui lòng chờ";
+
+
+
+    document.getElementById(
+
+      "loadingOverlay"
+
+    ).classList.remove("hidden");
+
+  }
+
+
+
+  function hideLoading() {
+
+    document.getElementById(
+
+      "loadingOverlay"
+
+    ).classList.add("hidden");
+
+  }
+
+
+
+  function showMessage(id, type, message) {
+
+    const el = document.getElementById(id);
+
+
+
+    if (!el) return;
+
+
+
+    if (!message) {
+
+      el.innerHTML = "";
+
+      return;
+
+    }
+
+
+
+    el.innerHTML =
+
+      '<div class="message ' +
+
+      type +
+
+      '">' +
+
+      escapeHtml(message) +
+
+      '</div>';
+
+  }
+
+
+
+  function escapeHtml(value) {
+
+    return String(value ?? "")
+
+      .replaceAll("&", "&amp;")
+
+      .replaceAll("<", "&lt;")
+
+      .replaceAll(">", "&gt;")
+
+      .replaceAll('"', "&quot;")
+
+      .replaceAll("'", "&#039;");
+
+  }
+
+
+
+  function escapeJs(value) {
+
+    return String(value ?? "")
+
+      .replaceAll("\\\\", "\\\\\\\\")
+
+      .replaceAll("'", "\\\\'")
+
+      .replaceAll('"', '\\\\"')
+
+      .replaceAll("\n", "\\\n")
+
+      .replaceAll("\r", "\\\r");
+
+  }
+
+
+
+  function formatNumber(value) {
+
+    const n = Number(value);
+
+
+
+    if (!isFinite(n)) return value;
+
+
+
+    return n.toLocaleString(
+
+      "vi-VN",
+
+      {
+
+        maximumFractionDigits: 6
+
+      }
+
+    );
+
+  }
+
+
+
+  function dateInputText(date) {
+
+    const yyyy = date.getFullYear();
+
+
+
+    const mm = String(
+
+      date.getMonth() + 1
+
+    ).padStart(2, "0");
+
+
+
+    const dd = String(
+
+      date.getDate()
+
+    ).padStart(2, "0");
+
+
+
+    return yyyy + "-" + mm + "-" + dd;
+
+  }
+
+
+
+  function setDefaultDates() {
+
+    const today = new Date();
+
+
+
+    const from = new Date(today);
+
+    from.setDate(from.getDate() - 6);
+
+
+
+    const planDate =
+
+      document.getElementById("planDate");
+
+
+
+    if (planDate && !planDate.value) {
+
+      planDate.value =
+
+        dateInputText(today);
+
+    }
+
+
+
+    const historyFrom =
+
+      document.getElementById(
+
+        "historyFrom"
+
+      );
+
+
+
+    const historyTo =
+
+      document.getElementById(
+
+        "historyTo"
+
+      );
+
+
+
+    if (historyFrom && !historyFrom.value) {
+
+      historyFrom.value =
+
+        dateInputText(from);
+
+    }
+
+
+
+    if (historyTo && !historyTo.value) {
+
+      historyTo.value =
+
+        dateInputText(today);
+
+    }
+
+  }
+
+
+
+  function showPage(pageId, buttonEl) {
+
+    document
+
+      .querySelectorAll(".page")
+
+      .forEach(function(page) {
+
+        page.classList.remove("active");
+
+      });
+
+
+
+    const page =
+
+      document.getElementById(pageId);
+
+
+
+    if (page) {
+
+      page.classList.add("active");
+
+    }
+
+
+
+    document
+
+      .querySelectorAll(".menu-btn")
+
+      .forEach(function(btn) {
+
+        btn.classList.remove("active");
+
+      });
+
+
+
+    if (buttonEl) {
+
+      buttonEl.classList.add("active");
+
+    }
+
+
+
+    if (pageId === "pageHistory") {
+
+      loadHistory(true);
+
+    }
+
+  }
+
+
+
+  function showApp() {
+
+    document
+
+      .getElementById("loginPage")
+
+      .classList.add("hidden");
+
+
+
+    document
+
+      .getElementById("appPage")
+
+      .classList.remove("hidden");
+
+
+
+    if (currentUser) {
+
+      document.getElementById(
+
+        "userInfo"
+
+      ).innerText =
+
+        currentUser.useName +
+
+        " / " +
+
+        currentUser.role +
+
+        (
+
+          currentUser.department
+
+            ? " / " +
+
+              currentUser.department
+
+            : ""
+
+        );
+
+    }
+
+
+
+    showPage(
+
+      "pageSingle",
+
+      document.getElementById(
+
+        "menuSingle"
+
+      )
+
+    );
+
+  }
+
+
+
+  function handleLogin() {
+
+    const useName =
+
+      document
+
+        .getElementById("loginUseName")
+
+        .value
+
+        .trim();
+
+
+
+    const passWord =
+
+      document
+
+        .getElementById("loginPassWord")
+
+        .value
+
+        .trim();
+
+
+
+    showMessage(
+
+      "loginMessage",
+
+      "",
+
+      ""
+
+    );
+
+
+
+    if (!useName || !passWord) {
+
+      showMessage(
+
+        "loginMessage",
+
+        "error",
+
+        "Vui lòng nhập tài khoản và mật khẩu."
+
+      );
+
+      return;
+
+    }
+
+
+
+    showLoading(
+
+      "Đang đăng nhập...",
+
+      "Đang kiểm tra role worker"
+
+    );
+
+
+
+    google.script.run
+
+      .withSuccessHandler(function(res) {
+
+        hideLoading();
+
+
+
+        if (!res || !res.success) {
+
+          showMessage(
+
+            "loginMessage",
+
+            "error",
+
+            res && res.message
+
+              ? res.message
+
+              : "Đăng nhập thất bại."
+
+          );
+
+          return;
+
+        }
+
+
+
+        sessionToken = res.token;
+
+        currentUser = res.user;
+
+
+
+        localStorage.setItem(
+
+          "WORKER_MANUAL_EXPORT_TOKEN",
+
+          sessionToken
+
+        );
+
+
+
+        showApp();
+
+        loadInitialData(false);
+
+      })
+
+      .withFailureHandler(function(err) {
+
+        hideLoading();
+
+
+
+        showMessage(
+
+          "loginMessage",
+
+          "error",
+
+          err.message ||
+
+            "Có lỗi khi đăng nhập."
+
+        );
+
+      })
+
+      .login({
+
+        useName: useName,
+
+        passWord: passWord
+
+      });
+
+  }
+
+
+
+  function handleLogout() {
+
+    const oldToken = sessionToken;
+
+
+
+    sessionToken = "";
+
+    currentUser = null;
+
+    stockItems = [];
+
+    manualDraft = [];
+
+    manualEditingIndex = -1;
+
+    productionPlans = [];
+
+    selectedPlan = null;
+
+    planItems = [];
+
+    planCanCreate = false;
+
+    historyRows = [];
+
+
+
+    localStorage.removeItem(
+
+      "WORKER_MANUAL_EXPORT_TOKEN"
+
+    );
+
+
+
+    google.script.run.logout(oldToken);
+
+
+
+    document
+
+      .getElementById("appPage")
+
+      .classList.add("hidden");
+
+
+
+    document
+
+      .getElementById("loginPage")
+
+      .classList.remove("hidden");
+
+
+
+    document.getElementById(
+
+      "loginPassWord"
+
+    ).value = "";
+
+
+
+    showMessage(
+
+      "loginMessage",
+
+      "info",
+
+      "Bạn đã đăng xuất."
+
+    );
+
+  }
+
+
+
+  function loadInitialData(silent) {
+
+    if (!silent) {
+
+      showLoading(
+
+        "Đang tải dữ liệu...",
+
+        "Đang đọc tồn kho và kế hoạch sản xuất"
+
+      );
+
+    }
+
+
+
+    google.script.run
+
+      .withSuccessHandler(function(res) {
+
+        hideLoading();
+
+
+
+        if (!res || !res.success) {
+
+          localStorage.removeItem(
+
+            "WORKER_MANUAL_EXPORT_TOKEN"
+
+          );
+
+          sessionToken = "";
+
+
+
+          document
+
+            .getElementById("appPage")
+
+            .classList.add("hidden");
+
+
+
+          document
+
+            .getElementById("loginPage")
+
+            .classList.remove("hidden");
+
+
+
+          showMessage(
+
+            "loginMessage",
+
+            "error",
+
+            "Phiên đăng nhập không hợp lệ."
+
+          );
+
+          return;
+
+        }
+
+
+
+        currentUser = res.user;
+
+        stockItems = res.tonKho || [];
+
+        productionPlans = res.plans || [];
+
+        historyRows = res.recentRequests || [];
+
+
+
+        showApp();
+
+
+
+        renderManualMaList();
+
+        renderManualIdOptions();
+
+        renderManualDraft();
+
+
+
+        renderPlanOptions();
+
+        renderHistory();
+
+      })
+
+      .withFailureHandler(function(err) {
+
+        hideLoading();
+
+
+
+        localStorage.removeItem(
+
+          "WORKER_MANUAL_EXPORT_TOKEN"
+
+        );
+
+
+
+        sessionToken = "";
+
+
+
+        document
+
+          .getElementById("appPage")
+
+          .classList.add("hidden");
+
+
+
+        document
+
+          .getElementById("loginPage")
+
+          .classList.remove("hidden");
+
+
+
+        showMessage(
+
+          "loginMessage",
+
+          "error",
+
+          err.message ||
+
+            "Không tải được dữ liệu."
+
+        );
+
+      })
+
+      .getInitialData(sessionToken);
+
+  }
+
+
+
+  function reloadAllData() {
+
+    loadInitialData(false);
+
+  }
+
+
+
+  /* =======================================================
+
+     STOCK
+
+     ======================================================= */
+
+
+
+  function loadStock(silent) {
+
+    if (!silent) {
+
+      showLoading(
+
+        "Đang tải tồn kho...",
+
+        "Đang đọc KhoNguyenLieu"
+
+      );
+
+    }
+
+
+
+    google.script.run
+
+      .withSuccessHandler(function(res) {
+
+        if (!silent) hideLoading();
+
+
+
+        stockItems =
+
+          res && res.tonKho
+
+            ? res.tonKho
+
+            : [];
+
+
+
+        renderManualMaList();
+
+        renderManualIdOptions();
+
+
+
+        if (!silent) {
+
+          showMessage(
+
+            "manualMessage",
+
+            "success",
+
+            "Đã tải lại tồn kho."
+
+          );
+
+        }
+
+      })
+
+      .withFailureHandler(function(err) {
+
+        if (!silent) hideLoading();
+
+
+
+        showMessage(
+
+          "manualMessage",
+
+          "error",
+
+          err.message ||
+
+            "Không tải được tồn kho."
+
+        );
+
+      })
+
+      .getApprovedInventoryItems(
+
+        sessionToken
+
+      );
+
+  }
+
+
+
+  function renderManualMaList() {
+
+    const list =
+
+      document.getElementById(
+
+        "manualMaList"
+
+      );
+
+
+
+    if (!list) return;
+
+
+
+    const materials = {};
+
+
+
+    stockItems.forEach(function(item) {
+
+      if (!item.maNguyenLieu) return;
+
+
+
+      materials[
+
+        item.maNguyenLieu
+
+      ] = item.tenNguyenLieu || "";
+
+    });
+
+
+
+    list.innerHTML =
+
+      Object.keys(materials)
+
+        .sort()
+
+        .map(function(ma) {
+
+          return (
+
+            '<option value="' +
+
+            escapeHtml(ma) +
+
+            '" label="' +
+
+            escapeHtml(materials[ma]) +
+
+            '"></option>'
+
+          );
+
+        })
+
+        .join("");
+
+  }
+
+
+
+  function getManualMa() {
+
+    return document
+
+      .getElementById("manualMa")
+
+      .value
+
+      .trim();
+
+  }
+
+
+
+  function handleManualMaChange() {
+
+    resetManualStockDetail(false);
+
+    renderManualIdOptions();
+
+  }
+
+
+
+  function renderManualIdOptions() {
+
+    const select =
+
+      document.getElementById(
+
+        "manualId"
+
+      );
+
+
+
+    if (!select) return;
+
+
+
+    const ma = getManualMa().toLowerCase();
+
+
+
+    let items = stockItems;
+
+
+
+    if (ma) {
+
+      items = stockItems.filter(
+
+        function(item) {
+
+          return (
+
+            String(
+
+              item.maNguyenLieu || ""
+
+            )
+
+              .toLowerCase() === ma
+
+          );
+
+        }
+
+      );
+
+    }
+
+
+
+    let html =
+
+      '<option value="">-- Chọn Id kho --</option>';
+
+
+
+    items.forEach(function(item) {
+
+      html +=
+
+        '<option value="' +
+
+        escapeHtml(item.Id) +
+
+        '">' +
+
+        escapeHtml(item.Id) +
+
+        " | " +
+
+        escapeHtml(item.LotNo) +
+
+        " | " +
+
+        escapeHtml(
+
+          formatNumber(
+
+            item.khoiLuongNhap
+
+          )
+
+        ) +
+
+        " " +
+
+        escapeHtml(item.donVi) +
+
+        " | HSD " +
+
+        escapeHtml(item.hanSuDung) +
+
+        "</option>";
+
+    });
+
+
+
+    select.innerHTML = html;
+
+  }
+
+
+
+  function findStockById(id) {
+
+    return (
+
+      stockItems.find(function(item) {
+
+        return String(item.Id) === String(id);
+
+      }) || null
+
+    );
+
+  }
+
+
+
+  function handleManualIdChange() {
+
+    const id =
+
+      document.getElementById(
+
+        "manualId"
+
+      ).value;
+
+
+
+    const item = findStockById(id);
+
+
+
+    if (!item) {
+
+      resetManualStockDetail(false);
+
+      return;
+
+    }
+
+
+
+    document.getElementById(
+
+      "manualMa"
+
+    ).value =
+
+      item.maNguyenLieu || "";
+
+
+
+    document.getElementById(
+
+      "manualName"
+
+    ).value =
+
+      item.tenNguyenLieu || "";
+
+
+
+    document.getElementById(
+
+      "manualPack"
+
+    ).value =
+
+      item.quyCachDongGoi || "";
+
+
+
+    document.getElementById(
+
+      "manualLot"
+
+    ).value =
+
+      item.LotNo || "";
+
+
+
+    document.getElementById(
+
+      "manualNsx"
+
+    ).value =
+
+      item.ngaySanXuat || "";
+
+
+
+    document.getElementById(
+
+      "manualHsd"
+
+    ).value =
+
+      item.hanSuDung || "";
+
+
+
+    document.getElementById(
+
+      "manualSupplier"
+
+    ).value =
+
+      item.nhaCungCap || "";
+
+
+
+    document.getElementById(
+
+      "manualInbound"
+
+    ).value =
+
+      item.ngayNhap || "";
+
+
+
+    document.getElementById(
+
+      "manualStockStatus"
+
+    ).value =
+
+      item.trangThai || "";
+
+
+
+    document.getElementById(
+
+      "manualMaterialStatus"
+
+    ).value =
+
+      item.trangThaiNguyenLieu || "";
+
+
+
+    document.getElementById(
+
+      "manualStockQty"
+
+    ).value =
+
+      item.khoiLuongNhap ?? "";
+
+
+
+    document.getElementById(
+
+      "manualUnit"
+
+    ).value =
+
+      item.donVi || "";
+
+
+
+    document.getElementById(
+
+      "manualAccounting"
+
+    ).value =
+
+      item.MaKeToan || "";
+
+    document.getElementById("manualSupplierCap").value =
+      item.nhaCungCapCap || "";
+
+  }
+
+
+
+  function resetManualStockDetail(
+
+    clearMa
+
+  ) {
+
+    if (clearMa) {
+
+      document.getElementById(
+
+        "manualMa"
+
+      ).value = "";
+
+    }
+
+
+
+    [
+
+      "manualName",
+
+      "manualPack",
+
+      "manualLot",
+
+      "manualNsx",
+
+      "manualHsd",
+
+      "manualSupplier",
+
+      "manualInbound",
+
+      "manualStockStatus",
+
+      "manualMaterialStatus",
+
+      "manualStockQty",
+
+      "manualUnit",
+
+      "manualAccounting",
+
+      "manualSupplierCap"
+
+    ].forEach(function(id) {
+
+      const el = document.getElementById(id);
+
+      if (el) el.value = "";
+
+    });
+
+  }
+
+
+
+  function resetManualForm() {
+
+    manualEditingIndex = -1;
+
+
+
+    resetManualStockDetail(true);
+
+
+
+    document.getElementById(
+
+      "manualId"
+
+    ).innerHTML =
+
+      '<option value="">-- Chọn Id kho --</option>';
+
+
+
+    document.getElementById(
+
+      "manualQty"
+
+    ).value = "";
+
+
+
+    document.getElementById(
+
+      "manualNote"
+
+    ).value = "";
+
+
+
+    document.getElementById(
+
+      "manualAddBtn"
+
+    ).innerText =
+
+      "Thêm nguyên liệu vào phiếu";
+
+
+
+    renderManualIdOptions();
+
+  }
+
+
+
+  /* =======================================================
+
+     MANUAL DRAFT
+
+     ======================================================= */
+
+
+
+  function addOrUpdateManualItem() {
+
+    showMessage(
+
+      "manualMessage",
+
+      "",
+
+      ""
+
+    );
+
+
+
+    const id =
+
+      document.getElementById(
+
+        "manualId"
+
+      ).value;
+
+
+
+    const stock = findStockById(id);
+
+
+
+    if (!stock) {
+
+      showMessage(
+
+        "manualMessage",
+
+        "error",
+
+        "Vui lòng chọn đúng Id kho."
+
+      );
+
+      return;
+
+    }
+
+
+
+    const qty = Number(
+
+      document.getElementById(
+
+        "manualQty"
+
+      ).value
+
+    );
+
+
+
+    if (!isFinite(qty) || qty <= 0) {
+
+      showMessage(
+
+        "manualMessage",
+
+        "error",
+
+        "Khối lượng xuất phải lớn hơn 0."
+
+      );
+
+      return;
+
+    }
+
+
+
+    if (
+
+      qty >
+
+      Number(stock.khoiLuongNhap) +
+
+        0.000001
+
+    ) {
+
+      showMessage(
+
+        "manualMessage",
+
+        "error",
+
+        "Khối lượng xuất lớn hơn tồn hiện tại của Id kho này."
+
+      );
+
+      return;
+
+    }
+
+
+
+    const item = {
+
+      IdKho: stock.Id,
+
+      maNguyenLieu:
+
+        stock.maNguyenLieu,
+
+      tenNguyenLieu:
+
+        stock.tenNguyenLieu,
+      MaKeToan: stock.MaKeToan || "",
+      nhaCungCapCap: stock.nhaCungCapCap || "",
+
+      khoiLuongXuat: qty,
+
+      donViXuat:
+
+        stock.donVi,
+
+      LotNo:
+
+        stock.LotNo,
+
+      hanSuDung:
+
+        stock.hanSuDung,
+
+      tonKho:
+
+        stock.khoiLuongNhap,
+
+      ghiChu:
+
+        document
+
+          .getElementById(
+
+            "manualNote"
+
+          )
+
+          .value
+
+          .trim()
+
+    };
+
+
+
+    if (manualEditingIndex >= 0) {
+
+      manualDraft[
+
+        manualEditingIndex
+
+      ] = item;
+
+
+
+      showMessage(
+
+        "manualMessage",
+
+        "success",
+
+        "Đã cập nhật dòng xuất."
+
+      );
+
+    } else {
+
+      manualDraft.push(item);
+
+
+
+      showMessage(
+
+        "manualMessage",
+
+        "success",
+
+        "Đã thêm nguyên liệu vào phiếu."
+
+      );
+
+    }
+
+
+
+    manualEditingIndex = -1;
+
+    renderManualDraft();
+
+    resetManualForm();
+
+  }
+
+
+
+  function renderManualDraft() {
+
+    const box =
+
+      document.getElementById(
+
+        "manualDraftBox"
+
+      );
+
+
+
+    if (!box) return;
+
+
+
+    if (!manualDraft.length) {
+
+      box.innerHTML =
+
+        '<div class="empty">Phiếu đang tạo chưa có nguyên liệu.</div>';
+
+      return;
+
+    }
+
+
+
+    let html = `
+
+      <table>
+
+        <thead>
+
+          <tr>
+
+            <th>STT</th>
+
+            <th>Id kho</th>
+
+            <th>Mã NL</th>
+
+            <th>Tên nguyên liệu</th>
+            <th>Mã kế toán</th>
+            <th>Nhà cung cấp</th>
+
+            <th>LotNo</th>
+
+            <th>HSD</th>
+
+            <th>KL xuất</th>
+
+            <th>Đơn vị</th>
+
+            <th>Tồn lúc chọn</th>
+
+            <th>Ghi chú</th>
+
+            <th>Thao tác</th>
+
+          </tr>
+
+        </thead>
+
+        <tbody>
+
+    `;
+
+
+
+    manualDraft.forEach(
+
+      function(item, index) {
+
+        html += `
+
+          <tr>
+
+            <td>${index + 1}</td>
+
+            <td>${escapeHtml(item.IdKho)}</td>
+
+            <td>${escapeHtml(item.maNguyenLieu)}</td>
+
+            <td>${escapeHtml(item.tenNguyenLieu)}</td>
+            <td>${escapeHtml(item.MaKeToan || "")}</td>
+            <td>${escapeHtml(item.nhaCungCapCap || "")}</td>
+
+            <td>${escapeHtml(item.LotNo)}</td>
+
+            <td>${escapeHtml(item.hanSuDung)}</td>
+
+            <td>${escapeHtml(formatNumber(item.khoiLuongXuat))}</td>
+
+            <td>${escapeHtml(item.donViXuat)}</td>
+
+            <td>${escapeHtml(formatNumber(item.tonKho))}</td>
+
+            <td>${escapeHtml(item.ghiChu)}</td>
+
+            <td>
+
+              <button class="btn btn-light mini-btn"
+
+                      onclick="editManualItem(${index})">
+
+                Sửa
+
+              </button>
+
+              <button class="btn btn-danger mini-btn"
+
+                      onclick="deleteManualItem(${index})">
+
+                Xóa
+
+              </button>
+
+            </td>
+
+          </tr>
+
+        `;
+
+      }
+
+    );
+
+
+
+    html += `
+
+        </tbody>
+
+      </table>
+
+    `;
+
+
+
+    box.innerHTML = html;
+
+  }
+
+
+
+  function editManualItem(index) {
+
+    const item = manualDraft[index];
+
+
+
+    if (!item) return;
+
+
+
+    document.getElementById(
+
+      "manualMa"
+
+    ).value =
+
+      item.maNguyenLieu || "";
+
+
+
+    renderManualIdOptions();
+
+
+
+    document.getElementById(
+
+      "manualId"
+
+    ).value =
+
+      item.IdKho || "";
+
+
+
+    handleManualIdChange();
+
+
+
+    document.getElementById(
+
+      "manualQty"
+
+    ).value =
+
+      item.khoiLuongXuat;
+
+
+
+    document.getElementById(
+
+      "manualNote"
+
+    ).value =
+
+      item.ghiChu || "";
+
+
+
+    manualEditingIndex = index;
+
+
+
+    document.getElementById(
+
+      "manualAddBtn"
+
+    ).innerText =
+
+      "Cập nhật dòng xuất";
+
+
+
+    showMessage(
+
+      "manualMessage",
+
+      "info",
+
+      "Đang sửa dòng " +
+
+        (index + 1) +
+
+        "."
+
+    );
+
+  }
+
+
+
+  function deleteManualItem(index) {
+
+    if (
+
+      !confirm(
+
+        "Bạn có chắc muốn xóa dòng này?"
+
+      )
+
+    ) {
+
+      return;
+
+    }
+
+
+
+    manualDraft.splice(index, 1);
+
+
+
+    if (manualEditingIndex === index) {
+
+      resetManualForm();
+
+    }
+
+
+
+    manualEditingIndex = -1;
+
+    renderManualDraft();
+
+  }
+
+
+
+  function clearManualDraft() {
+
+    if (!manualDraft.length) {
+
+      showMessage(
+
+        "manualMessage",
+
+        "info",
+
+        "Phiếu đang trống."
+
+      );
+
+      return;
+
+    }
+
+
+
+    if (
+
+      !confirm(
+
+        "Bạn có chắc muốn xóa toàn bộ phiếu đang tạo?"
+
+      )
+
+    ) {
+
+      return;
+
+    }
+
+
+
+    manualDraft = [];
+
+    manualEditingIndex = -1;
+
+
+
+    renderManualDraft();
+
+    resetManualForm();
+
+  }
+
+
+
+  function createManualVoucher() {
+
+    showMessage(
+
+      "manualMessage",
+
+      "",
+
+      ""
+
+    );
+
+
+
+    if (!manualDraft.length) {
+
+      showMessage(
+
+        "manualMessage",
+
+        "error",
+
+        "Phiếu xuất chưa có nguyên liệu."
+
+      );
+
+      return;
+
+    }
+
+
+
+    if (
+
+      !confirm(
+
+        "Tạo phiếu xuất thủ công này?\n\n" +
+
+        "Phiếu sẽ ở trạng thái Đã tạo và CHƯA trừ kho.\n" +
+
+        "Thủ kho sẽ phê duyệt và trừ kho sau."
+
+      )
+
+    ) {
+
+      return;
+
+    }
+
+
+
+    showLoading(
+
+      "Đang tạo phiếu...",
+
+      "Đang ghi PhieuXuatThuCong, chưa trừ KhoNguyenLieu"
+
+    );
+
+
+
+    google.script.run
+
+      .withSuccessHandler(function(res) {
+
+        hideLoading();
+
+
+
+        manualDraft = [];
+
+        manualEditingIndex = -1;
+
+
+
+        renderManualDraft();
+
+        resetManualForm();
+
+
+
+        historyRows =
+
+          res.recentRequests ||
+
+          historyRows;
+
+
+
+        renderHistory();
+
+
+
+        showMessage(
+
+          "manualMessage",
+
+          "success",
+
+          (
+
+            res.message ||
+
+            "Đã tạo phiếu."
+
+          ) +
+
+            " Mã phiếu: " +
+
+            res.PhieuXuatThuCongId
+
+        );
+
+      })
+
+      .withFailureHandler(function(err) {
+
+        hideLoading();
+
+
+
+        showMessage(
+
+          "manualMessage",
+
+          "error",
+
+          err.message ||
+
+            "Không tạo được phiếu."
+
+        );
+
+      })
+
+      .createWorkerManualExportVoucher(
+
+        sessionToken,
+
+        {
+
+          items: manualDraft
+
+        }
+
+      );
+
+  }
+
+
+
+  /* =======================================================
+
+     PLAN
+
+     ======================================================= */
+
+
+
+  function loadPlans(silent) {
+
+    if (!silent) {
+
+      showLoading(
+
+        "Đang tải kế hoạch...",
+
+        "Đang đọc KeHoachSanXuat"
+
+      );
+
+    }
+
+
+
+    google.script.run
+
+      .withSuccessHandler(function(res) {
+
+        if (!silent) hideLoading();
+
+
+
+        productionPlans =
+
+          res && res.plans
+
+            ? res.plans
+
+            : [];
+
+
+
+        setDefaultDates();
+
+        renderPlanOptions();
+
+
+
+        if (!silent) {
+
+          showMessage(
+
+            "planMessage",
+
+            "success",
+
+            "Đã tải lại kế hoạch sản xuất."
+
+          );
+
+        }
+
+      })
+
+      .withFailureHandler(function(err) {
+
+        if (!silent) hideLoading();
+
+
+
+        showMessage(
+
+          "planMessage",
+
+          "error",
+
+          err.message ||
+
+            "Không tải được kế hoạch."
+
+        );
+
+      })
+
+      .getProductionPlansForWorker(
+
+        sessionToken
+
+      );
+
+  }
+
+
+
+  function renderPlanOptions() {
+
+    const select =
+
+      document.getElementById(
+
+        "planSelect"
+
+      );
+
+
+
+    const date =
+
+      document.getElementById(
+
+        "planDate"
+
+      ).value;
+
+
+
+    if (!select) return;
+
+
+
+    if (!date) {
+
+      select.innerHTML =
+
+        '<option value="">-- Chọn ngày sản xuất trước --</option>';
+
+      return;
+
+    }
+
+
+
+    const filtered =
+
+      productionPlans.filter(
+
+        function(item) {
+
+          return (
+
+            String(
+
+              item.NgaySanXuat || ""
+
+            ) === String(date)
+
+          );
+
+        }
+
+      );
+
+
+
+    let html =
+
+      '<option value="">-- Chọn kế hoạch sản xuất --</option>';
+
+
+
+    filtered.forEach(function(item) {
+
+      html +=
+
+        '<option value="' +
+
+        escapeHtml(item.Id) +
+
+        '">' +
+
+        escapeHtml(item.Id) +
+
+        " | " +
+
+        escapeHtml(item.tenBaiLieu) +
+
+        " | " +
+
+        escapeHtml(
+
+          formatNumber(item.soLuong)
+
+        ) +
+
+        " mẻ</option>";
+
+    });
+
+
+
+    if (!filtered.length) {
+
+      html +=
+
+        '<option value="" disabled>Không có kế hoạch Hoạt động trong ngày này</option>';
+
+    }
+
+
+
+    select.innerHTML = html;
+
+  }
+
+
+
+  function handlePlanDateChange() {
+
+    selectedPlan = null;
+
+    planItems = [];
+
+    planCanCreate = false;
+
+
+
+    renderPlanOptions();
+
+
+
+    document.getElementById(
+
+      "planCreateBtn"
+
+    ).disabled = true;
+
+
+
+    document.getElementById(
+
+      "planInfo"
+
+    ).innerHTML =
+
+      '<div class="empty" style="margin-top:14px;">Hãy chọn kế hoạch sản xuất.</div>';
+
+
+
+    document.getElementById(
+
+      "planItemsBox"
+
+    ).innerHTML =
+
+      '<div class="empty">Chọn kế hoạch rồi bấm Xem nguyên liệu cần xuất.</div>';
+
+
+
+    showMessage(
+
+      "planMessage",
+
+      "",
+
+      ""
+
+    );
+
+  }
+
+
+
+  function handlePlanChange() {
+
+    const id =
+
+      document.getElementById(
+
+        "planSelect"
+
+      ).value;
+
+
+
+    selectedPlan =
+
+      productionPlans.find(
+
+        function(item) {
+
+          return String(item.Id) === String(id);
+
+        }
+
+      ) || null;
+
+
+
+    planItems = [];
+
+    planCanCreate = false;
+
+
+
+    document.getElementById(
+
+      "planCreateBtn"
+
+    ).disabled = true;
+
+
+
+    if (!selectedPlan) {
+
+      document.getElementById(
+
+        "planInfo"
+
+      ).innerHTML =
+
+        '<div class="empty" style="margin-top:14px;">Chưa chọn kế hoạch sản xuất.</div>';
+
+      return;
+
+    }
+
+
+
+    document.getElementById(
+
+      "planInfo"
+
+    ).innerHTML = `
+
+      <div class="plan-info">
+
+        <b>Mã KH:</b> ${escapeHtml(selectedPlan.Id)}
+
+        &nbsp;&nbsp;
+
+        <b>Bài liệu:</b> ${escapeHtml(selectedPlan.tenBaiLieu)}
+
+        &nbsp;&nbsp;
+
+        <b>Số mẻ:</b> ${escapeHtml(formatNumber(selectedPlan.soLuong))}
+
+        &nbsp;&nbsp;
+
+        <b>Ngày SX:</b> ${escapeHtml(selectedPlan.NgaySanXuat)}
+
+      </div>
+
+    `;
+
+  }
+
+
+
+  function loadPlanDetail() {
+
+    showMessage(
+
+      "planMessage",
+
+      "",
+
+      ""
+
+    );
+
+
+
+    if (!selectedPlan) {
+
+      showMessage(
+
+        "planMessage",
+
+        "error",
+
+        "Vui lòng chọn kế hoạch sản xuất."
+
+      );
+
+      return;
+
+    }
+
+
+
+    showLoading(
+
+      "Đang tính nguyên liệu...",
+
+      "Đang đọc bài trộn và vị trí kho dự kiến"
+
+    );
+
+
+
+    google.script.run
+
+      .withSuccessHandler(function(res) {
+
+        hideLoading();
+
+
+
+        planItems = res.items || [];
+
+        planCanCreate = !!res.duToanBo;
+
+
+
+        renderPlanItems();
+
+
+
+        document.getElementById(
+
+          "planCreateBtn"
+
+        ).disabled =
+
+          !planCanCreate;
+
+
+
+        if (planCanCreate) {
+
+          showMessage(
+
+            "planMessage",
+
+            "success",
+
+            "Đủ tồn tại thời điểm kiểm tra. Có thể tạo phiếu chờ duyệt."
+
+          );
+
+        } else {
+
+          showMessage(
+
+            "planMessage",
+
+            "error",
+
+            "Có nguyên liệu thiếu tồn tại thời điểm kiểm tra."
+
+          );
+
+        }
+
+      })
+
+      .withFailureHandler(function(err) {
+
+        hideLoading();
+
+
+
+        planItems = [];
+
+        planCanCreate = false;
+
+
+
+        renderPlanItems();
+
+
+
+        document.getElementById(
+
+          "planCreateBtn"
+
+        ).disabled = true;
+
+
+
+        showMessage(
+
+          "planMessage",
+
+          "error",
+
+          err.message ||
+
+            "Không tải được nguyên liệu kế hoạch."
+
+        );
+
+      })
+
+      .getWorkerProductionPlanDetail(
+
+        sessionToken,
+
+        selectedPlan.Id
+
+      );
+
+  }
+
+
+
+  function renderPlanItems() {
+
+    const box =
+
+      document.getElementById(
+
+        "planItemsBox"
+
+      );
+
+
+
+    if (!box) return;
+
+
+
+    if (!planItems.length) {
+
+      box.innerHTML =
+
+        '<div class="empty">Chưa có dữ liệu nguyên liệu.</div>';
+
+      return;
+
+    }
+
+
+
+    let html = `
+
+      <table style="min-width:1450px;">
+
+        <thead>
+
+          <tr>
+
+            <th>STT</th>
+
+            <th>Mã NL</th>
+
+            <th>Tên nguyên liệu</th>
+            <th>Mã kế toán</th>
+
+            <th>KL cần xuất</th>
+
+            <th>KL xuất thực tế</th>
+
+            <th>ĐVT</th>
+
+            <th>Tồn khả dụng</th>
+
+            <th>Id kho dự kiến</th>
+
+            <th>LotNo</th>
+
+            <th>HSD</th>
+
+            <th>KL tại lô</th>
+
+            <th>Trạng thái</th>
+
+          </tr>
+
+        </thead>
+
+        <tbody>
+
+    `;
+
+
+
+    planItems.forEach(
+
+      function(item, itemIndex) {
+
+        const lots =
+
+          item.lots &&
+
+          item.lots.length
+
+            ? item.lots
+
+            : [null];
+
+
+
+        lots.forEach(
+
+          function(lot, lotIndex) {
+
+            const first = lotIndex === 0;
+
+
+
+            html +=
+
+              '<tr class="' +
+
+              (
+
+                item.duSoLuong
+
+                  ? ""
+
+                  : "bad-row"
+
+              ) +
+
+              '">';
+
+
+
+            if (first) {
+
+              html += `
+
+                <td>${escapeHtml(item.STT)}</td>
+
+                <td>${escapeHtml(item.maNguyenLieu)}</td>
+
+                <td><b>${escapeHtml(item.tenNguyenLieu)}</b></td>
+                <td><b>${escapeHtml(item.MaKeToan || "")}</b></td>
+
+                <td>${escapeHtml(formatNumber(item.khoiLuongCanXuat))}</td>
+
+                <td>
+
+                  <input
+
+                    class="plan-actual-input"
+
+                    id="planActual_${itemIndex}"
+
+                    type="number"
+
+                    min="0.001"
+
+                    step="0.001"
+
+                    value="${escapeHtml(item.khoiLuongXuatThucTe)}"
+
+                    onchange="handlePlanActualChange(${itemIndex})">
+
+                </td>
+
+                <td>${escapeHtml(item.donViCanXuat)}</td>
+
+                <td>
+
+                  ${escapeHtml(formatNumber(item.tonKhoKhaDung))}
+
+                  ${escapeHtml(item.donViCanXuat)}
+
+                </td>
+
+              `;
+
+            } else {
+
+              html += `
+
+                <td></td>
+
+                <td></td>
+
+                <td>↳ Lô tiếp theo</td>
+
+                <td></td>
+
+                <td></td>
+
+                <td></td>
+
+                <td></td>
+
+              `;
+
+            }
+
+
+
+            html += `
+
+              <td>${escapeHtml(lot ? lot.Id : "")}</td>
+
+              <td>${escapeHtml(lot ? lot.LotNo : "")}</td>
+
+              <td>${escapeHtml(lot ? lot.hanSuDung : "")}</td>
+
+              <td>
+
+                ${
+
+                  lot
+
+                    ? escapeHtml(
+
+                        formatNumber(
+
+                          lot.khoiLuongSeXuat
+
+                        )
+
+                      ) +
+
+                      " " +
+
+                      escapeHtml(
+
+                        lot.donViKho
+
+                      )
+
+                    : ""
+
+                }
+
+              </td>
+
+              <td>
+
+                ${
+
+                  item.duSoLuong
+
+                    ? '<span class="status status-approved">Đủ tồn</span>'
+
+                    : '<span class="status status-cancelled">Thiếu tồn</span>'
+
+                }
+
+              </td>
+
+            </tr>
+
+            `;
+
+          }
+
+        );
+
+      }
+
+    );
+
+
+
+    html += `
+
+        </tbody>
+
+      </table>
+
+    `;
+
+
+
+    box.innerHTML = html;
+
+  }
+
+
+
+  function handlePlanActualChange(index) {
+
+    const item = planItems[index];
+
+
+
+    const input =
+
+      document.getElementById(
+
+        "planActual_" + index
+
+      );
+
+
+
+    if (!item || !input) return;
+
+
+
+    const qty = Number(input.value);
+
+
+
+    if (!isFinite(qty) || qty <= 0) {
+
+      showMessage(
+
+        "planMessage",
+
+        "error",
+
+        "KL xuất thực tế phải lớn hơn 0."
+
+      );
+
+
+
+      input.value =
+
+        item.khoiLuongXuatThucTe;
+
+
+
+      return;
+
+    }
+
+
+
+    item.khoiLuongXuatThucTe = qty;
+
+
+
+    /*
+
+     * Sau khi công nhân sửa KL, vị trí kho trên màn hình
+
+     * vẫn là preview cũ. Backend sẽ tính lại chính xác
+
+     * khi bấm Tạo phiếu.
+
+     */
+
+    showMessage(
+
+      "planMessage",
+
+      "info",
+
+      "Đã sửa KL thực tế. Khi bấm Tạo phiếu, hệ thống sẽ tính lại chính xác các Id kho cần lấy."
+
+    );
+
+  }
+
+
+
+  function createPlanVoucher() {
+
+    showMessage(
+
+      "planMessage",
+
+      "",
+
+      ""
+
+    );
+
+
+
+    if (!selectedPlan) {
+
+      showMessage(
+
+        "planMessage",
+
+        "error",
+
+        "Chưa chọn kế hoạch sản xuất."
+
+      );
+
+      return;
+
+    }
+
+
+
+    if (!planItems.length) {
+
+      showMessage(
+
+        "planMessage",
+
+        "error",
+
+        "Chưa tải danh sách nguyên liệu."
+
+      );
+
+      return;
+
+    }
+
+
+
+    const actualItems = [];
+
+
+
+    for (
+
+      let i = 0;
+
+      i < planItems.length;
+
+      i++
+
+    ) {
+
+      const item = planItems[i];
+
+
+
+      const input =
+
+        document.getElementById(
+
+          "planActual_" + i
+
+        );
+
+
+
+      const qty =
+
+        input
+
+          ? Number(input.value)
+
+          : Number(
+
+              item.khoiLuongXuatThucTe
+
+            );
+
+
+
+      if (!isFinite(qty) || qty <= 0) {
+
+        showMessage(
+
+          "planMessage",
+
+          "error",
+
+          "KL xuất thực tế của " +
+
+            item.tenNguyenLieu +
+
+            " phải lớn hơn 0."
+
+        );
+
+        return;
+
+      }
+
+
+
+      actualItems.push({
+
+        STT: item.STT,
+
+        maNguyenLieu:
+
+          item.maNguyenLieu,
+          MaKeToan: item.MaKeToan || "",
+
+        khoiLuongXuatThucTe: qty
+
+      });
+
+    }
+
+
+
+    if (
+
+      !confirm(
+
+        "Tạo phiếu xuất theo kế hoạch này?\n\n" +
+
+        "Mã KH: " +
+
+        selectedPlan.Id +
+
+        "\nBài liệu: " +
+
+        selectedPlan.tenBaiLieu +
+
+        "\n\nPhiếu sẽ ở trạng thái Đã tạo và CHƯA trừ kho."
+
+      )
+
+    ) {
+
+      return;
+
+    }
+
+
+
+    showLoading(
+
+      "Đang tạo phiếu...",
+
+      "Đang tính lại vị trí kho và ghi PhieuXuatThuCong"
+
+    );
+
+
+
+    google.script.run
+
+      .withSuccessHandler(function(res) {
+
+        hideLoading();
+
+
+
+        historyRows =
+
+          res.recentRequests ||
+
+          historyRows;
+
+
+
+        renderHistory();
+
+
+
+        planItems = [];
+
+        planCanCreate = false;
+
+
+
+        document.getElementById(
+
+          "planCreateBtn"
+
+        ).disabled = true;
+
+
+
+        document.getElementById(
+
+          "planItemsBox"
+
+        ).innerHTML =
+
+          '<div class="empty">Đã tạo phiếu. Có thể chọn kế hoạch khác.</div>';
+
+
+
+        showMessage(
+
+          "planMessage",
+
+          "success",
+
+          (
+
+            res.message ||
+
+            "Đã tạo phiếu."
+
+          ) +
+
+            " Mã phiếu: " +
+
+            res.PhieuXuatThuCongId
+
+        );
+
+      })
+
+      .withFailureHandler(function(err) {
+
+        hideLoading();
+
+
+
+        showMessage(
+
+          "planMessage",
+
+          "error",
+
+          err.message ||
+
+            "Không tạo được phiếu theo kế hoạch."
+
+        );
+
+      })
+
+      .createWorkerPlanExportVoucher(
+
+        sessionToken,
+
+        selectedPlan.Id,
+
+        actualItems
+
+      );
+
+  }
+
+
+
+  /* =======================================================
+
+     HISTORY
+
+     ======================================================= */
+
+
+
+  function loadHistory(silent) {
+
+    setDefaultDates();
+
+
+
+    if (!silent) {
+
+      showLoading(
+
+        "Đang tải phiếu...",
+
+        "Đang đọc PhieuXuatThuCong"
+
+      );
+
+    }
+
+
+
+    const filter = {
+
+      fromDate:
+
+        document.getElementById(
+
+          "historyFrom"
+
+        ).value || "",
+
+      toDate:
+
+        document.getElementById(
+
+          "historyTo"
+
+        ).value || ""
+
+    };
+
+
+
+    google.script.run
+
+      .withSuccessHandler(function(res) {
+
+        if (!silent) hideLoading();
+
+
+
+        historyRows =
+
+          res && res.rows
+
+            ? res.rows
+
+            : [];
+
+
+
+        renderHistory();
+
+      })
+
+      .withFailureHandler(function(err) {
+
+        if (!silent) hideLoading();
+
+
+
+        historyRows = [];
+
+        renderHistory();
+
+
+
+        showMessage(
+
+          "historyMessage",
+
+          "error",
+
+          err.message ||
+
+            "Không tải được lịch sử."
+
+        );
+
+      })
+
+      .getWorkerManualExportHistory(
+
+        sessionToken,
+
+        filter
+
+      );
+
+  }
+
+
+
+  function statusClass(status) {
+
+    const s = String(
+
+      status || ""
+
+    ).toLowerCase();
+
+
+
+    if (s.includes("phê duyệt")) {
+
+      return "status-approved";
+
+    }
+
+
+
+    if (
+
+      s.includes("hủy") ||
+
+      s.includes("huỷ")
+
+    ) {
+
+      return "status-cancelled";
+
+    }
+
+
+
+    return "status-created";
+
+  }
+
+
+
+  function renderHistory() {
+
+    const box =
+
+      document.getElementById(
+
+        "historyBox"
+
+      );
+
+
+
+    if (!box) return;
+
+
+
+    if (!historyRows.length) {
+
+      box.innerHTML =
+
+        '<div class="empty">Chưa có phiếu trong khoảng ngày đã chọn.</div>';
+
+      return;
+
+    }
+
+
+
+    let html = `
+
+      <table style="min-width:1500px;">
+
+        <thead>
+
+          <tr>
+
+            <th>Mã phiếu</th>
+
+            <th>STT</th>
+
+            <th>Id kho</th>
+
+            <th>Mã NL</th>
+
+            <th>Tên nguyên liệu</th>
+            <th>Mã kế toán</th>
+
+            <th>KL yêu cầu xuất</th>
+
+            <th>Đơn vị</th>
+
+            <th>LotNo</th>
+
+            <th>HSD</th>
+
+            <th>Người tạo</th>
+
+            <th>Thời gian tạo</th>
+
+            <th>Trạng thái</th>
+
+            <th>Ghi chú</th>
+
+          </tr>
+
+        </thead>
+
+        <tbody>
+
+    `;
+
+
+
+    historyRows.forEach(function(item) {
+
+      html += `
+
+        <tr>
+
+          <td><b>${escapeHtml(item.PhieuXuatThuCongId)}</b></td>
+
+          <td>${escapeHtml(item.STT)}</td>
+
+          <td>${escapeHtml(item.Id)}</td>
+
+          <td>${escapeHtml(item.maNguyenLieu)}</td>
+
+          <td>${escapeHtml(item.tenNguyenLieu)}</td>
+          <td>${escapeHtml(item.MaKeToan || "")}</td>
+
+          <td>${escapeHtml(formatNumber(item.khoiLuongNhap))}</td>
+
+          <td>${escapeHtml(item.donVi)}</td>
+
+          <td>${escapeHtml(item.LotNo)}</td>
+
+          <td>${escapeHtml(item.hanSuDung)}</td>
+
+          <td>${escapeHtml(item.nguoiXuatKhoThuCong)}</td>
+
+          <td>${escapeHtml(item.thoiGianLuu)}</td>
+
+          <td>
+
+            <span class="status ${statusClass(item.TrangThaiXuatThuCong)}">
+
+              ${escapeHtml(item.TrangThaiXuatThuCong)}
+
+            </span>
+
+          </td>
+
+          <td>${escapeHtml(item.ghiChu)}</td>
+
+        </tr>
+
+      `;
+
+    });
+
+
+
+    html += `
+
+        </tbody>
+
+      </table>
+
+    `;
+
+
+
+    box.innerHTML = html;
+
+  }
+
+</script>
+
+
+
+</body>
+
+</html>

@@ -1,0 +1,1331 @@
+<style>
+  /* ==================================================
+     MODULE ĐƠN ĐẶT HÀNG
+     Namespace po-* để tránh ảnh hưởng menu khác.
+     ================================================== */
+
+
+  .po-create-card {
+    margin-top: 18px;
+  }
+
+
+  .po-form-sheet {
+    width: 100%;
+
+    min-width: 1180px;
+
+    color: #111827;
+
+    background: white;
+
+    font-family:
+      Arial,
+      "Microsoft YaHei",
+      "Noto Sans SC",
+      sans-serif;
+
+    font-size: 12px;
+  }
+
+
+  .po-form-sheet,
+  .po-form-sheet * {
+    box-sizing:
+      border-box;
+  }
+
+
+  .po-box {
+    border:
+      1px solid #4b5563;
+
+    background: white;
+  }
+
+
+  .po-preline,
+  .po-section-title,
+  #poHeaderCompany,
+  #poHeaderTitle,
+  .po-info-table th,
+  .po-items-table th {
+    white-space:
+      pre-line;
+  }
+
+
+  /* ==================================================
+     PHẦN ĐẦU
+     ================================================== */
+
+  .po-top-grid {
+    display: grid;
+
+    grid-template-columns:
+      1.45fr
+      1.15fr
+      1fr;
+
+    min-height: 118px;
+  }
+
+  .po-main-title {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+
+    text-align: center !important;
+
+    padding: 5px !important;
+    font-size: 16px !important;
+    line-height: 1.2 !important;
+  }
+
+  #poHeaderTitle {
+    width: 100% !important;
+    text-align: center !important;
+  }
+
+
+  .po-top-grid > .po-box {
+    border-right: 0;
+  }
+
+
+  .po-top-grid > .po-box:last-child {
+    border-right:
+      1px solid #4b5563;
+  }
+
+
+  .po-company-block {
+    padding:
+      8px 10px;
+
+    white-space:
+      pre-line;
+
+    line-height: 1.45;
+
+    font-family:
+      "Times New Roman",
+      serif;
+
+    font-size: 12px;
+  }
+
+
+  .po-company-block::first-line {
+    font-weight: 800;
+
+    font-size: 17px;
+  }
+
+
+  .po-main-title {
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    padding: 8px;
+
+    text-align: center;
+
+    white-space:
+      pre-line;
+
+    font-family:
+      "Times New Roman",
+      serif;
+
+    font-weight: 800;
+
+    font-size: 18px;
+
+    line-height: 1.35;
+  }
+
+
+  .po-meta-block {
+    display: flex;
+
+    flex-direction: column;
+  }
+
+
+  .po-meta-row {
+    flex: 1;
+
+    display: grid;
+  }
+
+
+  .po-meta-row-two {
+    grid-template-columns:
+      1fr 1fr;
+  }
+
+
+  .po-meta-row + .po-meta-row {
+    border-top:
+      1px solid #4b5563;
+  }
+
+
+  .po-meta-cell {
+    min-width: 0;
+
+    display: flex;
+
+    flex-direction: column;
+
+    justify-content: center;
+
+    text-align: center;
+  }
+
+
+  .po-meta-row-two
+  .po-meta-cell:first-child {
+    border-right:
+      1px solid #4b5563;
+  }
+
+
+  .po-label {
+    padding:
+      4px 5px 2px;
+
+    font-family:
+      "Times New Roman",
+      serif;
+
+    font-size: 12px;
+  }
+
+
+  .po-input {
+    width: 100%;
+
+    min-width: 0;
+
+    border: 0;
+
+    outline: 0;
+
+    background:
+      transparent;
+
+    padding:
+      4px 6px;
+
+    font: inherit;
+  }
+
+
+  .po-input-center {
+    text-align: center;
+  }
+
+
+  .po-input-bold {
+    font-weight: 800;
+  }
+
+
+  /* ==================================================
+     BÊN MUA / NHÀ SẢN XUẤT / CHUYỂN TIỀN
+     ================================================== */
+
+  .po-party-grid {
+    display: grid;
+
+    grid-template-columns:
+      1fr 1fr 1fr;
+
+    margin-top: 7px;
+  }
+
+
+  .po-party-grid
+  .po-box {
+    min-height: 180px;
+
+    border-right: 0;
+
+    padding:
+      7px 8px;
+  }
+
+
+  .po-party-grid
+  .po-box:last-child {
+    border-right:
+      1px solid #4b5563;
+  }
+
+
+  .po-party-box {
+    display: flex;
+
+    flex-direction: column;
+  }
+
+
+  .po-section-title {
+    margin-bottom: 5px;
+
+    font-family:
+      "Times New Roman",
+      serif;
+
+    font-weight: 800;
+
+    font-size: 14px;
+
+    line-height: 1.25;
+  }
+
+
+  .po-preline {
+    line-height: 1.4;
+  }
+
+
+  .po-textarea {
+    flex: 1;
+
+    width: 100%;
+
+    min-height: 125px;
+
+    resize: vertical;
+
+    border: 0;
+
+    outline: 0;
+
+    background:
+      #fff;
+
+    padding:
+      4px;
+
+    font: inherit;
+
+    line-height: 1.4;
+  }
+
+
+  /* ==================================================
+     BẢNG THÔNG TIN
+     ================================================== */
+
+  .po-info-table-wrap,
+  .po-items-wrap {
+    margin-top: 7px;
+
+    overflow-x: auto;
+  }
+
+
+  .po-info-table,
+  .po-items-table {
+    width: 100%;
+
+    border-collapse:
+      collapse;
+
+    table-layout:
+      fixed;
+  }
+
+
+  .po-info-table th,
+  .po-info-table td,
+  .po-items-table th,
+  .po-items-table td {
+    border:
+      1px solid #4b5563;
+  }
+
+
+  .po-info-table th {
+    height: 54px;
+
+    padding:
+      6px 5px;
+
+    text-align: center;
+
+    vertical-align: middle;
+
+    font-family:
+      "Times New Roman",
+      serif;
+
+    font-weight: 800;
+
+    line-height: 1.25;
+  }
+
+
+  .po-info-table th:nth-child(1) {
+    width: 12%;
+  }
+
+  .po-info-table th:nth-child(2) {
+    width: 20%;
+  }
+
+  .po-info-table th:nth-child(3) {
+    width: 14%;
+  }
+
+  .po-info-table th:nth-child(4) {
+    width: 22%;
+  }
+
+  .po-info-table th:nth-child(5) {
+    width: 14%;
+  }
+
+  .po-info-table th:nth-child(6) {
+    width: 18%;
+  }
+
+
+  .po-info-table td {
+    height: 105px;
+
+    padding: 0;
+  }
+
+
+  .po-cell-input {
+    width: 100%;
+
+    height: 100%;
+
+    min-height: 102px;
+
+    resize: none;
+
+    border: 0;
+
+    outline: 0;
+
+    background: white;
+
+    padding:
+      7px;
+
+    font: inherit;
+
+    line-height: 1.35;
+  }
+
+
+  input.po-cell-input {
+    min-height: 102px;
+  }
+
+
+  .po-cell-center {
+    text-align: center;
+  }
+
+
+  /* ==================================================
+     BẢNG HÀNG HÓA
+     ================================================== */
+
+  .po-items-table {
+    min-width: 1300px;
+  }
+
+
+  .po-items-table th {
+    min-height: 60px;
+
+    padding:
+      7px 4px;
+
+    text-align: center;
+
+    vertical-align: middle;
+
+    font-family:
+      "Times New Roman",
+      serif;
+
+    font-size: 12px;
+
+    font-weight: 800;
+
+    line-height: 1.25;
+  }
+
+
+  .po-items-table td {
+    min-height: 82px;
+
+    padding: 0;
+
+    vertical-align: middle;
+  }
+
+
+  .po-col-stt {
+    width: 55px;
+  }
+
+  .po-col-code {
+    width: 95px;
+  }
+
+  .po-col-name {
+    width: 280px;
+  }
+
+  .po-col-unit {
+    width: 75px;
+  }
+
+  .po-col-qty {
+    width: 105px;
+  }
+
+  .po-col-price {
+    width: 145px;
+  }
+
+  .po-col-amount {
+    width: 135px;
+  }
+
+  .po-col-spec {
+    width: 270px;
+  }
+
+  .po-col-action {
+    width: 68px;
+  }
+
+
+  .po-table-input {
+    width: 100%;
+
+    min-height: 80px;
+
+    border: 0;
+
+    outline: 0;
+
+    resize: vertical;
+
+    background:
+      white;
+
+    padding:
+      6px;
+
+    font: inherit;
+  }
+
+
+  input.po-table-input {
+    min-height: 80px;
+  }
+
+
+  .po-center {
+    text-align: center;
+  }
+
+
+  .po-number {
+    text-align: right;
+
+    font-variant-numeric:
+      tabular-nums;
+  }
+
+
+  .po-total-label {
+    height: 48px;
+
+    padding:
+      8px;
+
+    text-align: center;
+
+    font-family:
+      "Times New Roman",
+      serif;
+
+    font-weight: 800;
+  }
+
+
+  .po-total-value {
+    padding:
+      8px;
+
+    text-align: right;
+
+    font-weight: 800;
+  }
+
+
+  .po-item-actions {
+    display: flex;
+
+    justify-content: flex-start;
+
+    margin-top: 10px;
+  }
+
+
+  /* ==================================================
+     PHẦN KÝ
+     ================================================== */
+
+  .po-signature-row {
+    display: grid;
+
+    grid-template-columns:
+      1fr minmax(520px, 44%);
+
+    margin-top: 14px;
+  }
+
+
+  .po-signature-spacer {
+    min-height: 1px;
+  }
+
+
+  .po-signature-box {
+    border:
+      1px solid #4b5563;
+
+    font-family:
+      "Times New Roman",
+      serif;
+  }
+
+
+  .po-signature-company {
+    min-height: 48px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    padding:
+      8px;
+
+    border-bottom:
+      1px solid #4b5563;
+
+    text-align: center;
+
+    font-size: 16px;
+
+    font-weight: 800;
+  }
+
+
+  .po-signature-head,
+  .po-signature-body {
+    display: grid;
+
+    grid-template-columns:
+      repeat(3, 1fr);
+  }
+
+
+  .po-signature-head > div {
+    min-height: 48px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    border-right:
+      1px solid #4b5563;
+
+    padding:
+      8px;
+
+    font-size: 15px;
+
+    font-weight: 800;
+  }
+
+
+  .po-signature-head
+  > div:last-child {
+    border-right: 0;
+  }
+
+
+  .po-signature-body {
+    border-top:
+      1px solid #4b5563;
+  }
+
+
+  .po-signature-body > div {
+    min-height: 120px;
+
+    border-right:
+      1px solid #4b5563;
+  }
+
+
+  .po-signature-body
+  > div:last-child {
+    border-right: 0;
+  }
+
+
+  /* ==================================================
+     RESPONSIVE
+     ================================================== */
+
+  @media (
+    max-width: 1100px
+  ) {
+
+    .po-form-sheet {
+      min-width: 1050px;
+    }
+
+  }
+
+  /* ==================================================
+    CÂN LẠI ĐỘ RỘNG BẢNG HÀNG HÓA
+    Phủ kín 100% chiều rộng form PO
+    ================================================== */
+
+  .po-items-table {
+    width: 100% !important;
+    table-layout: fixed !important;
+  }
+
+
+  /* STT */
+  .po-items-table th:nth-child(1),
+  .po-items-table td:nth-child(1) {
+    width: 4% !important;
+  }
+
+  /* Mã hàng */
+  .po-items-table th:nth-child(2),
+  .po-items-table td:nth-child(2) {
+    width: 8% !important;
+  }
+
+  /* Tên hàng */
+  .po-items-table th:nth-child(3),
+  .po-items-table td:nth-child(3) {
+    width: 24% !important;
+  }
+
+  /* ĐVT */
+  .po-items-table th:nth-child(4),
+  .po-items-table td:nth-child(4) {
+    width: 7% !important;
+  }
+
+  /* Số lượng */
+  .po-items-table th:nth-child(5),
+  .po-items-table td:nth-child(5) {
+    width: 9% !important;
+  }
+
+  /* Đơn giá */
+  .po-items-table th:nth-child(6),
+  .po-items-table td:nth-child(6) {
+    width: 12% !important;
+  }
+
+  /* Thành tiền */
+  .po-items-table th:nth-child(7),
+  .po-items-table td:nth-child(7) {
+    width: 12% !important;
+  }
+
+  /* Thông số */
+  .po-items-table th:nth-child(8),
+  .po-items-table td:nth-child(8) {
+    width: 24% !important;
+  }
+
+
+  /* Nút Xóa */
+  .po-items-table th:nth-child(9),
+  .po-items-table td:nth-child(9) {
+    width: 5% !important;
+  }
+
+
+  /* Input bên trong phải ăn theo chiều rộng cột */
+  .po-items-table input,
+  .po-items-table textarea,
+  .po-items-table select {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box;
+  }
+
+  /* ==================================================
+    IN ĐẬM TIÊU ĐỀ 3 KHỐI THÔNG TIN
+    Bên mua - Nhà sản xuất - Đơn vị chuyển tiền NCC
+    ================================================== */
+
+  #poLabelBenMua,
+  #poLabelNhaSanXuat,
+  #poLabelDonViVanChuyenChoNCC {
+    font-weight: 700 !important;
+  }
+
+  /* ==================================================
+    COMBOBOX ĐƠN VỊ CHUYỂN TIỀN
+    ================================================== */
+
+  .po-party-select-wrap {
+    flex: 1;
+
+    display: flex;
+
+    align-items: flex-start;
+
+    padding-top: 6px;
+  }
+
+
+  .po-party-select {
+    width: 100%;
+
+    min-height: 42px;
+
+    padding:
+      8px 10px;
+
+    border:
+      1px solid #cbd5e1;
+
+    border-radius:
+      8px;
+
+    outline: none;
+
+    background:
+      white;
+
+    color:
+      #111827;
+
+    font: inherit;
+
+    cursor:
+      pointer;
+  }
+
+
+  .po-party-select:focus {
+    border-color:
+      #059669;
+
+    box-shadow:
+      0 0 0 2px
+      rgba(5, 150, 105, .10);
+  }
+
+  /* ==================================================
+    TEXT ĐƠN VỊ CHUYỂN TIỀN ĐÃ CHỌN
+    ================================================== */
+
+  .po-party-selected-text {
+    margin-top: 10px;
+
+    padding: 4px 2px;
+
+    color: #111827;
+
+    font-size: 12px;
+
+    line-height: 1.5;
+
+    white-space: pre-line;
+
+    word-break: break-word;
+  }
+
+  /* ==================================================
+    THANH CHỌN TRÊN CARD ĐƠN ĐẶT HÀNG
+    ================================================== */
+
+  .po-order-toolbar {
+    display: flex;
+
+    align-items: flex-end;
+
+    gap: 12px;
+
+    flex-wrap: nowrap;
+
+    margin:
+      0 20px 8px;
+
+    padding-top:
+      2px;
+  }
+
+
+  .po-order-filter-item {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 5px;
+
+    min-width: 0;
+  }
+
+
+  .po-order-filter-item label {
+    color: #334155;
+
+    font-size: 12px;
+
+    font-weight: 700;
+
+    white-space: nowrap;
+  }
+
+
+  .po-order-control {
+    height: 42px;
+
+    margin: 0 !important;
+  }
+
+
+  /* Loại đơn giá */
+  #poLoaiDonGia {
+    width: 200px !important;
+
+    min-width: 200px !important;
+  }
+
+
+  /* Tất cả / cần đặt */
+  #poNguyenLieuScope {
+    width: 210px !important;
+
+    min-width: 210px !important;
+  }
+
+
+  /* Tìm nguyên liệu */
+  .po-order-material-item {
+    flex: 1;
+
+    max-width: 520px;
+  }
+
+
+  #poNguyenLieuSearch {
+    width: 100% !important;
+
+    min-width: 320px !important;
+  }
+
+  .po-add-material-btn {
+    height: 42px;
+
+    flex: 0 0 auto;
+
+    white-space: nowrap;
+  }
+
+
+  .po-port-cell {
+    height: 100%;
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 5px;
+
+    padding: 5px;
+  }
+
+
+  .po-port-select {
+    width: 100%;
+
+    min-height: 34px;
+
+    border:
+      1px solid #cbd5e1;
+
+    border-radius: 6px;
+
+    padding:
+      5px 7px;
+
+    background: white;
+
+    font: inherit;
+  }
+
+
+  .po-port-text {
+    flex: 1;
+
+    width: 100%;
+
+    min-height: 60px;
+
+    resize: none;
+
+    border: 0;
+
+    outline: 0;
+
+    text-align: center;
+
+    font: inherit;
+  }
+
+  /* ==================================================
+    TÊN NGUYÊN LIỆU + NÚT THÊM CÙNG 1 HÀNG
+    ================================================== */
+
+  .po-material-add-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+  }
+
+
+  /* Ô tìm nguyên liệu chiếm phần còn lại */
+  .po-material-add-row #poNguyenLieuSearch {
+    flex: 1 1 auto;
+    min-width: 0;
+    width: auto;
+  }
+
+
+  /* Nút thêm nhỏ gọn */
+  .po-material-add-row #poAddMaterialButton {
+    flex: 0 0 auto;
+
+    width: auto;
+    min-width: 145px;
+
+    height: 40px;
+    padding: 0 16px;
+
+    border: none;
+    border-radius: 10px;
+
+    white-space: nowrap;
+
+    font-size: 13px;
+    font-weight: 700;
+
+    cursor: pointer;
+  }
+
+  /* ==================================================
+    NÚT LƯU + XUẤT PDF
+    ================================================== */
+
+  .po-card-actions {
+    display: flex;
+
+    align-items: center;
+
+    justify-content: flex-end;
+
+    gap: 8px;
+
+    flex-wrap: nowrap;
+  }
+
+
+  .po-card-actions .btn {
+    white-space: nowrap;
+  }
+
+  /* ==================================================
+    CARD LỊCH SỬ ĐẶT HÀNG
+    ================================================== */
+
+  .po-history-card {
+    margin-top: 18px;
+  }
+
+
+  .po-history-filter-row {
+    display: flex;
+
+    align-items: flex-end;
+
+    justify-content: flex-end;
+
+    gap: 10px;
+
+    flex-wrap: nowrap;
+  }
+
+
+  .po-history-filter-item {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 5px;
+
+    flex: 0 0 auto;
+  }
+
+
+  .po-history-filter-item label {
+    color: #334155;
+
+    font-size: 11px;
+
+    font-weight: 800;
+
+    white-space: nowrap;
+  }
+
+
+  .po-history-control {
+    height: 40px;
+
+    margin: 0 !important;
+  }
+
+
+  #poHistoryFromDate,
+  #poHistoryToDate {
+    width: 145px !important;
+  }
+
+
+  .po-history-material-filter {
+    width: 300px;
+  }
+
+
+  #poHistoryMaterialSearch {
+    width: 300px !important;
+  }
+
+
+  /* ==================================================
+    BẢNG LỊCH SỬ
+    ================================================== */
+
+  .po-history-table-wrap {
+    width: 100%;
+
+    overflow: auto;
+
+    max-height:
+      520px;
+
+    border:
+      1px solid #e2e8f0;
+
+    border-radius:
+      12px;
+  }
+
+
+  .po-history-table {
+    width: 100%;
+
+    min-width: 1450px;
+
+    border-collapse:
+      collapse;
+
+    font-size: 12px;
+  }
+
+
+  .po-history-table th {
+    position: sticky;
+
+    top: 0;
+
+    z-index: 2;
+
+    padding:
+      8px 7px;
+
+    border:
+      1px solid #dbe4e1;
+
+    color: white;
+
+    background:
+      var(--emerald-900);
+
+    text-align: center;
+
+    white-space: nowrap;
+  }
+
+
+  .po-history-table td {
+    padding:
+      7px;
+
+    border:
+      1px solid #e5ebe8;
+
+    vertical-align:
+      middle;
+  }
+
+
+  .po-history-table tbody tr:hover {
+    background:
+      #f8fffc;
+  }
+
+
+  .po-history-actions {
+    width: 190px;
+
+    min-width: 190px;
+
+    text-align: center;
+
+    white-space: nowrap;
+  }
+
+
+  .po-history-actions .btn {
+    padding:
+      5px 7px;
+
+    margin:
+      2px;
+
+    font-size:
+      10px;
+  }
+
+
+  .po-history-po-number {
+    font-weight: 800;
+
+    color:
+      #075985;
+  }
+
+
+  .po-history-preline {
+    white-space:
+      pre-line;
+
+    line-height:
+      1.35;
+  }
+
+
+  .po-history-number {
+    text-align: right;
+
+    font-variant-numeric:
+      tabular-nums;
+  }
+
+
+  .po-history-total {
+    font-weight:
+      800;
+  }
+
+
+  @media (
+    max-width: 1000px
+  ) {
+
+    .po-history-filter-row {
+      overflow-x:
+        auto;
+    }
+
+  }
+
+  /* ==================================================
+    TRẠNG THÁI + ẢNH PO
+    ================================================== */
+
+  .po-history-status {
+    min-width: 105px;
+
+    text-align: center;
+
+    font-weight: 800;
+
+    white-space: nowrap;
+  }
+
+
+  .po-history-status-created {
+    color: #92400e;
+
+    background: #fffbeb;
+  }
+
+
+  .po-history-status-approved {
+    color: #047857;
+
+    background: #ecfdf5;
+  }
+
+
+  .po-history-image {
+    min-width: 90px;
+
+    text-align: center;
+
+    white-space: nowrap;
+  }
+
+
+  .po-history-no-image {
+    color: #94a3b8;
+
+    font-size: 11px;
+  }
+
+
+  .po-history-upload-btn {
+    white-space: nowrap;
+  }
+
+</style>

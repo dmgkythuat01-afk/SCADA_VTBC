@@ -1,0 +1,440 @@
+<!-- ==================================================
+     MODULE GIAO DIỆN BÁO CÁO
+     ================================================== -->
+
+<section
+  id="viewBaoCao"
+  class="hidden"
+>
+  <!-- 1. FORECAST BÁN HÀNG -->
+  <div
+    id="reportView_baoCaoForecastBanHang"
+    class="report-view hidden"
+  >
+    <div class="panel">
+
+      <div class="panel-head">
+        <div>
+          <h2>
+            Forecast bán hàng
+          </h2>
+
+          <div class="report-subtitle">
+            Phòng kinh doanh nhập
+          </div>
+        </div>
+
+        <div class="forecast-filter-row">
+
+          <!-- SỐ TUẦN -->
+          <div class="forecast-filter-item">
+            <label>
+              Số tuần
+            </label>
+
+            <select
+              id="forecastWeekCount"
+              class="search"
+              onchange="loadForecastBanHang(true)"
+            >
+              <option value="4">
+                4 tuần
+              </option>
+
+              <option value="8">
+                8 tuần
+              </option>
+
+              <option value="12">
+                12 tuần
+              </option>
+            </select>
+          </div>
+
+
+          <!-- KHÁCH HÀNG -->
+          <div class="forecast-filter-item">
+            <label>Khách hàng</label>
+
+            <div class="forecast-multi-select" id="forecastCustomerMulti">
+              <button
+                type="button"
+                class="forecast-multi-button"
+                onclick="toggleForecastMulti('forecastCustomerMulti')"
+              >
+                <span id="forecastCustomerMultiText">
+                  Tất cả khách hàng
+                </span>
+
+                <span>▾</span>
+              </button>
+
+              <div class="forecast-multi-dropdown">
+                <div
+                  id="forecastCustomerMultiOptions"
+                  class="forecast-multi-options"
+                ></div>
+              </div>
+            </div>
+          </div>
+
+
+          <!-- TÊN SẢN PHẨM -->
+          <div class="forecast-filter-item">
+            <label>Tên sản phẩm</label>
+
+            <div class="forecast-multi-select" id="forecastProductMulti">
+              <button
+                type="button"
+                class="forecast-multi-button"
+                onclick="toggleForecastMulti('forecastProductMulti')"
+              >
+                <span id="forecastProductMultiText">
+                  Tất cả sản phẩm
+                </span>
+
+                <span>▾</span>
+              </button>
+
+              <div class="forecast-multi-dropdown">
+                <input
+                  type="text"
+                  id="forecastProductMultiSearch"
+                  class="forecast-multi-search"
+                  placeholder="Tìm sản phẩm..."
+                  oninput="filterForecastProductMultiOptions()"
+                >
+
+                <div
+                  id="forecastProductMultiOptions"
+                  class="forecast-multi-options"
+                ></div>
+              </div>
+            </div>
+          </div>
+
+
+          <!-- HIỂN THỊ -->
+          <div class="forecast-filter-item">
+            <label>
+              Hiển thị
+            </label>
+
+            <select
+              id="forecastDisplayMode"
+              class="search"
+              onchange="applyForecastBanHangFilters()"
+            >
+              <option value="customer">
+                Theo khách hàng
+              </option>
+
+              <option value="total">
+                Tổng
+              </option>
+            </select>
+          </div>
+
+
+          <!-- TẢI LẠI -->
+          <button
+            class="btn btn-ghost"
+            onclick="loadForecastBanHang(true)"
+          >
+            Tải lại
+          </button>
+
+
+          <!-- EXCEL -->
+          <button
+            class="btn btn-primary"
+            onclick="exportCurrentReportExcel()"
+          >
+            📥 Tải Excel
+          </button>
+
+        </div> 
+      </div>
+
+
+      <div class="panel-body">
+
+        <div
+          id="forecastBanHangSummary"
+          class="forecast-summary"
+        ></div>
+
+        <div
+          class="forecast-table-wrap"
+        >
+          <table
+            id="forecastBanHangTable"
+            class="forecast-table"
+          >
+            <tbody>
+              <tr>
+                <td class="empty">
+                  Đang chờ tải dữ liệu...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+
+  <!-- 2. NHU CẦU NGUYÊN LIỆU --> 
+  <div
+    id="reportView_baoCaoNhuCauNguyenLieu"
+    class="report-view hidden"
+  >
+    <div class="panel">
+
+      <div class="panel-head">
+
+        <div>
+          <h2>
+            Nhu cầu nguyên liệu
+          </h2>
+
+          <div class="report-subtitle">
+            Tính từ Forecast bán hàng và định lượng BOM
+          </div>
+        </div>
+
+
+        <div
+          class="material-demand-filter-row"
+        >
+
+          <div
+            class="material-demand-filter-item"
+          >
+            <label>
+              Số tuần
+            </label>
+
+            <select
+              id="materialDemandWeekCount"
+              class="search"
+              onchange="loadNhuCauNguyenLieu(true)"
+            >
+              <option value="4">
+                4 tuần
+              </option>
+
+              <option value="8">
+                8 tuần
+              </option>
+
+              <option value="12">
+                12 tuần
+              </option>
+            </select>
+          </div>
+
+
+          <button
+            class="btn btn-ghost"
+            onclick="loadNhuCauNguyenLieu(true)"
+          >
+            Tải lại
+          </button>
+
+          <button
+            class="btn btn-primary"
+            onclick="exportCurrentReportExcel()"
+          >
+            📥 Tải Excel
+          </button>
+
+        </div>
+
+      </div>
+
+
+      <div class="panel-body">
+
+        <div
+          id="materialDemandSummary"
+          class="forecast-summary"
+        ></div>
+
+
+        <div
+          class="material-demand-table-wrap"
+        >
+          <table
+            id="materialDemandTable"
+            class="material-demand-table"
+          >
+            <tbody>
+              <tr>
+                <td class="empty">
+                  Đang chờ tải dữ liệu...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+
+        <div
+          id="materialDemandWarning"
+          class="warning-box"
+          style="
+            display:none;
+            margin-top:14px;
+          "
+        ></div>
+
+      </div>
+
+    </div>
+  </div>
+
+
+  <!-- 3. YÊU CẦU ĐẶT HÀNG -->
+    <div
+      id="reportView_baoCaoYeuCauDatHang"
+      class="report-view hidden"
+    >
+      <div class="panel">
+
+        <div class="panel-head">
+
+          <div>
+            <h2>
+              Yêu cầu đặt hàng
+            </h2>
+
+            <div class="report-subtitle">
+              Theo dõi tồn kho, nhu cầu và thời điểm cần phát hành PO
+            </div>
+          </div>
+
+
+          <div
+            class="order-request-filter-row"
+          >
+
+            <!-- SỐ TUẦN -->
+            <div
+              class="order-request-filter-item"
+            >
+              <label>
+                Số tuần
+              </label>
+
+              <select
+                id="orderRequestWeekCount"
+                class="search"
+                onchange="loadYeuCauDatHang(true)"
+              >
+                <option value="4">
+                  4 tuần
+                </option>
+
+                <option value="8">
+                  8 tuần
+                </option>
+
+                <option value="12">
+                  12 tuần
+                </option>
+              </select>
+            </div>
+
+
+            <!-- HIỂN THỊ -->
+            <div
+              class="order-request-filter-item"
+            >
+              <label>
+                Hiển thị
+              </label>
+
+              <select
+                id="orderRequestDisplayFilter"
+                class="search"
+                onchange="filterYeuCauDatHangClient()"
+              >
+                <option value="all">
+                  Tất cả nguyên liệu
+                </option>
+
+                <option value="needOrder">
+                  Nguyên liệu cần đặt
+                </option>
+              </select>
+            </div>
+
+
+            <!-- TẢI LẠI -->
+            <button
+              class="btn btn-ghost"
+              onclick="loadYeuCauDatHang(true)"
+            >
+              Tải lại
+            </button>
+
+
+            <!-- EXCEL -->
+            <button
+              class="btn btn-primary"
+              onclick="exportCurrentReportExcel()"
+            >
+              📥 Tải Excel
+            </button>
+
+          </div>
+
+        </div>
+
+
+        <div class="panel-body">
+
+          <div
+            id="orderRequestSummary"
+            class="forecast-summary"
+          ></div>
+
+
+          <div
+            class="order-request-table-wrap"
+          >
+
+            <table
+              id="orderRequestTable"
+              class="order-request-table"
+            >
+              <tbody>
+                <tr>
+                  <td class="empty">
+                    Đang chờ tải dữ liệu...
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+
+          </div>
+
+
+          <div
+            id="orderRequestWarning"
+            class="warning-box"
+            style="
+              display:none;
+              margin-top:14px;
+            "
+          ></div>
+
+        </div>
+
+      </div>
+    </div>
+</section>

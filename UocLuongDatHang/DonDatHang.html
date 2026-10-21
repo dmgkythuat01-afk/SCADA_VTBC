@@ -1,0 +1,894 @@
+<!-- ==================================================
+     MODULE ĐƠN ĐẶT HÀNG
+     Vòng 1:
+     - Chỉ dựng Card giống mẫu PO.
+     - Các ô dữ liệu để nhập tay.
+     - Tiêu đề sẽ được JS map từ CauHinhDonDatHang.
+     ================================================== -->
+
+
+<template id="donDatHangCardTemplate">
+
+  <div
+    id="donDatHangCard"
+    class="panel po-create-card"
+  >
+
+    <div class="panel-head">
+
+      <div>
+
+        <h2>
+          Tạo đơn đặt hàng
+        </h2>
+
+        <div class="report-subtitle">
+          Khởi tạo đơn đặt hàng theo mẫu chuẩn
+        </div>
+
+      </div>
+
+
+      <div
+        class="po-card-actions"
+      >
+
+        <!-- LƯU ĐƠN -->
+        <button
+          id="poSaveButton"
+          type="button"
+          class="btn btn-primary"
+          onclick="saveDonDatHangCard()"
+        >
+          💾 Lưu đơn
+        </button>
+
+
+        <button
+          id="poCancelEditButton"
+          type="button"
+          class="btn btn-ghost hidden"
+          onclick="cancelEditDonDatHang()"
+        >
+          ✖ Hủy sửa
+        </button>
+
+
+        <!-- XUẤT PDF / IN -->
+        <button
+          type="button"
+          class="btn btn-ghost"
+          onclick="printDonDatHangPdf()"
+        >
+          🖨️ Xuất PDF/In
+        </button>
+
+      </div>
+
+    </div>
+
+    <!-- ==========================================
+        BỘ CHỌN CHO FORM ĐƠN ĐẶT HÀNG
+        ========================================== -->
+
+    <div class="po-order-toolbar">
+
+      <!-- LOẠI ĐƠN GIÁ -->
+      <div class="po-order-filter-item">
+
+        <label>
+          Loại đơn giá
+        </label>
+
+        <select
+          id="poLoaiDonGia"
+          class="search po-order-control"
+          onchange="changeDonDatHangPriceType()"
+        >
+          <option value="coThue">
+            Có thuế VAT
+          </option>
+
+          <option value="khongThue">
+            Không thuế VAT
+          </option>
+        </select>
+
+      </div>
+
+
+      <!-- PHẠM VI NGUYÊN LIỆU -->
+      <div class="po-order-filter-item">
+
+        <label>
+          Hiển thị nguyên liệu
+        </label>
+
+        <select
+          id="poNguyenLieuScope"
+          class="search po-order-control"
+          onchange="changeDonDatHangMaterialScope()"
+        >
+          <option value="needOrder">
+            Nguyên liệu cần đặt
+          </option>
+
+          <option value="all">
+            Tất cả nguyên liệu
+          </option>
+        </select>
+
+      </div>
+
+
+      <!-- TÌM / CHỌN NGUYÊN LIỆU -->
+      <div class="po-order-filter-item po-order-material-item">
+
+        <label>
+          Tên nguyên liệu
+        </label>
+
+        <div class="po-material-add-row">
+
+          <input
+            id="poNguyenLieuSearch"
+            class="search po-order-control"
+            type="text"
+            list="poNguyenLieuDataList"
+            placeholder="Gõ để tìm nguyên liệu..."
+            autocomplete="off"
+            onchange="onDonDatHangMaterialSelected()"
+          >
+
+          <datalist
+            id="poNguyenLieuDataList"
+          >
+          </datalist>
+
+
+          <button
+            type="button"
+            id="poAddMaterialButton"
+            class="btn btn-primary po-add-material-btn"
+            onclick="addSelectedMaterialToOrder()"
+          >
+            + Thêm vào đơn hàng
+          </button>
+
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <div class="panel-body">
+
+      <div
+        id="poFormSheet"
+        class="po-form-sheet"
+      >
+
+        <!-- ==========================================
+             PHẦN ĐẦU
+             ========================================== -->
+
+        <div class="po-top-grid">
+
+          <!-- Công ty -->
+          <div
+            id="poHeaderCompany"
+            class="po-box po-company-block"
+          >
+          </div>
+
+
+          <!-- Tiêu đề -->
+          <div
+            id="poHeaderTitle"
+            class="po-box po-main-title"
+          >
+          </div>
+
+
+          <!-- Ngày / Trang / Số PO -->
+          <div
+            class="po-box po-meta-block"
+          >
+
+            <div class="po-meta-row po-meta-row-two">
+
+              <div class="po-meta-cell">
+
+                <div
+                  id="poLabelNgay"
+                  class="po-label"
+                >
+                  Ngày/号
+                </div>
+
+                <input
+                  id="poNgay"
+                  type="text"
+                  class="po-input po-input-center"
+                  placeholder="dd/mm/yyyy"
+                >
+
+              </div>
+
+
+              <div class="po-meta-cell">
+
+                <div
+                  id="poLabelTrang"
+                  class="po-label"
+                >
+                  Trang/…
+                </div>
+
+                <input
+                  id="poTrang"
+                  type="text"
+                  class="po-input po-input-center"
+                  value="1/1"
+                >
+
+              </div>
+
+            </div>
+
+
+            <div class="po-meta-row">
+
+              <div class="po-meta-cell po-meta-cell-full">
+
+                <div
+                  id="poLabelSoDonDatHang"
+                  class="po-label"
+                >
+                  Số đơn đặt hàng/订货单：
+                </div>
+
+                <input
+                  id="poSoDonDatHang"
+                  type="text"
+                  class="po-input po-input-center po-input-bold"
+                >
+
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <!-- ==========================================
+             BÊN MUA / NHÀ SX / ĐƠN VỊ CHUYỂN TIỀN
+             ========================================== -->
+
+        <div class="po-party-grid">
+
+          <!-- Bên mua -->
+          <div class="po-box po-party-box">
+
+            <div
+              id="poLabelBenMua"
+              class="po-section-title"
+            >
+              Bên mua:
+              <br>
+              买方
+            </div>
+
+            <div
+              id="poBuyerFixed"
+              class="po-preline"
+            >
+            </div>
+
+          </div>
+
+
+          <!-- Nhà sản xuất -->
+          <div class="po-box po-party-box">
+
+            <div
+              id="poLabelNhaSanXuat"
+              class="po-section-title"
+            >
+              Nhà sản xuất:
+            </div>
+
+            <select
+              id="poNhaSanXuatSelect"
+              class="po-party-select"
+              onchange="onDonDatHangSupplierChange()"
+            >
+              <option value="">
+                Chọn nhà sản xuất
+              </option>
+            </select>
+
+
+            <textarea
+              id="poNhaSanXuat"
+              class="po-textarea"
+            ></textarea>
+
+          </div>
+
+
+          <!-- Đơn vị chuyển tiền -->
+          <div class="po-box po-party-box">
+
+            <div
+              id="poLabelDonViVanChuyen"
+              class="po-section-title"
+            >
+              Đơn vị chuyển tiền cho NCC:
+            </div>
+
+
+            <div class="po-party-select-wrap">
+
+              <select
+                id="poDonViVanChuyen"
+                class="po-party-select"
+                onchange="onDonViChuyenTienChange()"
+              >
+                <option value="">
+                  Chọn đơn vị chuyển tiền
+                </option>
+              </select>
+
+            </div>
+
+
+            <div
+              id="poDonViVanChuyenText"
+              class="po-party-selected-text"
+            >
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <!-- ==========================================
+             THÔNG TIN ĐƠN
+             ========================================== -->
+
+        <div class="po-info-table-wrap">
+
+          <table class="po-info-table">
+
+            <thead>
+
+              <tr>
+
+                <th
+                  id="poLabelTheoDeNghi"
+                >
+                  Theo đề nghị/kế hoạch số:
+                </th>
+
+                <th
+                  id="poLabelNoiDung"
+                >
+                  Nội dung
+                </th>
+
+                <th
+                  id="poLabelNguoiLienHe"
+                >
+                  Người liên hệ
+                </th>
+
+                <th
+                  id="poLabelPhuongThucThanhToan"
+                >
+                  Phương thức và thời hạn thanh toán
+                </th>
+
+                <th
+                  id="poLabelThoiGianGiaoHang"
+                >
+                  Thời gian giao hàng
+                </th>
+
+                <th
+                  id="poLabelCangDen"
+                >
+                  Cảng đến
+                </th>
+
+              </tr>
+
+            </thead>
+
+
+            <tbody>
+
+              <tr>
+
+                <td>
+                  <textarea
+                    id="poTheoDeNghi"
+                    class="po-cell-input"
+                  ></textarea>
+                </td>
+
+                <td>
+                  <textarea
+                    id="poNoiDung"
+                    class="po-cell-input"
+                  ></textarea>
+                </td>
+
+                <td>
+                  <textarea
+                    id="poNguoiLienHe"
+                    class="po-cell-input"
+                  ></textarea>
+                </td>
+
+                <td>
+                  <textarea
+                    id="poPhuongThucThanhToan"
+                    class="po-cell-input"
+                  ></textarea>
+                </td>
+
+                <td>
+                  <input
+                    id="poThoiGianGiaoHang"
+                    type="text"
+                    class="po-cell-input po-cell-center"
+                    placeholder="dd/mm/yyyy"
+                  >
+                </td>
+
+                <td>
+                  <div class="po-port-cell">
+
+                    <select
+                      id="poCangDenSelect"
+                      class="po-port-select"
+                      onchange="onDonDatHangPortChange()"
+                    >
+                      <option value="">
+                        Chọn cảng đến
+                      </option>
+                    </select>
+
+
+                    <textarea
+                      id="poCangDen"
+                      class="po-port-text"
+                    ></textarea>
+
+                  </div>
+                </td>
+
+              </tr>
+
+            </tbody>
+
+          </table>
+
+        </div>
+
+
+        <!-- ==========================================
+             BẢNG HÀNG HÓA
+             ========================================== -->
+
+        <div class="po-items-wrap">
+
+          <table class="po-items-table">
+
+            <thead>
+
+              <tr>
+
+                <th
+                  id="poLabelStt"
+                  class="po-col-stt"
+                >
+                  STT
+                </th>
+
+                <th
+                  id="poLabelMaHangHoa"
+                  class="po-col-code"
+                >
+                  Mã hàng hóa
+                </th>
+
+                <th
+                  id="poLabelTenHangHoa"
+                  class="po-col-name"
+                >
+                  Tên hàng hóa
+                </th>
+
+                <th
+                  id="poLabelDonViTinh"
+                  class="po-col-unit"
+                >
+                  Đơn vị tính
+                </th>
+
+                <th
+                  id="poLabelSoLuong"
+                  class="po-col-qty"
+                >
+                  Số lượng
+                </th>
+
+                <th
+                  id="poLabelDonGia"
+                  class="po-col-price"
+                >
+                  Đơn giá gồm thuế VAT
+                </th>
+
+                <th
+                  id="poLabelThanhTien"
+                  class="po-col-amount"
+                >
+                  Thành tiền
+                </th>
+
+                <th
+                  id="poLabelThongSoKyThuat"
+                  class="po-col-spec"
+                >
+                  Thông số kỹ thuật cơ bản
+                </th>
+
+                <th class="po-col-action">
+                </th>
+
+              </tr>
+
+            </thead>
+
+
+            <tbody
+              id="poItemsBody"
+            >
+            </tbody>
+
+
+            <tfoot>
+
+              <tr>
+
+                <!-- Gộp từ STT đến Đơn giá -->
+                <td
+                  id="poLabelTongCong"
+                  colspan="6"
+                  class="po-total-label"
+                >
+                  Tổng cộng
+                </td>
+
+
+                <!-- Đúng cột Thành tiền -->
+                <td
+                  id="poTongTien"
+                  class="po-total-value"
+                >
+                </td>
+
+
+                <!-- Cột Thông số kỹ thuật -->
+                <td></td>
+
+
+                <!-- Cột Xóa -->
+                <td></td>
+
+              </tr>
+
+            </tfoot>
+
+          </table>
+
+        </div>
+
+
+        <div class="po-item-actions">
+
+          <button
+            type="button"
+            class="btn btn-ghost"
+            onclick="addDonDatHangItemRow()"
+          >
+            + Thêm dòng hàng hóa
+          </button>
+
+        </div>
+
+
+        <!-- ==========================================
+             PHẦN KÝ - GÓC PHẢI
+             ========================================== -->
+
+        <div class="po-signature-row">
+
+          <div class="po-signature-spacer">
+          </div>
+
+
+          <div class="po-signature-box">
+
+            <div
+              id="poSignatureCompany"
+              class="po-signature-company"
+            >
+              CÔNG TY TNHH ĐỨC MINH ĐỒNG NAI
+            </div>
+
+
+            <div class="po-signature-head">
+
+              <div>
+                Người lập
+              </div>
+
+              <div>
+                Xác nhận
+              </div>
+
+              <div>
+                Duyệt
+              </div>
+
+            </div>
+
+
+            <div class="po-signature-body">
+
+              <div></div>
+
+              <div></div>
+
+              <div></div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- ==================================================
+      CARD LỊCH SỬ ĐẶT HÀNG
+      ================================================== -->
+
+  <div
+    id="donDatHangHistoryCard"
+    class="panel po-history-card"
+  >
+
+    <div class="panel-head">
+
+      <div>
+
+        <h2>
+          Lịch sử đặt hàng
+        </h2>
+
+        <div class="report-subtitle">
+          Tra cứu, in và chỉnh sửa các đơn đã tạo
+        </div>
+
+      </div>
+
+
+      <div class="po-history-filter-row">
+
+        <!-- TỪ NGÀY -->
+        <div class="po-history-filter-item">
+
+          <label>
+            Từ ngày
+          </label>
+
+          <input
+            id="poHistoryFromDate"
+            type="date"
+            class="search po-history-control"
+          >
+
+        </div>
+
+
+        <!-- ĐẾN NGÀY -->
+        <div class="po-history-filter-item">
+
+          <label>
+            Đến ngày
+          </label>
+
+          <input
+            id="poHistoryToDate"
+            type="date"
+            class="search po-history-control"
+          >
+
+        </div>
+
+
+        <!-- TÊN NGUYÊN LIỆU -->
+        <div
+          class="
+            po-history-filter-item
+            po-history-material-filter
+          "
+        >
+
+          <label>
+            Tên nguyên liệu
+          </label>
+
+          <input
+            id="poHistoryMaterialSearch"
+            type="text"
+            list="poHistoryMaterialList"
+            class="search po-history-control"
+            placeholder="Gõ để tìm nguyên liệu..."
+            autocomplete="off"
+          >
+
+          <datalist
+            id="poHistoryMaterialList"
+          >
+          </datalist>
+
+        </div>
+
+
+        <!-- LỌC -->
+        <button
+          type="button"
+          class="btn btn-primary"
+          onclick="loadLichSuDonDatHang(true)"
+        >
+          🔍 Lọc
+        </button>
+
+
+        <!-- TẢI LẠI -->
+        <button
+          type="button"
+          class="btn btn-ghost"
+          onclick="resetLichSuDonDatHangFilter()"
+        >
+          Tải lại
+        </button>
+
+      </div>
+
+    </div>
+
+
+    <div class="panel-body">
+
+      <div
+        id="poHistorySummary"
+        class="forecast-summary"
+      >
+      </div>
+
+
+      <div class="po-history-table-wrap">
+
+        <table
+          id="poHistoryTable"
+          class="po-history-table"
+        >
+
+          <thead>
+
+            <tr>
+
+              <th>
+                Thao tác
+              </th>
+
+              <th>
+                Trạng thái PO
+              </th>
+
+              <th>
+                Xem ảnh PO
+              </th>
+
+              <th>
+                Ngày đơn
+              </th>
+
+              <th>
+                Số đơn
+              </th>
+
+              <th>
+                Nhà sản xuất
+              </th>
+
+              <th>
+                Nguyên liệu
+              </th>
+
+              <th>
+                Tổng SL
+              </th>
+
+              <th>
+                Tổng cộng
+              </th>
+
+              <th>
+                Thời gian giao hàng
+              </th>
+
+              <th>
+                Cảng đến
+              </th>
+
+              <th>
+                Thời gian tạo
+              </th>
+
+            </tr>
+
+          </thead>
+
+
+          <tbody>
+
+            <tr>
+
+              <td
+                colspan="12"
+                class="empty"
+              >
+                Đang chờ tải dữ liệu...
+              </td>
+
+            </tr>
+
+          </tbody>
+
+        </table>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- ==================================================
+      INPUT ẨN UPLOAD ẢNH PO
+      ================================================== -->
+
+  <input
+    id="poHistoryImageInput"
+    type="file"
+    accept="image/*"
+    style="display:none;"
+    onchange="uploadSelectedAnhPODonDatHang(this)"
+  >
+
+</template>

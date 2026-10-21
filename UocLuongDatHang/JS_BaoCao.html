@@ -1,0 +1,3283 @@
+<script>
+  /*******************************************************
+   * MODULE JAVASCRIPT BÁO CÁO
+   *
+   * Không sửa logic menu Quản lý.
+   *******************************************************/
+
+  /*
+   * Đăng ký 3 menu con của "Báo cáo".
+   *
+   * renderMenu() trong Index.html hiện tại
+   * đã biết đọc REPORT_MENU.
+   */
+  REPORT_MENU.push(
+    {
+      key: 'baoCaoForecastBanHang',
+      label: 'Forecast bán hàng',
+      icon: '📈'
+    },
+    {
+      key: 'baoCaoNhuCauNguyenLieu',
+      label: 'Nhu cầu nguyên liệu',
+      icon: '🧪'
+    },
+    {
+      key: 'baoCaoYeuCauDatHang',
+      label: 'Yêu cầu đặt hàng',
+      icon: '🛒'
+    }
+  );
+
+  let FORECAST_BAN_HANG_CACHE = {};
+
+  let NHU_CAU_NGUYEN_LIEU_CACHE = {};
+
+  let YEU_CAU_DAT_HANG_CACHE = {};
+
+  let FORECAST_SELECTED_CUSTOMERS = [];
+
+  let FORECAST_SELECTED_PRODUCTS = [];
+
+  /**
+   * Kiểm tra key có thuộc module Báo cáo không.
+   */
+  function isReportMenuKey(key) {
+    return (REPORT_MENU || [])
+      .some(item =>
+        String(item.key) ===
+        String(key)
+      );
+  }
+
+
+  /**
+   * Lấy tên hiển thị của báo cáo.
+   */
+  function getReportMenuLabel(key) {
+    const item =
+      (REPORT_MENU || [])
+        .find(item =>
+          String(item.key) ===
+          String(key)
+        );
+
+    return item
+      ? item.label
+      : key;
+  }
+
+
+  /**
+   * Ẩn tất cả view con của Báo cáo.
+   */
+  function hideAllReportViews() {
+    document
+      .querySelectorAll(
+        '#viewBaoCao .report-view'
+      )
+      .forEach(el => {
+        el.classList.add('hidden');
+      });
+  }
+
+
+  /**
+   * Hiển thị một menu Báo cáo.
+   *
+   * Hiện tại chỉ hiện khung placeholder.
+   * Prompt sau sẽ bổ sung nghiệp vụ từng menu.
+   */
+  async function showReportView(key) {
+    const viewData =
+      document.getElementById(
+        'viewData'
+      );
+
+    const viewBaoCao =
+      document.getElementById(
+        'viewBaoCao'
+      );
+
+    /*
+     * Ẩn phần Quản lý.
+     */
+    if (viewData) {
+      viewData.classList.add(
+        'hidden'
+      );
+    }
+
+    /*
+     * Ẩn card nhập Kế hoạch bán hàng
+     * vì card này nằm ngoài viewData.
+     */
+    const keHoachBanHangInputPanel =
+      document.getElementById(
+        'keHoachBanHangInputPanel'
+      );
+
+    if (keHoachBanHangInputPanel) {
+      keHoachBanHangInputPanel.style.display =
+        'none';
+    }
+
+    /*
+     * Hiện vùng Báo cáo.
+     */
+    if (viewBaoCao) {
+      viewBaoCao.classList.remove(
+        'hidden'
+      );
+    }
+
+    hideAllReportViews();
+
+    const target =
+      document.getElementById(
+        'reportView_' + key
+      );
+
+    if (target) {
+      target.classList.remove(
+        'hidden'
+      );
+    }
+
+    /*
+     * Báo cáo không phải sheet CRUD,
+     * vì vậy không gọi loadSheet().
+     */
+    currentSheet = '';
+
+    /*
+     * Tiêu đề trang.
+     */
+    const pageTitle =
+      document.getElementById(
+        'pageTitle'
+      );
+
+    const pageSub =
+      document.getElementById(
+        'pageSub'
+      );
+
+    if (pageTitle) {
+      pageTitle.textContent =
+        getReportMenuLabel(key);
+    }
+
+    if (pageSub) {
+      if (
+        key ===
+        'baoCaoForecastBanHang'
+      ) {
+        pageSub.textContent =
+          'Forecast bán hàng - Phòng kinh doanh nhập.';
+      } else if (
+        key ===
+        'baoCaoNhuCauNguyenLieu'
+      ) {
+        pageSub.textContent =
+          'Tổng hợp và theo dõi nhu cầu nguyên liệu / vật tư.';
+      } else if (
+        key ===
+        'baoCaoYeuCauDatHang'
+      ) {
+        pageSub.textContent =
+          'Yêu cầu đặt hàng - Phòng bán hàng nhập.';
+      } else {
+        pageSub.textContent =
+          'Báo cáo hệ thống.';
+      }
+    }
+
+    if (
+      key ===
+      'baoCaoForecastBanHang'
+    ) {
+      await loadForecastBanHang(
+        false
+      );
+    }
+
+    if (
+      key ===
+      'baoCaoNhuCauNguyenLieu'
+    ) {
+      await loadNhuCauNguyenLieu(
+        false
+      );
+    }
+
+    if (
+      key ===
+      'baoCaoYeuCauDatHang'
+    ) {
+      await loadYeuCauDatHang(
+        false
+      );
+    }
+
+  }
+
+
+  /**
+   * Khi quay lại menu Quản lý,
+   * gọi hàm này để ẩn vùng Báo cáo.
+   */
+  function hideBaoCaoModule() {
+    const viewBaoCao =
+      document.getElementById(
+        'viewBaoCao'
+      );
+
+    if (viewBaoCao) {
+      viewBaoCao.classList.add(
+        'hidden'
+      );
+    }
+
+    hideAllReportViews();
+  }
+
+  function getForecastCacheKey(
+    soTuan
+  ) {
+    return String(
+      soTuan || 4
+    );
+  }
+
+  async function loadForecastBanHang(
+    forceReload = false
+  ) {
+    const weekCountEl =
+      document.getElementById(
+        'forecastWeekCount'
+      );
+
+    const soTuan =
+      Number(
+        weekCountEl?.value || 4
+      );
+
+    const cacheKey =
+      getForecastCacheKey(
+        soTuan
+      );
+
+
+    /*
+    * Nếu đã có cache theo số tuần
+    * thì dùng ngay.
+    */
+    if (
+      !forceReload &&
+      FORECAST_BAN_HANG_CACHE[
+        cacheKey
+      ]
+    ) {
+      const data =
+        FORECAST_BAN_HANG_CACHE[
+          cacheKey
+        ];
+
+      renderForecastCustomerOptions(
+        data
+      );
+
+      renderForecastProductOptions(
+        data
+      );
+
+      applyForecastBanHangFilters();
+
+      return;
+    }
+
+
+    setLoading(true);
+
+    try {
+      /*
+      * QUAN TRỌNG:
+      * Backend lấy tất cả khách hàng.
+      *
+      * Không truyền filter khách hàng nữa.
+      */
+      const data =
+        await server(
+          'getBaoCaoForecastBanHang',
+          soTuan,
+          ''
+        );
+
+      FORECAST_BAN_HANG_CACHE[
+        cacheKey
+      ] =
+        data;
+
+      renderForecastCustomerOptions(
+        data
+      );
+
+      renderForecastProductOptions(
+        data
+      );
+
+      applyForecastBanHangFilters();
+
+    } catch (error) {
+      alert(
+        error.message ||
+        error
+      );
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function filterForecastBanHangClient() {
+
+    applyForecastBanHangFilters();
+
+  }
+
+  function applyForecastBanHangFilters() {
+
+    const weekCountEl =
+      document.getElementById(
+        'forecastWeekCount'
+      );
+ 
+    const selectedCustomers =
+      FORECAST_SELECTED_CUSTOMERS ||
+      [];
+
+
+    const selectedProducts =
+      FORECAST_SELECTED_PRODUCTS ||
+      [];
+      
+
+    const displayModeEl =
+      document.getElementById(
+        'forecastDisplayMode'
+      );
+
+
+    const soTuan =
+      Number(
+        weekCountEl?.value || 4
+      );
+
+ 
+
+    const displayMode =
+      displayModeEl?.value ||
+      'customer';
+
+
+    const cacheKey =
+      getForecastCacheKey(
+        soTuan
+      );
+
+
+    /*
+    * Dữ liệu gốc.
+    */
+    const originalData =
+      FORECAST_BAN_HANG_CACHE[
+        cacheKey
+      ];
+
+
+    if (!originalData) {
+      return;
+    }
+
+
+    /*
+    * ==========================================
+    * 1. LỌC SẢN PHẨM
+    * ==========================================
+    */
+
+    let products =
+      (
+        originalData.products ||
+        []
+      )
+        .filter(product =>
+          !selectedProducts.length ||
+          selectedProducts.some(
+            code =>
+              String(code) ===
+              String(
+                product.maSanPham ||
+                ''
+              )
+          )
+        );
+
+
+    /*
+    * ==========================================
+    * 2. LỌC KHÁCH HÀNG
+    * ==========================================
+    */
+
+    if (
+      selectedCustomers.length
+    ) {
+
+      products =
+        products
+          .map(product => {
+
+            const customerRows =
+              (
+                product.customerRows ||
+                []
+              )
+                .filter(row =>
+                  selectedCustomers.some(
+                    customer =>
+                      String(customer) ===
+                      String(
+                        row.khachHang ||
+                        ''
+                      )
+                  )
+                );
+
+
+            /*
+            * Tính lại tổng của sản phẩm
+            * chỉ theo khách hàng đang lọc.
+            */
+            const totalWeeks =
+              {};
+
+
+            (
+              originalData.weeks ||
+              []
+            )
+              .forEach(w => {
+
+                const key =
+                  w.nam +
+                  '|' +
+                  w.tuan;
+
+
+                totalWeeks[
+                  key
+                ] =
+                  customerRows.reduce(
+                    (
+                      sum,
+                      row
+                    ) =>
+                      sum +
+                      Number(
+                        row.weeks?.[
+                          key
+                        ] || 0
+                      ),
+                    0
+                  );
+
+              });
+
+
+            return {
+
+              ...product,
+
+              customerRows,
+
+              totalWeeks
+
+            };
+
+          })
+
+
+          /*
+          * Không có khách hàng đang lọc
+          * thì bỏ sản phẩm.
+          */
+          .filter(product =>
+            product
+              .customerRows
+              .length
+          );
+
+    }
+
+
+    /*
+    * ==========================================
+    * 3. DATA RENDER
+    * ==========================================
+    */
+
+    const filteredData = {
+
+      ...originalData,
+
+      khachHangFilter:
+        selectedCustomers,
+
+      maSanPhamFilter:
+        selectedProducts,
+
+      displayMode:
+        displayMode,
+
+      products:
+        products
+
+    };
+
+
+    renderForecastBanHang(
+      filteredData
+    );
+
+  }
+
+  function renderForecastCustomerOptions(
+    data
+  ) {
+
+    const box =
+      document.getElementById(
+        'forecastCustomerMultiOptions'
+      );
+
+    if (!box) {
+      return;
+    }
+
+
+    const customers =
+      data.customers || [];
+
+
+    FORECAST_SELECTED_CUSTOMERS =
+      FORECAST_SELECTED_CUSTOMERS
+        .filter(value =>
+          customers.some(item =>
+            String(item) ===
+            String(value)
+          )
+        );
+
+
+    box.innerHTML =
+      customers
+        .map(item => {
+
+          const checked =
+            FORECAST_SELECTED_CUSTOMERS
+              .some(value =>
+                String(value) ===
+                String(item)
+              );
+
+          return `
+            <label
+              class="forecast-multi-option"
+            >
+              <input
+                type="checkbox"
+                value="${esc(item)}"
+                ${
+                  checked
+                    ? 'checked'
+                    : ''
+                }
+                onchange="onForecastCustomerMultiChange()"
+              >
+
+              <span>
+                ${esc(item)}
+              </span>
+            </label>
+          `;
+
+        })
+        .join('');
+
+
+    updateForecastCustomerMultiText();
+
+  }
+
+  function renderForecastProductOptions(
+    data
+  ) {
+
+    const box =
+      document.getElementById(
+        'forecastProductMultiOptions'
+      );
+
+    if (!box) {
+      return;
+    }
+
+
+    const products =
+      (
+        data?.products ||
+        []
+      )
+        .slice()
+        .sort(
+          (a, b) =>
+            String(
+              a.tenSanPham ||
+              ''
+            )
+            .localeCompare(
+              String(
+                b.tenSanPham ||
+                ''
+              ),
+              'vi'
+            )
+        );
+
+
+    FORECAST_SELECTED_PRODUCTS =
+      FORECAST_SELECTED_PRODUCTS
+        .filter(value =>
+          products.some(product =>
+            String(
+              product.maSanPham ||
+              ''
+            ) ===
+            String(value)
+          )
+        );
+
+
+    box.innerHTML =
+      products
+        .map(product => {
+
+          const code =
+            String(
+              product.maSanPham ||
+              ''
+            );
+
+
+          const checked =
+            FORECAST_SELECTED_PRODUCTS
+              .some(value =>
+                String(value) ===
+                code
+              );
+
+
+          return `
+            <label
+              class="forecast-multi-option"
+              data-search="${esc(
+                (
+                  product.tenSanPham ||
+                  ''
+                ).toLowerCase()
+              )}"
+            >
+
+              <input
+                type="checkbox"
+                value="${esc(code)}"
+                ${
+                  checked
+                    ? 'checked'
+                    : ''
+                }
+                onchange="onForecastProductMultiChange()"
+              >
+
+              <span>
+                ${esc(
+                  product.tenSanPham ||
+                  product.maSanPham ||
+                  ''
+                )}
+              </span>
+
+            </label>
+          `;
+
+        })
+        .join('');
+
+
+    updateForecastProductMultiText();
+
+  }
+
+  function toggleForecastMulti(
+    id
+  ) {
+
+    document
+      .querySelectorAll(
+        '.forecast-multi-select'
+      )
+      .forEach(el => {
+
+        if (el.id !== id) {
+          el.classList.remove('open');
+        }
+
+      });
+
+
+    document
+      .getElementById(id)
+      ?.classList
+      .toggle('open');
+
+  }
+
+
+  function onForecastCustomerMultiChange() {
+
+    FORECAST_SELECTED_CUSTOMERS =
+      Array
+        .from(
+          document.querySelectorAll(
+            '#forecastCustomerMultiOptions input:checked'
+          )
+        )
+        .map(el =>
+          el.value
+        );
+
+
+    updateForecastCustomerMultiText();
+
+    applyForecastBanHangFilters();
+
+  }
+
+
+  function onForecastProductMultiChange() {
+
+    FORECAST_SELECTED_PRODUCTS =
+      Array
+        .from(
+          document.querySelectorAll(
+            '#forecastProductMultiOptions input:checked'
+          )
+        )
+        .map(el =>
+          el.value
+        );
+
+
+    updateForecastProductMultiText();
+
+    applyForecastBanHangFilters();
+
+  }
+
+
+  function updateForecastCustomerMultiText() {
+
+    const el =
+      document.getElementById(
+        'forecastCustomerMultiText'
+      );
+
+
+    if (!el) {
+      return;
+    }
+
+
+    if (
+      !FORECAST_SELECTED_CUSTOMERS.length
+    ) {
+
+      el.textContent =
+        'Tất cả khách hàng';
+
+      return;
+    }
+
+
+    if (
+      FORECAST_SELECTED_CUSTOMERS.length === 1
+    ) {
+
+      el.textContent =
+        FORECAST_SELECTED_CUSTOMERS[0];
+
+      return;
+    }
+
+
+    el.textContent =
+      FORECAST_SELECTED_CUSTOMERS.length +
+      ' khách hàng';
+
+  }
+
+
+  function updateForecastProductMultiText() {
+
+    const el =
+      document.getElementById(
+        'forecastProductMultiText'
+      );
+
+
+    if (!el) {
+      return;
+    }
+
+
+    if (
+      !FORECAST_SELECTED_PRODUCTS.length
+    ) {
+
+      el.textContent =
+        'Tất cả sản phẩm';
+
+      return;
+    }
+
+
+    if (
+      FORECAST_SELECTED_PRODUCTS.length === 1
+    ) {
+
+      const soTuan =
+        Number(
+          document.getElementById(
+            'forecastWeekCount'
+          )?.value || 4
+        );
+
+
+      const data =
+        FORECAST_BAN_HANG_CACHE[
+          getForecastCacheKey(
+            soTuan
+          )
+        ];
+
+
+      const product =
+        (
+          data?.products ||
+          []
+        )
+          .find(item =>
+            String(
+              item.maSanPham ||
+              ''
+            ) ===
+            String(
+              FORECAST_SELECTED_PRODUCTS[0]
+            )
+          );
+
+
+      el.textContent =
+        product?.tenSanPham ||
+        FORECAST_SELECTED_PRODUCTS[0];
+
+      return;
+    }
+
+
+    el.textContent =
+      FORECAST_SELECTED_PRODUCTS.length +
+      ' sản phẩm';
+
+  }
+
+
+  function filterForecastProductMultiOptions() {
+
+    const keyword =
+      String(
+        document.getElementById(
+          'forecastProductMultiSearch'
+        )?.value ||
+        ''
+      )
+        .trim()
+        .toLowerCase();
+
+
+    document
+      .querySelectorAll(
+        '#forecastProductMultiOptions .forecast-multi-option'
+      )
+      .forEach(el => {
+
+        const text =
+          String(
+            el.dataset.search ||
+            ''
+          );
+
+
+        el.style.display =
+          !keyword ||
+          text.includes(keyword)
+            ? ''
+            : 'none';
+
+      });
+
+  }
+
+  function renderForecastBanHang(
+    data
+  ) {
+    const table =
+      document.getElementById(
+        'forecastBanHangTable'
+      );
+
+    const summary =
+      document.getElementById(
+        'forecastBanHangSummary'
+      );
+
+    if (
+      !table ||
+      !data
+    ) {
+      return;
+    }
+
+    const weeks =
+      data.weeks || [];
+
+    const products =
+      data.products || [];
+
+    const displayMode =
+      data.displayMode ||
+      document.getElementById(
+        'forecastDisplayMode'
+      )?.value ||
+      'customer';
+
+
+    const isTotalMode =
+      displayMode ===
+      'total';
+
+    table.classList.toggle(
+      'forecast-total-mode',
+      isTotalMode
+    );
+
+    table.classList.toggle(
+      'forecast-customer-mode',
+      !isTotalMode
+    );
+
+
+    /*
+    * ==========================================
+    * SUMMARY
+    * ==========================================
+    */
+
+    if (summary) {
+      if (weeks.length) {
+        const first =
+          weeks[0];
+
+        const last =
+          weeks[
+            weeks.length - 1
+          ];
+
+        let summaryText =
+          'Hiển thị ' +
+          weeks.length +
+          ' tuần: Tuần ' +
+          first.tuan +
+          '/' +
+          first.nam +
+          ' → Tuần ' +
+          last.tuan +
+          '/' +
+          last.nam +
+          ' • ' +
+          products.length +
+          ' sản phẩm';
+
+
+        if (
+          Array.isArray(
+            data.khachHangFilter
+          ) &&
+          data.khachHangFilter.length
+        ) {
+
+          summaryText +=
+            ' • Khách hàng: ' +
+            (
+              data.khachHangFilter.length === 1
+                ? data.khachHangFilter[0]
+                : data.khachHangFilter.length +
+                  ' khách hàng'
+            );
+
+        }
+
+
+        summaryText +=
+          isTotalMode
+            ? ' • Hiển thị: Tổng'
+            : ' • Hiển thị: Theo khách hàng';
+
+
+        summary.textContent =
+          summaryText;
+      } else {
+        summary.textContent =
+          '';
+      }
+    }
+
+
+    /*
+    * ==========================================
+    * KHÔNG CÓ DỮ LIỆU
+    * ==========================================
+    */
+
+    if (!products.length) {
+
+      table.innerHTML = `
+        <thead>
+          <tr>
+
+            <th>
+              Tên sản phẩm
+            </th>
+
+            ${
+              !isTotalMode
+                ? `
+                  <th>
+                    Khách hàng
+                  </th>
+                `
+                : ''
+            }
+
+            ${weeks
+              .map(w => `
+                <th>
+                  Tuần ${w.tuan}
+                </th>
+              `)
+              .join('')}
+
+          </tr>
+        </thead>
+
+        <tbody>
+
+          <tr>
+
+            <td
+              colspan="${
+                weeks.length +
+                (
+                  isTotalMode
+                    ? 1
+                    : 2
+                )
+              }"
+              class="empty"
+            >
+              Không có dữ liệu Forecast bán hàng
+              phù hợp với điều kiện lọc.
+            </td>
+
+          </tr>
+
+        </tbody>
+      `;
+
+      return;
+    }
+
+
+    /*
+    * ==========================================
+    * BODY
+    * ==========================================
+    */
+
+    let bodyHtml = '';
+
+
+    /*
+    * ==========================================
+    * CHẾ ĐỘ 1:
+    * HIỂN THỊ THEO KHÁCH HÀNG
+    * ==========================================
+    */
+
+    if (
+      !isTotalMode
+    ) {
+
+      products.forEach(
+        product => {
+
+          const customerRows =
+            product.customerRows ||
+            [];
+
+
+          /*
+          * Các dòng khách hàng.
+          */
+          customerRows.forEach(
+            (
+              row,
+              rowIndex
+            ) => {
+
+              bodyHtml += `
+                <tr
+                  class="${
+                    rowIndex === 0
+                      ? 'forecast-product-start'
+                      : ''
+                  }"
+                >
+
+                  <!-- TÊN SẢN PHẨM -->
+                  <td
+                    class="
+                      forecast-product-cell
+                    "
+                  >
+                    ${
+                      rowIndex === 0
+                        ? esc(
+                            product.tenSanPham ||
+                            product.maSanPham ||
+                            ''
+                          )
+                        : ''
+                    }
+                  </td>
+
+
+                  <!-- KHÁCH HÀNG -->
+                  <td
+                    class="
+                      forecast-customer-cell
+                    "
+                  >
+                    ${esc(
+                      row.khachHang ||
+                      ''
+                    )}
+                  </td>
+
+
+                  <!-- CÁC TUẦN -->
+                  ${weeks
+                    .map(w => {
+
+                      const key =
+                        w.nam +
+                        '|' +
+                        w.tuan;
+
+
+                      const qty =
+                        Number(
+                          row.weeks?.[
+                            key
+                          ] || 0
+                        );
+
+
+                      return `
+                        <td
+                          class="
+                            forecast-number
+                          "
+                        >
+                          ${
+                            qty !== 0
+                              ? fmtNum(qty)
+                              : ''
+                          }
+                        </td>
+                      `;
+
+                    })
+                    .join('')}
+
+                </tr>
+              `;
+
+            }
+          );
+
+
+          /*
+          * Dòng tổng sản phẩm.
+          */
+          bodyHtml += `
+            <tr
+              class="
+                forecast-total-row
+              "
+            >
+
+              <td
+                class="
+                  forecast-total-label
+                "
+              >
+                Tổng
+              </td>
+
+              <td>
+              </td>
+
+
+              ${weeks
+                .map(w => {
+
+                  const key =
+                    w.nam +
+                    '|' +
+                    w.tuan;
+
+
+                  const qty =
+                    Number(
+                      product
+                        .totalWeeks?.[
+                          key
+                        ] || 0
+                    );
+
+
+                  return `
+                    <td
+                      class="
+                        forecast-number
+                      "
+                    >
+                      ${
+                        qty !== 0
+                          ? fmtNum(qty)
+                          : ''
+                      }
+                    </td>
+                  `;
+
+                })
+                .join('')}
+
+            </tr>
+          `;
+
+        }
+      );
+
+    }
+
+
+    /*
+    * ==========================================
+    * CHẾ ĐỘ 2:
+    * HIỂN THỊ TỔNG
+    *
+    * Mỗi sản phẩm chỉ 1 dòng.
+    * Không có cột khách hàng.
+    * Không có dòng Tổng phụ.
+    * ==========================================
+    */
+
+    else {
+
+      products.forEach(
+        (
+          product,
+          productIndex
+        ) => {
+
+          bodyHtml += `
+            <tr
+              class="
+                ${
+                  productIndex > 0
+                    ? 'forecast-product-start'
+                    : ''
+                }
+                forecast-total-only-row
+              "
+            >
+
+              <!-- TÊN SẢN PHẨM -->
+              <td
+                class="
+                  forecast-product-cell
+                "
+              >
+                ${esc(
+                  product.tenSanPham ||
+                  product.maSanPham ||
+                  ''
+                )}
+              </td>
+
+
+              <!-- TỔNG CÁC TUẦN -->
+              ${weeks
+                .map(w => {
+
+                  const key =
+                    w.nam +
+                    '|' +
+                    w.tuan;
+
+
+                  const qty =
+                    Number(
+                      product
+                        .totalWeeks?.[
+                          key
+                        ] || 0
+                    );
+
+
+                  return `
+                    <td
+                      class="
+                        forecast-number
+                      "
+                    >
+                      ${
+                        qty !== 0
+                          ? fmtNum(qty)
+                          : ''
+                      }
+                    </td>
+                  `;
+
+                })
+                .join('')}
+
+            </tr>
+          `;
+
+        }
+      );
+
+    }
+
+
+    /*
+    * ==========================================
+    * RENDER TABLE
+    * ==========================================
+    */
+
+    table.innerHTML = `
+      <thead>
+        <tr>
+
+          <th>
+            Tên sản phẩm
+          </th>
+
+          ${
+            !isTotalMode
+              ? `
+                <th>
+                  Khách hàng
+                </th>
+              `
+              : ''
+          }
+
+          ${weeks
+            .map(w => `
+              <th>
+                Tuần ${w.tuan}
+              </th>
+            `)
+            .join('')}
+
+        </tr>
+      </thead>
+
+      <tbody>
+        ${bodyHtml}
+      </tbody>
+    `;
+  }
+
+  function getMaterialDemandCacheKey(
+    soTuan
+  ) {
+    return String(
+      soTuan || 4
+    );
+  }
+
+
+  async function loadNhuCauNguyenLieu(
+    forceReload = false
+  ) {
+    const weekCountEl =
+      document.getElementById(
+        'materialDemandWeekCount'
+      );
+
+    const soTuan =
+      Number(
+        weekCountEl?.value || 4
+      );
+
+    const cacheKey =
+      getMaterialDemandCacheKey(
+        soTuan
+      );
+
+
+    /*
+    * Có cache
+    * → render ngay.
+    */
+    if (
+      !forceReload &&
+      NHU_CAU_NGUYEN_LIEU_CACHE[
+        cacheKey
+      ]
+    ) {
+      renderNhuCauNguyenLieu(
+        NHU_CAU_NGUYEN_LIEU_CACHE[
+          cacheKey
+        ]
+      );
+
+      return;
+    }
+
+
+    setLoading(true);
+
+    try {
+
+      const data =
+        await server(
+          'getBaoCaoNhuCauNguyenLieu',
+          soTuan
+        );
+
+
+      NHU_CAU_NGUYEN_LIEU_CACHE[
+        cacheKey
+      ] =
+        data;
+
+
+      renderNhuCauNguyenLieu(
+        data
+      );
+
+    } catch (error) {
+
+      alert(
+        error.message ||
+        error
+      );
+
+    } finally {
+
+      setLoading(false);
+
+    }
+  }
+
+  function renderNhuCauNguyenLieu(
+    data
+  ) {
+    const table =
+      document.getElementById(
+        'materialDemandTable'
+      );
+
+    const summary =
+      document.getElementById(
+        'materialDemandSummary'
+      );
+
+    const warningEl =
+      document.getElementById(
+        'materialDemandWarning'
+      );
+
+
+    if (
+      !table ||
+      !data
+    ) {
+      return;
+    }
+
+
+    const weeks =
+      data.weeks || [];
+
+    const products =
+      data.products || [];
+
+    const warnings =
+      data.warnings || [];
+
+
+    /*
+    * ==========================================
+    * SUMMARY
+    * ==========================================
+    */
+
+    if (summary) {
+
+      if (weeks.length) {
+
+        const first =
+          weeks[0];
+
+        const last =
+          weeks[
+            weeks.length - 1
+          ];
+
+        summary.textContent =
+          'Hiển thị ' +
+          weeks.length +
+          ' tuần: Tuần ' +
+          first.tuan +
+          '/' +
+          first.nam +
+          ' → Tuần ' +
+          last.tuan +
+          '/' +
+          last.nam +
+          ' • ' +
+          products.length +
+          ' sản phẩm';
+
+      } else {
+
+        summary.textContent =
+          '';
+
+      }
+    }
+
+
+    /*
+    * ==========================================
+    * CẢNH BÁO QUY ĐỔI ĐƠN VỊ
+    * ==========================================
+    */
+
+    if (warningEl) {
+
+      if (warnings.length) {
+
+        warningEl.style.display =
+          '';
+
+        warningEl.innerHTML = `
+          <b>
+            Cảnh báo cấu hình quy đổi đơn vị
+          </b>
+
+          ${warnings
+            .slice(0, 20)
+            .map(item => `
+              <div>
+                • ${esc(item)}
+              </div>
+            `)
+            .join('')}
+        `;
+
+      } else {
+
+        warningEl.style.display =
+          'none';
+
+        warningEl.innerHTML =
+          '';
+
+      }
+    }
+
+
+    /*
+    * ==========================================
+    * KHÔNG CÓ DATA
+    * ==========================================
+    */
+
+    if (!products.length) {
+
+      table.innerHTML = `
+        <thead>
+
+          <tr>
+
+            <th>
+              Tên sản phẩm
+            </th>
+
+            <th>
+              Tên nguyên liệu/vật tư
+            </th>
+
+            <th>
+              Đơn vị tính
+            </th>
+
+            ${weeks
+              .map(w => `
+                <th>
+                  Tuần ${w.tuan}
+                </th>
+              `)
+              .join('')}
+
+          </tr>
+
+        </thead>
+
+
+        <tbody>
+
+          <tr>
+
+            <td
+              colspan="${
+                weeks.length + 3
+              }"
+              class="empty"
+            >
+              Không có nhu cầu nguyên liệu
+              trong khoảng tuần đang xem.
+            </td>
+
+          </tr>
+
+        </tbody>
+      `;
+
+      return;
+    }
+
+
+    /*
+    * ==========================================
+    * BODY
+    * ==========================================
+    */
+
+    let bodyHtml = '';
+
+
+    products.forEach(
+      product => {
+
+        const materials =
+          product.materials || [];
+
+
+        materials.forEach(
+          (
+            material,
+            materialIndex
+          ) => {
+
+            bodyHtml += `
+              <tr
+                class="${
+                  materialIndex === 0
+                    ? 'material-product-start'
+                    : ''
+                }"
+              >
+
+                <td
+                  class="
+                    material-product-cell
+                  "
+                >
+                  ${
+                    materialIndex === 0
+                      ? esc(
+                          product.tenSanPham ||
+                          ''
+                        )
+                      : ''
+                  }
+                </td>
+
+
+                <td
+                  class="
+                    material-name-cell
+                  "
+                >
+                  ${esc(
+                    material.tenNguyenLieu ||
+                    ''
+                  )}
+                </td>
+
+
+                <td
+                  class="
+                    material-unit-cell
+                  "
+                >
+                  ${esc(
+                    material.donVi ||
+                    ''
+                  )}
+                </td>
+
+
+                ${weeks
+                  .map(w => {
+
+                    const key =
+                      w.nam +
+                      '|' +
+                      w.tuan;
+
+                    const qty =
+                      Number(
+                        material
+                          .weeks[
+                            key
+                          ] || 0
+                      );
+
+                    return `
+                      <td
+                        class="
+                          material-demand-number
+                        "
+                      >
+                        ${
+                          qty !== 0
+                            ? fmtNum(qty)
+                            : ''
+                        }
+                      </td>
+                    `;
+
+                  })
+                  .join('')}
+
+              </tr>
+            `;
+          }
+        );
+
+      }
+    );
+
+
+    /*
+    * ==========================================
+    * TABLE
+    * ==========================================
+    */
+
+    table.innerHTML = `
+      <thead>
+
+        <tr>
+
+          <th>
+            Tên sản phẩm
+          </th>
+
+          <th>
+            Tên nguyên liệu/vật tư
+          </th>
+
+          <th>
+            Đơn vị tính
+          </th>
+
+          ${weeks
+            .map(w => `
+              <th>
+                Tuần ${w.tuan}
+              </th>
+            `)
+            .join('')}
+
+        </tr>
+
+      </thead>
+
+
+      <tbody>
+        ${bodyHtml}
+      </tbody>
+    `;
+  }
+
+  function getOrderRequestCacheKey(
+    soTuan
+  ) {
+    return String(
+      soTuan || 4
+    );
+  }
+
+
+  async function loadYeuCauDatHang(
+    forceReload = false
+  ) {
+    const weekCountEl =
+      document.getElementById(
+        'orderRequestWeekCount'
+      );
+
+
+    const soTuan =
+      Number(
+        weekCountEl?.value || 4
+      );
+
+
+    const cacheKey =
+      getOrderRequestCacheKey(
+        soTuan
+      );
+
+
+    /*
+    * ==========================================
+    * DÙNG CACHE
+    * ==========================================
+    */
+
+    if (
+      !forceReload &&
+      YEU_CAU_DAT_HANG_CACHE[
+        cacheKey
+      ]
+    ) {
+
+      /*
+      * Không render trực tiếp.
+      *
+      * Phải áp lại combobox:
+      * Tất cả / Nguyên liệu cần đặt.
+      */
+      filterYeuCauDatHangClient();
+
+      return;
+    }
+
+
+    setLoading(
+      true
+    );
+
+
+    try {
+
+      const data =
+        await server(
+          'getBaoCaoYeuCauDatHang',
+          soTuan
+        );
+
+
+      YEU_CAU_DAT_HANG_CACHE[
+        cacheKey
+      ] =
+        data;
+
+
+      /*
+      * Áp dụng filter hiện tại.
+      */
+      filterYeuCauDatHangClient();
+
+
+    } catch (error) {
+
+      alert(
+        error.message ||
+        error
+      );
+
+
+    } finally {
+
+      setLoading(
+        false
+      );
+
+    }
+  }
+
+  function filterYeuCauDatHangClient() {
+
+    const weekCountEl =
+      document.getElementById(
+        'orderRequestWeekCount'
+      );
+
+    const displayFilterEl =
+      document.getElementById(
+        'orderRequestDisplayFilter'
+      );
+
+
+    const soTuan =
+      Number(
+        weekCountEl?.value || 4
+      );
+
+
+    const displayMode =
+      displayFilterEl?.value ||
+      'all';
+
+
+    const cacheKey =
+      getOrderRequestCacheKey(
+        soTuan
+      );
+
+
+    /*
+    * Dữ liệu gốc chưa lọc.
+    */
+    const originalData =
+      YEU_CAU_DAT_HANG_CACHE[
+        cacheKey
+      ];
+
+
+    if (!originalData) {
+      return;
+    }
+
+
+    /*
+    * ==========================================
+    * TẤT CẢ NGUYÊN LIỆU
+    * ==========================================
+    */
+
+    if (
+      displayMode ===
+      'all'
+    ) {
+
+      renderYeuCauDatHang(
+        originalData
+      );
+
+      return;
+    }
+
+
+    /*
+    * ==========================================
+    * CHỈ NGUYÊN LIỆU CẦN ĐẶT
+    * ==========================================
+    */
+
+    if (
+      displayMode ===
+      'needOrder'
+    ) {
+
+      const filteredData = {
+        ...originalData,
+
+        displayMode:
+          'needOrder',
+
+        totalMaterialCount:
+          (
+            originalData.rows ||
+            []
+          ).length,
+
+        rows:
+          (
+            originalData.rows ||
+            []
+          )
+            .filter(row =>
+              Boolean(
+                row.canDat
+              )
+            )
+      };
+
+
+      renderYeuCauDatHang(
+        filteredData
+      );
+
+      return;
+    }
+
+
+    /*
+    * Fallback.
+    */
+    renderYeuCauDatHang(
+      originalData
+    );
+  }
+
+  function formatDateVN(
+    value
+  ) {
+    if (!value) {
+      return '';
+    }
+
+    const text =
+      String(value).trim();
+
+    /*
+    * yyyy-mm-dd
+    */
+    const match =
+      text.match(
+        /^(\d{4})-(\d{2})-(\d{2})$/
+      );
+
+    if (match) {
+      return (
+        match[3] +
+        '/' +
+        match[2] +
+        '/' +
+        match[1]
+      );
+    }
+
+    /*
+    * Nếu dữ liệu đã là dạng khác
+    * thì giữ nguyên.
+    */
+    return text;
+  }
+
+  function renderYeuCauDatHang(
+    data
+  ) {
+    const table =
+      document.getElementById(
+        'orderRequestTable'
+      );
+
+    const summary =
+      document.getElementById(
+        'orderRequestSummary'
+      );
+
+    const warningEl =
+      document.getElementById(
+        'orderRequestWarning'
+      );
+
+
+    if (
+      !table ||
+      !data
+    ) {
+      return;
+    }
+
+
+    const weeks =
+      data.weeks || [];
+
+    const rows =
+      data.rows || [];
+
+    const warnings =
+      data.warnings || [];
+
+
+    /*
+    * ==========================================
+    * SUMMARY
+    * ==========================================
+    */
+
+    if (summary) {
+
+      if (weeks.length) {
+
+        const first =
+          weeks[0];
+
+        const last =
+          weeks[
+            weeks.length - 1
+          ];
+
+        const canDatCount =
+          rows.filter(row =>
+            row.canDat
+          ).length;
+
+
+        const formatDateVN =
+          value => {
+
+            if (!value) {
+              return '';
+            }
+
+            const parts =
+              String(value)
+                .split('-');
+
+            if (parts.length !== 3) {
+              return value;
+            }
+
+            return (
+              parts[2] +
+              '/' +
+              parts[1] +
+              '/' +
+              parts[0]
+            );
+          };
+
+
+        const weekHtml =
+          weeks
+            .map(w => {
+
+              return `
+                <div class="order-summary-week">
+                  <b>
+                    Tuần ${w.tuan}/${w.nam}
+                  </b>
+
+                  <span>
+                    ${formatDateVN(w.ngayDauTuan)}
+                    →
+                    ${formatDateVN(w.ngayCuoiTuan)}
+                  </span>
+                </div>
+              `;
+
+            })
+            .join('');
+
+
+        summary.innerHTML = `
+          <div class="order-summary-title">
+            Hiển thị ${weeks.length} tuần
+            • ${rows.length} nguyên liệu/vật tư
+            • ${canDatCount} dòng cần đặt hàng
+          </div>
+
+          <div class="order-summary-weeks">
+            ${weekHtml}
+          </div>
+        `;
+
+      } else {
+
+        summary.textContent =
+          '';
+
+      }
+    }
+
+
+    /*
+    * ==========================================
+    * WARNING
+    * ==========================================
+    */
+
+    /*
+    * ==========================================
+    * WARNING
+    * ==========================================
+    */
+
+    if (warningEl) {
+
+      const messages = [];
+
+      const invalidRows =
+        data.invalidExternalRowDetails ||
+        [];
+
+
+      /*
+      * Cảnh báo dòng KhoNguyenLieu
+      * không map được.
+      */
+      if (
+        Number(
+          data.invalidExternalRows ||
+          0
+        ) > 0
+      ) {
+
+        messages.push(
+          'Có ' +
+          data.invalidExternalRows +
+          ' dòng KhoNguyenLieu file 2 không map được.'
+        );
+
+      }
+
+
+      /*
+      * Cảnh báo quy đổi đơn vị.
+      */
+      warnings.forEach(item =>
+        messages.push(item)
+      );
+
+
+      /*
+      * ==========================================
+      * KHÔNG CÓ CẢNH BÁO
+      * ==========================================
+      *
+      * CHỈ ẨN BOX.
+      * KHÔNG return khỏi hàm.
+      */
+
+      if (
+        !messages.length &&
+        !invalidRows.length
+      ) {
+
+        warningEl.style.display =
+          'none';
+
+        warningEl.innerHTML =
+          '';
+
+      } else {
+
+        /*
+        * ========================================
+        * CÓ CẢNH BÁO
+        * ========================================
+        */
+
+        warningEl.style.display =
+          '';
+
+
+        const messageHtml =
+          messages
+            .slice(0, 20)
+            .map(item => `
+              <div
+                class="order-warning-message"
+              >
+                • ${esc(item)}
+              </div>
+            `)
+            .join('');
+
+
+        const detailHtml =
+          invalidRows.length
+            ? `
+              <div
+                class="order-warning-detail-title"
+              >
+                Chi tiết dòng không map được:
+              </div>
+
+              <div
+                class="order-warning-detail-list"
+              >
+
+                ${invalidRows
+                  .map(
+                    (
+                      item,
+                      index
+                    ) => `
+                      <div
+                        class="order-warning-detail-item"
+                      >
+
+                        <div>
+                          <b>
+                            ${index + 1}.
+                            ${esc(
+                              item.tenNguyenLieu ||
+                              '(Không có tên nguyên liệu)'
+                            )}
+                          </b>
+                        </div>
+
+                        <div
+                          class="order-warning-detail-grid"
+                        >
+
+                          <span>
+                            Mã NL:
+                            <b>
+                              ${esc(
+                                item.maNguyenLieu ||
+                                '(trống)'
+                              )}
+                            </b>
+                          </span>
+
+                          <span>
+                            Mã kế toán:
+                            <b>
+                              ${esc(
+                                item.MaKeToan ||
+                                '(trống)'
+                              )}
+                            </b>
+                          </span>
+
+                          <span>
+                            Khối lượng:
+                            <b>
+                              ${
+                                item.khoiLuongNhap !== '' &&
+                                item.khoiLuongNhap !== null &&
+                                item.khoiLuongNhap !== undefined
+                                  ? fmtNum(
+                                      Number(
+                                        item.khoiLuongNhap
+                                      )
+                                    )
+                                  : '(trống)'
+                              }
+                            </b>
+
+                            ${esc(
+                              item.donVi ||
+                              ''
+                            )}
+                          </span>
+
+                          <span>
+                            Lot:
+                            <b>
+                              ${esc(
+                                item.LotNo ||
+                                '(trống)'
+                              )}
+                            </b>
+                          </span>
+
+                          <span>
+                            Ngày nhập:
+                            <b>
+                              ${esc(
+                                item.ngayNhap
+                                  ? formatDateVN(
+                                      item.ngayNhap
+                                    )
+                                  : '(trống)'
+                              )}
+                            </b>
+                          </span>
+
+                        </div>
+
+                      </div>
+                    `
+                  )
+                  .join('')}
+
+              </div>
+            `
+            : '';
+
+
+        warningEl.innerHTML = `
+          <div
+            class="order-warning-title"
+          >
+            ⚠ Cảnh báo dữ liệu
+          </div>
+
+          ${messageHtml}
+
+          ${detailHtml}
+        `;
+
+      }
+
+    }
+
+
+    /*
+    * ==========================================
+    * HEADER TUẦN
+    * ==========================================
+    */
+
+    const weekHeaders =
+      weeks
+        .map(w => `
+          <th class="order-request-week-demand">
+            Nhu cầu SX<br>
+            tuần ${w.tuan}
+          </th>
+
+          <th class="order-request-week-inbound">
+            Hàng về<br>
+            tuần ${w.tuan}
+          </th>
+
+          <th class="order-request-week-ending">
+            Tồn cuối<br>
+            tuần ${w.tuan}
+          </th>
+        `)
+        .join('');
+
+
+    /*
+    * ==========================================
+    * KHÔNG CÓ DATA
+    * ==========================================
+    */
+
+    if (!rows.length) {
+
+      table.innerHTML = `
+        <thead>
+          <tr>
+
+            <th>
+              Mã nguyên liệu vật tư
+            </th>
+
+            <th>
+              Mã kế toán
+            </th>
+
+            <th>
+              Tên nguyên liệu vật tư
+            </th>
+
+            <th>
+              Đơn vị
+            </th>
+
+            <th>
+              Tồn đầu tuần
+            </th>
+
+            <th>
+              Tồn thực tế
+            </th>
+
+            ${weekHeaders}
+
+            <th>
+              Leadtime
+            </th>
+
+            <th>
+              Ngày cần đặt hàng (PO)
+            </th>
+
+            <th>
+              Ngày nhập kho dự kiến
+            </th>
+
+            <th>
+              Thao tác
+            </th>
+
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr>
+            <td
+              colspan="${
+                10 +
+                weeks.length * 3
+              }"
+              class="empty"
+            >
+              Không có dữ liệu.
+            </td>
+          </tr>
+        </tbody>
+      `;
+
+      return;
+    }
+
+
+    /*
+    * ==========================================
+    * BODY
+    * ==========================================
+    */
+
+    const bodyHtml =
+      rows
+        .map(row => {
+
+          /*
+          * Map weekValues để render nhanh.
+          */
+          const weekMap = {};
+
+          (
+            row.weeks ||
+            []
+          ).forEach(item => {
+
+            const key =
+              item.nam +
+              '|' +
+              item.tuan;
+
+            weekMap[key] =
+              item;
+
+          });
+
+
+          const weekCells =
+            weeks
+              .map(w => {
+
+                const key =
+                  w.nam +
+                  '|' +
+                  w.tuan;
+
+                const item =
+                  weekMap[
+                    key
+                  ] || {};
+
+
+                const nhuCau =
+                  Number(
+                    item.nhuCau || 0
+                  );
+
+
+                const hangVe =
+                  Number(
+                    item.hangVe || 0
+                  );
+
+
+                const tonCuoi =
+                  Number(
+                    item.tonCuoi || 0
+                  );
+
+
+                /*
+                * Tồn cuối âm → cảnh báo.
+                */
+                const tonCuoiClass =
+                  tonCuoi < 0
+                    ? 'order-request-negative'
+                    : '';
+
+
+                return `
+                  <!-- NHU CẦU -->
+                  <td
+                    class="
+                      order-request-number
+                      order-request-week-demand
+                    "
+                  >
+                    ${
+                      nhuCau !== 0
+                        ? fmtNum(
+                            nhuCau
+                          )
+                        : ''
+                    }
+                  </td>
+
+
+                  <!-- HÀNG VỀ -->
+                  <td
+                    class="
+                      order-request-number
+                      order-request-week-inbound
+                    "
+                  >
+                    ${
+                      hangVe !== 0
+                        ? fmtNum(
+                            hangVe
+                          )
+                        : ''
+                    }
+                  </td>
+
+
+                  <!-- TỒN CUỐI -->
+                  <td
+                    class="
+                      order-request-number
+                      order-request-week-ending
+                      ${tonCuoiClass}
+                    "
+                  >
+                    ${fmtNum(
+                      tonCuoi
+                    )}
+                  </td>
+                `;
+
+              })
+              .join('');
+
+
+          const rowClass =
+            row.canDat
+              ? 'order-request-row-need'
+              : '';
+
+
+          return `
+            <tr
+              class="${rowClass}"
+            >
+
+              <td
+                class="
+                  order-request-code
+                "
+              >
+                ${esc(
+                  row.maNguyenLieu ||
+                  ''
+                )}
+              </td>
+
+
+              <td>
+                ${esc(
+                  row.MaKeToan ||
+                  ''
+                )}
+              </td>
+
+
+              <td
+                class="
+                  order-request-name
+                "
+              >
+                ${esc(
+                  row.tenNguyenLieu ||
+                  ''
+                )}
+              </td>
+
+
+              <td
+                class="
+                  order-request-unit
+                "
+              >
+                ${esc(
+                  row.donVi ||
+                  ''
+                )}
+              </td>
+
+
+              <td
+                class="
+                  order-request-number
+                "
+              >
+                ${fmtNum(
+                  row.tonDauTuan ||
+                  0
+                )}
+              </td>
+
+
+              <td
+                class="
+                  order-request-number
+                "
+              >
+                ${fmtNum(
+                  row.tonThucTe ||
+                  0
+                )}
+              </td>
+
+
+              ${weekCells}
+
+
+              <td
+                class="
+                  order-request-center
+                "
+              >
+                ${
+                  Number(
+                    row.leadtime || 0
+                  )
+                }
+              </td>
+
+
+              <td
+                class="
+                  order-request-date
+                  ${
+                    row.canDat
+                      ? 'order-request-po'
+                      : ''
+                  }
+                "
+              >
+                ${esc(
+                  formatDateVN(
+                    row.ngayCanDat
+                  )
+                )}
+
+                ${
+                  row.canDat
+                    ? `
+                      <small>
+
+                        ${
+                          row.tuanKichHoatDat
+                            ? `
+                              Đặt từ tuần
+                              ${esc(
+                                row.tuanKichHoatDat
+                              )}
+                              <br>
+                            `
+                            : ''
+                        }
+
+                        ${
+                          row.tuanThieuSomNhat
+                            ? `
+                              Thiếu từ tuần
+                              ${esc(
+                                row.tuanThieuSomNhat
+                              )}
+                            `
+                            : ''
+                        }
+
+                      </small>
+                    `
+                    : ''
+                }
+              </td>
+
+
+              <td
+                class="
+                  order-request-date
+                "
+              >
+                ${esc(
+                  formatDateVN(
+                    row.ngayNhapKhoDuKien
+                  )
+                )}
+              </td>
+ 
+
+            </tr>
+          `;
+
+        })
+        .join('');
+
+
+    /*
+    * ==========================================
+    * TABLE
+    * ==========================================
+    */
+
+    table.innerHTML = `
+      <thead>
+
+        <tr>
+
+          <th>
+            Mã nguyên liệu vật tư
+          </th>
+
+          <th>
+            Mã kế toán
+          </th>
+
+          <th>
+            Tên nguyên liệu vật tư
+          </th>
+
+          <th>
+            Đơn vị
+          </th>
+
+          <th>
+            Tồn đầu tuần ${weeks[0]?.tuan || ''}
+          </th>
+
+          <th>
+            Tồn thực tế
+          </th>
+
+          ${weekHeaders}
+
+          <th>
+            Leadtime
+          </th>
+
+          <th>
+            Ngày cần đặt hàng (PO)
+          </th>
+
+          <th>
+            Ngày nhập kho dự kiến
+          </th>
+ 
+
+        </tr>
+
+      </thead>
+
+
+      <tbody>
+        ${bodyHtml}
+      </tbody>
+    `;
+  }
+
+  function getCurrentReportExportConfig() {
+
+    /*
+    * ==========================================
+    * FORECAST BÁN HÀNG
+    * ==========================================
+    */
+    if (
+      currentView ===
+      'baoCaoForecastBanHang'
+    ) {
+      return {
+        tableId:
+          'forecastBanHangTable',
+
+        sheetName:
+          'Forecast ban hang',
+
+        filePrefix:
+          'Forecast_ban_hang'
+      };
+    }
+
+
+    /*
+    * ==========================================
+    * NHU CẦU NGUYÊN LIỆU
+    * ==========================================
+    */
+    if (
+      currentView ===
+      'baoCaoNhuCauNguyenLieu'
+    ) {
+      return {
+        tableId:
+          'materialDemandTable',
+
+        sheetName:
+          'Nhu cau nguyen lieu',
+
+        filePrefix:
+          'Nhu_cau_nguyen_lieu'
+      };
+    }
+
+
+    /*
+    * ==========================================
+    * YÊU CẦU ĐẶT HÀNG
+    *
+    * Khi làm card thứ 3 sau này,
+    * chỉ cần mở phần này.
+    * ==========================================
+    */
+
+    
+    if (
+      currentView ===
+      'baoCaoYeuCauDatHang'
+    ) {
+      return {
+        tableId:
+          'orderRequestTable',
+
+        sheetName:
+          'Yeu cau dat hang',
+
+        filePrefix:
+          'Yeu_cau_dat_hang'
+      };
+    }
+    
+
+
+    return null;
+  }
+
+  function exportCurrentReportExcel() {
+
+    /*
+    * Kiểm tra thư viện XLSX.
+    */
+    if (
+      typeof XLSX ===
+      'undefined'
+    ) {
+      alert(
+        'Không tìm thấy thư viện xuất Excel.'
+      );
+
+      return;
+    }
+
+
+    /*
+    * Lấy cấu hình theo report
+    * đang mở.
+    */
+    const config =
+      getCurrentReportExportConfig();
+
+
+    if (!config) {
+      alert(
+        'Báo cáo này chưa được cấu hình tải Excel.'
+      );
+
+      return;
+    }
+
+
+    /*
+    * Lấy đúng bảng đang hiển thị.
+    */
+    const table =
+      document.getElementById(
+        config.tableId
+      );
+
+
+    if (!table) {
+      alert(
+        'Không tìm thấy bảng dữ liệu để tải.'
+      );
+
+      return;
+    }
+
+
+    /*
+    * Kiểm tra bảng có dữ liệu không.
+    */
+    const bodyRows =
+      table.querySelectorAll(
+        'tbody tr'
+      );
+
+
+    if (!bodyRows.length) {
+      alert(
+        'Bảng hiện tại chưa có dữ liệu.'
+      );
+
+      return;
+    }
+
+
+    try {
+
+      /*
+      * ========================================
+      * CHUYỂN TABLE HTML → WORKSHEET
+      * ========================================
+      */
+
+      const worksheet =
+        XLSX.utils.table_to_sheet(
+          table,
+          {
+            raw: true
+          }
+        );
+
+
+      /*
+      * ========================================
+      * CĂN ĐỘ RỘNG CỘT
+      * ========================================
+      *
+      * Tính tương đối theo nội dung.
+      */
+
+      const range =
+        XLSX.utils.decode_range(
+          worksheet['!ref']
+        );
+
+
+      const colWidths = [];
+
+
+      for (
+        let col = range.s.c;
+        col <= range.e.c;
+        col++
+      ) {
+
+        let maxLength = 10;
+
+
+        for (
+          let row = range.s.r;
+          row <= range.e.r;
+          row++
+        ) {
+
+          const cellAddress =
+            XLSX.utils.encode_cell({
+              r: row,
+              c: col
+            });
+
+
+          const cell =
+            worksheet[
+              cellAddress
+            ];
+
+
+          if (!cell) {
+            continue;
+          }
+
+
+          const text =
+            String(
+              cell.v ?? ''
+            );
+
+
+          maxLength =
+            Math.max(
+              maxLength,
+              text.length + 2
+            );
+        }
+
+
+        /*
+        * Không để cột quá rộng.
+        */
+        colWidths.push({
+          wch:
+            Math.min(
+              maxLength,
+              45
+            )
+        });
+      }
+
+
+      worksheet['!cols'] =
+        colWidths;
+
+
+      /*
+      * ========================================
+      * TẠO WORKBOOK
+      * ========================================
+      */
+
+      const workbook =
+        XLSX.utils.book_new();
+
+
+      XLSX.utils.book_append_sheet(
+        workbook,
+        worksheet,
+        config.sheetName
+      );
+
+
+      /*
+      * ========================================
+      * TÊN FILE
+      * ========================================
+      */
+
+      const now =
+        new Date();
+
+
+      const yyyy =
+        now.getFullYear();
+
+
+      const mm =
+        String(
+          now.getMonth() + 1
+        ).padStart(
+          2,
+          '0'
+        );
+
+
+      const dd =
+        String(
+          now.getDate()
+        ).padStart(
+          2,
+          '0'
+        );
+
+
+      const hh =
+        String(
+          now.getHours()
+        ).padStart(
+          2,
+          '0'
+        );
+
+
+      const mi =
+        String(
+          now.getMinutes()
+        ).padStart(
+          2,
+          '0'
+        );
+
+
+      const fileName =
+        config.filePrefix +
+        '_' +
+        yyyy +
+        mm +
+        dd +
+        '_' +
+        hh +
+        mi +
+        '.xlsx';
+
+
+      /*
+      * ========================================
+      * TẢI FILE
+      * ========================================
+      */
+
+      XLSX.writeFile(
+        workbook,
+        fileName
+      );
+
+
+      toast(
+        'Đã tải file Excel.'
+      );
+
+
+    } catch (error) {
+
+      console.error(
+        error
+      );
+
+
+      alert(
+        'Không thể tạo file Excel: ' +
+        (
+          error.message ||
+          error
+        )
+      );
+
+    }
+  }
+
+</script>

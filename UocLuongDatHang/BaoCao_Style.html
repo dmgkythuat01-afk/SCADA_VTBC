@@ -1,0 +1,1523 @@
+<style>
+  /* ==================================================
+     STYLE RIÊNG CHO MODULE BÁO CÁO
+     Không sửa style của menu Quản lý.
+     ================================================== */
+
+
+  /* ==================================================
+     1. KHUNG CHUNG BÁO CÁO
+     ================================================== */
+
+  #viewBaoCao {
+    width: 100%;
+  }
+
+  .report-view {
+    width: 100%;
+  }
+
+  .report-subtitle {
+    margin-top: 5px;
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+
+  /* ==================================================
+     2. PLACEHOLDER CHO CÁC BÁO CÁO CHƯA LÀM
+     ================================================== */
+
+  .report-placeholder {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+
+    min-height: 130px;
+    padding: 22px;
+
+    border: 1px dashed #b7dfd0;
+    border-radius: 18px;
+
+    background:
+      linear-gradient(
+        135deg,
+        #f8fffc,
+        #ecfdf5
+      );
+  }
+
+  .report-placeholder-icon {
+    width: 52px;
+    height: 52px;
+
+    flex: 0 0 52px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 16px;
+
+    background: white;
+
+    box-shadow:
+      0 8px 20px
+      rgba(2, 44, 34, .10);
+
+    font-size: 25px;
+  }
+
+  .report-placeholder b {
+    display: block;
+
+    margin-bottom: 6px;
+
+    color: var(--emerald-900);
+
+    font-size: 16px;
+  }
+
+  .report-placeholder p {
+    margin: 0;
+
+    color: var(--muted);
+
+    font-size: 13px;
+    line-height: 1.55;
+  }
+
+
+  /* ==================================================
+     3. HEADER FORECAST BÁN HÀNG
+     ================================================== */
+
+  #reportView_baoCaoForecastBanHang
+  .panel-head {
+    display: flex;
+
+    flex-direction: row;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap: 20px;
+
+    flex-wrap: nowrap;
+  }
+
+
+  /*
+   * Phần tiêu đề bên trái.
+   */
+  #reportView_baoCaoForecastBanHang
+  .panel-head > div:first-child {
+    flex: 0 1 auto;
+
+    min-width: 190px;
+  }
+
+
+  /* ==================================================
+     4. BỘ LỌC FORECAST
+     Số tuần + Khách hàng + Tải lại
+     luôn nằm trên 1 hàng
+     ================================================== */
+
+  .forecast-filter-row {
+    display: flex !important;
+
+    flex-direction: row !important;
+
+    align-items: flex-end !important;
+
+    justify-content: flex-end;
+
+    gap: 10px;
+
+    flex-wrap: nowrap !important;
+
+    flex: 0 0 auto;
+
+    width: auto;
+
+    min-width: max-content;
+
+    margin-left: auto;
+  }
+
+
+  /*
+   * Mỗi cụm:
+   *
+   * Label
+   * Combobox
+   */
+  .forecast-filter-item {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 5px;
+
+    flex: 0 0 auto;
+
+    margin: 0;
+  }
+
+
+  .forecast-filter-item label {
+    display: block;
+
+    margin: 0;
+
+    color: #475569;
+
+    font-size: 11px;
+
+    font-weight: 800;
+
+    white-space: nowrap;
+  }
+
+
+  /*
+   * Không cho CSS .search chung
+   * làm combobox giãn hết hàng.
+   */
+  .forecast-filter-item .search {
+    margin: 0;
+
+    flex: none;
+  }
+
+
+  /*
+   * Combobox số tuần.
+   */
+  #forecastWeekCount {
+    width: 130px !important;
+
+    min-width: 130px !important;
+
+    max-width: 130px !important;
+  }
+
+
+  /*
+   * Combobox khách hàng.
+   */
+  #forecastCustomerFilter {
+    width: 210px !important;
+
+    min-width: 210px !important;
+
+    max-width: 210px !important;
+  }
+
+  /*
+  * Tên sản phẩm.
+  */
+  #forecastProductFilter {
+    width: 260px !important;
+
+    min-width: 260px !important;
+
+    max-width: 260px !important;
+  }
+
+
+  /*
+  * Chế độ hiển thị.
+  */
+  #forecastDisplayMode {
+    width: 160px !important;
+
+    min-width: 160px !important;
+
+    max-width: 160px !important;
+  }
+
+
+  /*
+   * Nút tải lại.
+   */
+  .forecast-filter-row .btn {
+    flex: 0 0 auto;
+
+    height: 42px;
+
+    margin: 0;
+
+    white-space: nowrap;
+  }
+
+
+  /* ==================================================
+     5. THÔNG TIN TÓM TẮT FORECAST
+     ================================================== */
+
+  .forecast-summary {
+    margin-bottom: 12px;
+
+    color: var(--muted);
+
+    font-size: 13px;
+
+    font-weight: 700;
+  }
+
+
+  /* ==================================================
+     6. KHUNG BẢNG FORECAST
+     ================================================== */
+
+  .forecast-table-wrap {
+    overflow: auto;
+
+    max-height:
+      calc(100vh - 260px);
+
+    border:
+      1px solid #e4f0eb;
+
+    border-radius: 16px;
+  }
+
+
+  .forecast-table {
+    width: 100%;
+
+    min-width: 900px;
+
+    border-collapse: separate;
+
+    border-spacing: 0;
+
+    font-size: 13px;
+  }
+
+
+  /* ==================================================
+     7. HEADER BẢNG
+     ================================================== */
+
+  .forecast-table th {
+    position: sticky;
+
+    top: 0;
+
+    z-index: 3;
+
+    padding: 11px 10px;
+
+    color: white;
+
+    background:
+      var(--emerald-900);
+
+    text-align: center;
+
+    white-space: nowrap;
+  }
+
+
+  /*
+   * Cột Tên sản phẩm.
+   */
+  .forecast-table th:first-child {
+    min-width: 330px;
+
+    text-align: left;
+  }
+
+
+  /*
+   * Cột Khách hàng.
+   */
+  .forecast-table th:nth-child(2) {
+    min-width: 160px;
+
+    text-align: left;
+  }
+
+
+  /* ==================================================
+     8. Ô DỮ LIỆU
+     ================================================== */
+
+  .forecast-table td {
+    padding: 9px 10px;
+
+    border-bottom:
+      1px solid #edf4f1;
+
+    border-right:
+      1px solid #edf4f1;
+
+    vertical-align: middle;
+  }
+
+
+  /*
+   * Tên sản phẩm.
+   */
+  .forecast-product-cell {
+    min-width: 330px;
+
+    color: #1e293b;
+
+    font-weight: 800;
+  }
+
+
+  /*
+   * Khách hàng.
+   */
+  .forecast-customer-cell {
+    min-width: 160px;
+  }
+
+
+  /*
+   * Số lượng forecast.
+   */
+  .forecast-number {
+    min-width: 100px;
+
+    text-align: right;
+
+    font-variant-numeric:
+      tabular-nums;
+  }
+
+
+  /* ==================================================
+     9. PHÂN CÁCH GIỮA CÁC SẢN PHẨM
+     ================================================== */
+
+  .forecast-product-start td {
+    border-top:
+      2px solid #d9efe6;
+  }
+
+
+  /* ==================================================
+     10. DÒNG TỔNG CỦA TỪNG SẢN PHẨM
+     ================================================== */
+
+  /* ==================================================
+   DÒNG TỔNG CỦA TỪNG SẢN PHẨM
+   Không tô nền - chỉ chữ xanh dương + in đậm
+   ================================================== */
+
+  .forecast-total-row td {
+    color: #2563eb !important;
+    background: white !important;
+    font-weight: 900;
+
+    border-top: 1px solid #e5e7eb;
+    border-bottom: 1px solid #dbe3ea;
+  }
+
+  .forecast-total-label {
+    color: #2563eb !important;
+    font-weight: 900;
+    text-align: left;
+  }
+
+
+  /* ==================================================
+     11. GIỮ CỐ ĐỊNH 2 CỘT ĐẦU
+     KHI KÉO NGANG
+     ================================================== */
+
+  /*
+   * Cột 1:
+   * Tên sản phẩm
+   */
+  .forecast-table th:first-child,
+  .forecast-table td:first-child {
+    position: sticky;
+
+    left: 0;
+
+    z-index: 2;
+  }
+
+
+  .forecast-table th:first-child {
+    z-index: 5;
+
+    background:
+      var(--emerald-900);
+  }
+
+
+  .forecast-table td:first-child {
+    background: white;
+  }
+
+
+  /*
+   * Cột 2:
+   * Khách hàng
+   */
+  .forecast-table th:nth-child(2),
+  .forecast-table td:nth-child(2) {
+    position: sticky;
+
+    left: 330px;
+
+    z-index: 2;
+  }
+
+
+  .forecast-table th:nth-child(2) {
+    z-index: 5;
+
+    background:
+      var(--emerald-900);
+  }
+
+
+  .forecast-table td:nth-child(2) {
+    background: white;
+  }
+
+
+  /*
+   * Khi dòng Tổng sticky
+   * vẫn phải giữ nền xanh nhạt.
+   */
+  .forecast-total-row td:first-child,
+  .forecast-total-row td:nth-child(2) {
+    background: white !important;
+  }
+
+
+  /* ==================================================
+     12. MÀN HÌNH HẸP
+     ==================================================
+     Desktop vẫn giữ filter 1 hàng.
+     Nếu màn hình quá hẹp thì cho phép kéo ngang
+     thay vì ép các control xuống dòng.
+     ================================================== */
+
+  @media (
+    max-width: 900px
+  ) {
+
+    #reportView_baoCaoForecastBanHang
+    .panel-head {
+      overflow-x: auto;
+    }
+
+    .forecast-filter-row {
+      flex-wrap:
+        nowrap !important;
+    }
+
+  }
+
+  /* ==================================================
+   NHU CẦU NGUYÊN LIỆU
+   ================================================== */
+
+  #reportView_baoCaoNhuCauNguyenLieu
+  .panel-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: nowrap;
+  }
+
+
+  /* FILTER */
+
+  .material-demand-filter-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
+    flex-wrap: nowrap;
+    margin-left: auto;
+  }
+
+  .material-demand-filter-item {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .material-demand-filter-item label {
+    color: #475569;
+    font-size: 11px;
+    font-weight: 800;
+    white-space: nowrap;
+  }
+
+  #materialDemandWeekCount {
+    width: 130px !important;
+    min-width: 130px !important;
+    max-width: 130px !important;
+  }
+
+
+  /* TABLE WRAP */
+
+  .material-demand-table-wrap {
+    overflow: auto;
+
+    max-height:
+      calc(100vh - 260px);
+
+    border:
+      1px solid #e4f0eb;
+
+    border-radius: 16px;
+  }
+
+
+  /* TABLE */
+
+  .material-demand-table {
+    width: 100%;
+
+    min-width: 950px;
+
+    border-collapse: separate;
+
+    border-spacing: 0;
+
+    font-size: 13px;
+  }
+
+
+  /* HEADER */
+
+  .material-demand-table th {
+    position: sticky;
+
+    top: 0;
+
+    z-index: 3;
+
+    padding: 11px 10px;
+
+    color: white;
+
+    background:
+      var(--emerald-900);
+
+    text-align: center;
+
+    white-space: nowrap;
+  }
+
+
+  .material-demand-table th:nth-child(1) {
+    min-width: 330px;
+    text-align: left;
+  }
+
+  .material-demand-table th:nth-child(2) {
+    min-width: 260px;
+    text-align: left;
+  }
+
+  .material-demand-table th:nth-child(3) {
+    min-width: 90px;
+    text-align: center;
+  }
+
+
+  /* DATA */
+
+  .material-demand-table td {
+    padding: 9px 10px;
+
+    border-bottom:
+      1px solid #edf4f1;
+
+    border-right:
+      1px solid #edf4f1;
+
+    vertical-align: middle;
+  }
+
+
+  .material-product-cell {
+    min-width: 330px;
+
+    color: #1e293b;
+
+    font-weight: 800;
+  }
+
+
+  .material-name-cell {
+    min-width: 260px;
+  }
+
+
+  .material-unit-cell {
+    min-width: 90px;
+
+    text-align: center;
+
+    font-weight: 700;
+  }
+
+
+  .material-demand-number {
+    min-width: 100px;
+
+    text-align: right;
+
+    font-variant-numeric:
+      tabular-nums;
+  }
+
+
+  /* DÒNG BẮT ĐẦU SẢN PHẨM MỚI */
+
+  .material-product-start td {
+    border-top:
+      2px solid #d9efe6;
+  }
+
+  /* ==================================================
+     YÊU CẦU ĐẶT HÀNG
+     Chỉ sửa riêng phần menu này
+     ================================================== */
+
+  #reportView_baoCaoYeuCauDatHang
+  .panel-head {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 16px;
+    flex-wrap: nowrap !important;
+  }
+
+  #reportView_baoCaoYeuCauDatHang
+  .panel-head > div:first-child {
+    flex: 0 1 auto;
+    min-width: 210px;
+  }
+
+  /* FILTER YÊU CẦU ĐẶT HÀNG */
+
+  .order-request-filter-row {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: flex-end !important;
+    justify-content: flex-end;
+    gap: 8px;
+    flex-wrap: nowrap !important;
+    flex: 0 0 auto;
+    width: auto;
+    min-width: max-content;
+    margin-left: auto;
+  }
+
+  .order-request-filter-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 0 0 auto;
+    margin: 0;
+  }
+
+  .order-request-filter-item label {
+    display: block;
+    margin: 0;
+    color: #475569;
+    font-size: 11px;
+    font-weight: 800;
+    white-space: nowrap;
+  }
+
+  .order-request-filter-item .search {
+    margin: 0;
+    flex: none;
+  }
+
+  #orderRequestWeekCount {
+    width: 115px !important;
+    min-width: 115px !important;
+    max-width: 115px !important;
+  }
+
+  #orderRequestDisplayFilter {
+    width: 190px !important;
+    min-width: 190px !important;
+    max-width: 190px !important;
+  }
+
+  .order-request-filter-row .btn {
+    flex: 0 0 auto;
+    height: 40px;
+    padding: 9px 12px;
+    margin: 0;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+
+  /* KHUNG BẢNG */
+
+  .order-request-table-wrap {
+    width: 100%;
+    overflow: auto;
+    max-height: calc(100vh - 260px);
+    border: 1px solid #e4f0eb;
+    border-radius: 16px;
+  }
+
+  .order-request-table {
+    width: max-content;
+    min-width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 11px;
+  }
+
+  /* HEADER */
+
+  .order-request-table th {
+    position: sticky;
+    top: 0;
+    z-index: 3;
+    padding: 8px 5px;
+    color: white;
+    background: var(--emerald-900);
+    text-align: center;
+    vertical-align: middle;
+    white-space: normal;
+    line-height: 1.2;
+    font-size: 11px;
+    font-weight: 800;
+  }
+
+  /* BODY */
+
+  .order-request-table td {
+    padding: 7px 5px;
+    border-right: 1px solid #edf4f1;
+    border-bottom: 1px solid #edf4f1;
+    vertical-align: middle;
+    font-size: 11px;
+  }
+
+  /* 6 CỘT ĐẦU */
+
+  .order-request-table th:nth-child(1),
+  .order-request-table td:nth-child(1) {
+    width: 80px;
+    min-width: 80px;
+    max-width: 80px;
+    white-space: normal;
+    word-break: break-word;
+  }
+
+  .order-request-table th:nth-child(2),
+  .order-request-table td:nth-child(2) {
+    width: 72px;
+    min-width: 72px;
+    max-width: 72px;
+  }
+
+  .order-request-table th:nth-child(3),
+  .order-request-table td:nth-child(3) {
+    width: 165px;
+    min-width: 165px;
+    max-width: 165px;
+    white-space: normal;
+    line-height: 1.25;
+  }
+
+  .order-request-table th:nth-child(4),
+  .order-request-table td:nth-child(4) {
+    width: 50px;
+    min-width: 50px;
+    max-width: 50px;
+    text-align: center;
+  }
+
+  .order-request-table th:nth-child(5),
+  .order-request-table td:nth-child(5) {
+    width: 68px;
+    min-width: 68px;
+    max-width: 68px;
+  }
+
+  .order-request-table th:nth-child(6),
+  .order-request-table td:nth-child(6) {
+    width: 68px;
+    min-width: 68px;
+    max-width: 68px;
+  }
+
+  /* CỘT TUẦN - Dùng class riêng, không dùng nth-child 3n */
+
+  .order-request-week-demand {
+    width: 62px !important;
+    min-width: 62px !important;
+    max-width: 62px !important;
+  }
+
+  .order-request-week-inbound {
+    width: 58px !important;
+    min-width: 58px !important;
+    max-width: 58px !important;
+  }
+
+  .order-request-week-ending {
+    width: 58px !important;
+    min-width: 58px !important;
+    max-width: 58px !important;
+  }
+
+  .order-request-table th {
+    white-space: normal !important;
+    line-height: 1.15;
+    padding: 6px 4px;
+    font-size: 10px;
+  }
+
+  /* CÁC CỘT CUỐI */
+
+  .order-request-center {
+    width: 58px !important;
+    min-width: 58px !important;
+    max-width: 58px !important;
+    text-align: center;
+  }
+
+  .order-request-date {
+    width: 96px;
+    min-width: 96px !important;
+    max-width: 96px;
+    padding-left: 4px !important;
+    padding-right: 4px !important;
+    text-align: center;
+    white-space: normal;
+    line-height: 1.2;
+  }
+
+  .order-request-date small {
+    display: block;
+    margin-top: 3px;
+    color: #64748b;
+    font-size: 9px;
+    font-weight: 700;
+    line-height: 1.15;
+  }
+
+  .order-request-action {
+    width: 72px;
+    min-width: 72px !important;
+    max-width: 72px;
+    text-align: center;
+  }
+
+  .order-request-action .btn {
+    padding: 6px 8px;
+    border-radius: 9px;
+    font-size: 10px;
+  }
+
+  /* CĂN SỐ / NỘI DUNG */
+
+  .order-request-number {
+    text-align: right;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .order-request-unit,
+  .order-request-center {
+    text-align: center;
+  }
+
+  .order-request-name {
+    font-weight: 700;
+    word-break: break-word;
+  }
+
+  .order-request-code {
+    font-weight: 700;
+  }
+
+  /* CẢNH BÁO */
+
+  .order-request-negative {
+    color: #b91c1c !important;
+    background: #fef2f2 !important;
+    font-weight: 900;
+  }
+
+  .order-request-row-need td {
+    border-bottom-color: #fed7aa;
+  }
+
+  .order-request-po {
+    color: #c2410c;
+    background: #fff7ed;
+    font-weight: 900;
+  }
+
+  /* XEN KẼ / HOVER */
+
+  .order-request-table tbody tr:nth-child(even) td {
+    background: #fafdfc;
+  }
+
+  .order-request-table tbody tr:hover td {
+    background: #ecfdf5;
+  }
+
+  /* GIỮ CỘT MÃ NL KHI KÉO NGANG */
+
+  .order-request-table th:first-child,
+  .order-request-table td:first-child {
+    position: sticky;
+    left: 0;
+  }
+
+  .order-request-table th:first-child {
+    z-index: 6;
+    background: var(--emerald-900);
+  }
+
+  .order-request-table td:first-child {
+    z-index: 2;
+    background: white;
+  }
+
+  .order-request-table tbody tr:nth-child(even) td:first-child {
+    background: #fafdfc;
+  }
+
+  /* ==================================================
+    CHI TIẾT CẢNH BÁO YÊU CẦU ĐẶT HÀNG
+    ================================================== */
+
+  .order-warning-title {
+    margin-bottom: 8px;
+
+    color: #92400e;
+
+    font-size: 13px;
+    font-weight: 900;
+  }
+
+  .order-warning-message {
+    margin-bottom: 5px;
+
+    color: #92400e;
+
+    font-size: 12px;
+  }
+
+  .order-warning-detail-title {
+    margin-top: 12px;
+    margin-bottom: 7px;
+
+    color: #78350f;
+
+    font-size: 12px;
+    font-weight: 900;
+  }
+
+  .order-warning-detail-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .order-warning-detail-item {
+    padding: 9px 10px;
+
+    border:
+      1px solid #fde68a;
+
+    border-radius: 10px;
+
+    background:
+      #fffbeb;
+
+    color: #475569;
+
+    font-size: 11px;
+  }
+
+  .order-warning-detail-grid {
+    display: flex;
+    flex-wrap: wrap;
+
+    gap:
+      4px 18px;
+
+    margin-top: 5px;
+  }
+
+  .order-warning-detail-grid span {
+    white-space: nowrap;
+  }
+
+  /* ==========================================
+    SUMMARY YÊU CẦU ĐẶT HÀNG
+    ========================================== */
+
+  .order-summary-title {
+    margin-bottom: 6px;
+
+    color: #64748b;
+
+    font-size: 13px;
+
+    font-weight: 800;
+  }
+
+
+  .order-summary-weeks {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 3px;
+  }
+
+
+  .order-summary-week {
+    display: flex;
+
+    align-items: center;
+
+    gap: 8px;
+
+    color: #64748b;
+
+    font-size: 12px;
+  }
+
+
+  .order-summary-week b {
+    min-width: 95px;
+
+    color: #475569;
+  }
+
+
+  .order-summary-week span {
+    white-space: nowrap;
+  }
+
+  /* ==================================================
+    FORECAST - CHẾ ĐỘ TỔNG
+    ================================================== */
+
+  /*
+  * Khi chế độ Tổng:
+  * cột thứ 2 đã là tuần,
+  * nên không sticky cột thứ 2 nữa.
+  */
+  .forecast-table.forecast-total-mode
+  th:nth-child(2),
+  .forecast-table.forecast-total-mode
+  td:nth-child(2) {
+    position: static !important;
+
+    left: auto !important;
+  }
+
+
+  /*
+  * Chỉ giữ cột tên sản phẩm.
+  */
+  .forecast-table.forecast-total-mode
+  th:first-child,
+  .forecast-table.forecast-total-mode
+  td:first-child {
+    position: sticky;
+
+    left: 0;
+  }
+
+
+  .forecast-table.forecast-total-mode
+  th:first-child {
+    z-index: 5;
+
+    background:
+      var(--emerald-900);
+  }
+
+
+  .forecast-table.forecast-total-mode
+  td:first-child {
+    z-index: 2;
+
+    background: white;
+  }
+
+
+  /*
+  * Dòng chế độ Tổng.
+  */
+  .forecast-total-only-row
+  .forecast-product-cell {
+    font-weight: 800;
+  }
+
+  .forecast-multi-select {
+    position: relative;
+    width: 210px;
+  }
+
+  /* ==================================================
+   MULTI SELECT - TÊN SẢN PHẨM
+    ================================================== */
+
+  #forecastProductMulti {
+    width: 360px;
+    min-width: 360px;
+  }
+
+
+  /* Dropdown rộng hơn ô chọn */
+  #forecastProductMulti
+  .forecast-multi-dropdown {
+    width: 430px;
+    max-width: 430px;
+  }
+   
+
+  .forecast-multi-button {
+    width: 100%;
+    height: 42px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    padding: 0 12px;
+
+    border: 1px solid #d6e4df;
+    border-radius: 12px;
+
+    background: white;
+
+    font-size: 13px;
+    text-align: left;
+
+    cursor: pointer;
+  }
+
+  .forecast-multi-dropdown {
+    display: none;
+
+    position: absolute;
+
+    top: calc(100% + 5px);
+    left: 0;
+
+    z-index: 50;
+
+    width: 100%;
+    max-height: 300px;
+
+    overflow: auto;
+
+    padding: 8px;
+
+    border: 1px solid #d6e4df;
+    border-radius: 12px;
+
+    background: white;
+
+    box-shadow:
+      0 12px 30px rgba(0, 0, 0, .12);
+  }
+
+  .forecast-multi-select.open
+  .forecast-multi-dropdown {
+    display: block;
+  }
+
+  .forecast-multi-option {
+    display: flex;
+    align-items: center;
+
+    gap: 8px;
+
+    padding: 7px 6px;
+
+    border-radius: 8px;
+
+    cursor: pointer;
+  }
+
+  .forecast-multi-option:hover {
+    background: #ecfdf5;
+  }
+
+  .forecast-multi-option input {
+    margin: 0;
+  }
+
+  .forecast-multi-search {
+    width: 100%;
+
+    margin-bottom: 8px;
+
+    padding: 8px 10px;
+
+    border: 1px solid #d6e4df;
+    border-radius: 9px;
+
+    box-sizing: border-box;
+  }
+
+  /* ==================================================
+    FORECAST MULTI SELECT - CHO DROPDOWN NỔI RA NGOÀI CARD
+    ================================================== */
+
+  /*
+  * Card Forecast phải cho phép dropdown
+  * tràn xuống phía dưới.
+  */
+  #reportView_baoCaoForecastBanHang
+  .panel {
+    overflow: visible !important;
+  }
+
+
+  /*
+  * Header phải nằm trên phần body.
+  */
+  #reportView_baoCaoForecastBanHang
+  .panel-head {
+    position: relative !important;
+
+    z-index: 100 !important;
+
+    overflow: visible !important;
+  }
+
+
+  /*
+  * Hàng filter cũng không được cắt dropdown.
+  */
+  #reportView_baoCaoForecastBanHang
+  .forecast-filter-row {
+    position: relative;
+
+    z-index: 110;
+
+    overflow: visible !important;
+  }
+
+
+  /*
+  * Từng multi-select.
+  */
+  #reportView_baoCaoForecastBanHang
+  .forecast-multi-select {
+    position: relative;
+
+    z-index: 120;
+  }
+
+
+  /*
+  * Khi đang mở thì đưa hẳn lên trên.
+  */
+  #reportView_baoCaoForecastBanHang
+  .forecast-multi-select.open {
+    z-index: 9999;
+  }
+
+
+  /*
+  * Dropdown.
+  */
+  #reportView_baoCaoForecastBanHang
+  .forecast-multi-dropdown {
+    z-index: 10000 !important;
+
+    max-height: 320px;
+
+    overflow-y: auto;
+
+    overflow-x: hidden;
+  }
+
+
+  /*
+  * Body phải thấp layer hơn dropdown.
+  */
+  #reportView_baoCaoForecastBanHang
+  .panel-body {
+    position: relative;
+
+    z-index: 1;
+  }
+
+  /* ==================================================
+    MULTI SELECT - CHECKBOX + TEXT CÙNG 1 HÀNG
+    ================================================== */
+
+  #forecastCustomerMultiOptions .forecast-multi-option,
+  #forecastProductMultiOptions .forecast-multi-option {
+
+    display: grid !important;
+
+    /*
+    * Cột 1 = checkbox
+    * Cột 2 = nội dung
+    */
+    grid-template-columns:
+      18px minmax(0, 1fr) !important;
+
+    /*
+    * QUAN TRỌNG:
+    * chỉ bắt đầu từ cùng một hàng
+    */
+    grid-template-rows:
+      auto !important;
+
+    column-gap: 8px;
+
+    align-items: start !important;
+
+    width: 100%;
+
+    box-sizing: border-box;
+
+    padding: 7px 6px;
+
+    margin: 0;
+
+    white-space: normal !important;
+  }
+
+
+  /* ==================================================
+    CHECKBOX
+    ================================================== */
+
+  #forecastCustomerMultiOptions
+  .forecast-multi-option
+  input[type="checkbox"],
+
+  #forecastProductMultiOptions
+  .forecast-multi-option
+  input[type="checkbox"] {
+
+    /*
+    * Checkbox ở cột 1, hàng 1
+    */
+    grid-column:
+      1 !important;
+
+    grid-row:
+      1 !important;
+
+    align-self:
+      start !important;
+
+    justify-self:
+      start !important;
+
+
+    width:
+      14px !important;
+
+    height:
+      14px !important;
+
+    min-width:
+      14px !important;
+
+    max-width:
+      14px !important;
+
+
+    margin:
+      3px 0 0 0 !important;
+
+    padding:
+      0 !important;
+
+
+    display:
+      block !important;
+
+    flex:
+      none !important;
+  }
+
+
+  /* ==================================================
+    TEXT
+    ================================================== */
+
+  #forecastCustomerMultiOptions
+  .forecast-multi-option
+  span,
+
+  #forecastProductMultiOptions
+  .forecast-multi-option
+  span {
+
+    /*
+    * Text ở cột 2, CÙNG hàng 1
+    */
+    grid-column:
+      2 !important;
+
+    grid-row:
+      1 !important;
+
+
+    display:
+      block !important;
+
+    min-width:
+      0 !important;
+
+    width:
+      auto !important;
+
+
+    margin:
+      0 !important;
+
+    padding:
+      0 !important;
+
+
+    white-space:
+      normal !important;
+
+    overflow-wrap:
+      break-word !important;
+
+    word-break:
+      normal !important;
+
+
+    line-height:
+      1.35;
+
+    text-align:
+      left;
+  }
+
+</style>
