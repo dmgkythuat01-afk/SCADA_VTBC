@@ -2049,6 +2049,21 @@
               <button class="btn btn-success" onclick="exportApprovedExportExcel()">Tải Excel</button>
             </div>
 
+            <div class="report-filter-row">
+              <div class="field">
+                <label for="approvedExportIdFilter">PHIEUXUATID</label>
+                <select id="approvedExportIdFilter" onchange="renderApprovedExportTable()">
+                  <option value="">Tất cả</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="approvedExportRecipeFilter">TENBAILIEU</label>
+                <select id="approvedExportRecipeFilter" onchange="renderApprovedExportTable()">
+                  <option value="">Tất cả</option>
+                </select>
+              </div>
+            </div>
+
             <div id="approvedExportTableBox" class="report-table-area">
               <div class="empty">Chọn khoảng ngày rồi bấm Tải dữ liệu.</div>
             </div>
@@ -5307,6 +5322,7 @@
           if (!res || !res.success) {
             approvedExportRows = [];
             approvedExportHeaders = [];
+            resetApprovedExportFilters();
             renderApprovedExportTable();
             showMessage("approvedExportMessage", "error", "Không tải được phiếu xuất kho đã phê duyệt.");
             return;
@@ -5314,6 +5330,7 @@
 
           approvedExportHeaders = res.headers || [];
           approvedExportRows = res.rows || [];
+          resetApprovedExportFilters();
           renderApprovedExportTable();
           showMessage("approvedExportMessage", "success", "Đã tải " + approvedExportRows.length + " dòng phiếu xuất kho đã phê duyệt.");
         })
@@ -5321,18 +5338,46 @@
           if (!silent) hideLoading();
           approvedExportRows = [];
           approvedExportHeaders = [];
+          resetApprovedExportFilters();
           renderApprovedExportTable();
           showMessage("approvedExportMessage", "error", err.message || "Có lỗi khi tải phiếu xuất kho đã phê duyệt.");
         })
         .getApprovedExportRequestsReport(sessionToken, getApprovedExportFilter());
     }
 
+    function resetApprovedExportFilters() {
+      [
+        { id: "approvedExportIdFilter", key: "PhieuXuatId" },
+        { id: "approvedExportRecipeFilter", key: "tenBaiLieu" }
+      ].forEach(function(filter) {
+        const select = document.getElementById(filter.id);
+        const values = [...new Set(approvedExportRows.map(function(row) {
+          return String(row[filter.key] ?? "");
+        }).filter(function(value) { return value.trim() !== ""; }))];
+        values.sort(function(a, b) { return a.localeCompare(b, "vi"); });
+        select.replaceChildren(new Option("Tất cả", ""));
+        values.forEach(function(value) {
+          select.add(new Option(value, value));
+        });
+        select.value = "";
+      });
+    }
+
+    function getFilteredApprovedExportRows() {
+      const phieuXuatId = document.getElementById("approvedExportIdFilter")?.value || "";
+      const tenBaiLieu = document.getElementById("approvedExportRecipeFilter")?.value || "";
+      return approvedExportRows.filter(function(row) {
+        return (!phieuXuatId || String(row.PhieuXuatId ?? "") === phieuXuatId)
+          && (!tenBaiLieu || String(row.tenBaiLieu ?? "") === tenBaiLieu);
+      });
+    }
+
     function renderApprovedExportTable() {
       renderGenericReportTable(
         "approvedExportTableBox",
         approvedExportHeaders,
-        approvedExportRows,
-        "Không có phiếu xuất kho đã phê duyệt trong khoảng ngày đã chọn."
+        getFilteredApprovedExportRows(),
+        "Không có phiếu xuất kho đã phê duyệt phù hợp với bộ lọc đã chọn."
       );
     }
 
