@@ -98,14 +98,20 @@ function mktBuildInputs(snapshot,options) {
   });
   (snapshot.bom||[]).forEach(r=>{
     if(text(r.trangThai)!=='Dang dung')return;
-    const id=text(r.maDinhLuong);if(!id||bomIds.has(id))throw new Error('Trùng hoặc thiếu maDinhLuong: '+id);bomIds.add(id);
-    const product=text(r.maSanPham),material=text(r.maNguyenLieu);if(!product||!material)throw new Error('BOM thiếu mã sản phẩm/nguyên liệu: '+id);
+    const bomId=text(r.maDinhLuong);if(!bomId)throw new Error('DinhLuong dòng '+(r.__rowNumber||'?')+': thiếu maDinhLuong');
+    const product=text(r.maSanPham),material=text(r.maNguyenLieu);if(!product||!material)throw new Error('BOM thiếu mã sản phẩm/nguyên liệu: '+bomId);
     ensure(material,r.donViDinhLuong);const choices=new Map();
     for(let priority=0;priority<4;priority++) {
       const enabled=r['SuDung'+priority]===true || text(r['SuDung'+priority]).toUpperCase()==='TRUE';
       const code=text(r['MaKeToan'+(priority||'')]);if(enabled&&code&&!choices.has(code))choices.set(code,priority);
     }
-    const item={...r,id,material,choices:[...choices].map(([code,priority])=>({code,priority}))};
+    const allowed=[...choices].map(([code,priority])=>({code,priority}));
+    // maDinhLuong identifies the whole recipe, not an individual ingredient.
+    // A semantic line key preserves rights and is independent of sheet row order.
+    const id=JSON.stringify([bomId,product,material,allowed,mktNumber_(r.dinhLuong1SKU,'dinhLuong1SKU '+bomId),unit(r.donViDinhLuong),mktNumber_(r.haoHutPhanTram,'haoHutPhanTram '+bomId,0)]);
+    if(bomIds.has(id))throw new Error('DinhLuong trùng dòng nguyên liệu: maDinhLuong '+bomId+' / '+product+' / '+material+(r.__rowNumber?' (dòng '+r.__rowNumber+')':''));
+    bomIds.add(id);
+    const item={...r,id,material,choices:allowed};
     if(!bomBySP.has(product))bomBySP.set(product,[]);bomBySP.get(product).push(item);
   });
   const aggregated=new Map();

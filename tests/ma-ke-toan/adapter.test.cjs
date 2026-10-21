@@ -29,3 +29,13 @@ test('legacy stock calculation unit keeps safety and order pack meaning',()=>{
  s.conversions=[{donViNguon:'kg',donViDich:'g',heSoQuyDoi:1000}];
  const r=build(s);a.equal(r.materialConfig.NL.unit,'kg');a.equal(r.materialConfig.NL.safety,10);a.equal(r.materialConfig.NL.pack,25);
 });
+test('one BOM code can identify multiple ingredient lines without merging demand',()=>{
+ const s=fixture();s.bom.push({...s.bom[0],maNguyenLieu:'NL2',dinhLuong1SKU:3});s.materials.push({maNguyenLieu:'NL2',donVi:'kg'});
+ const r=build(s);a.equal(r.demands.length,2);a.equal(r.demands.find(d=>d.material==='NL').quantity,210);a.equal(r.demands.find(d=>d.material==='NL2').quantity,315);
+ a.notEqual(r.demands[0].id,r.demands[1].id);
+ const reversed=build({...s,bom:[...s.bom].reverse()});a.equal(JSON.stringify(r.demands),JSON.stringify(reversed.demands));
+});
+test('same BOM ingredient with different permissions keeps separate rights',()=>{
+ const s=fixture();s.bom.push({...s.bom[0],MaKeToan:'003',SuDung1:false});const r=build(s);
+ a.equal(r.demands.length,2);a.ok(r.demands.some(d=>d.choices.length===1&&d.choices[0].code==='003'));
+});
