@@ -10,6 +10,23 @@
 
 **Spec:** `docs/superpowers/specs/2026-10-21-bao-cao-ma-ke-toan-design.md`
 
+## Execution result
+
+Implemented on `feature/bao-cao-ma-ke-toan` in the existing workspace as requested.
+Tasks 1–5 completed; `node --test tests/ma-ke-toan/*.test.cjs`: 25 passing tests,
+including comparison against exhaustive optimization on 80 small graphs.
+Fresh independent review completed; all Important findings have regression tests
+and fixes (receipt units, safety timing, legacy configuration units, hidden-week
+detail and per-week permissions). No deferred minors. Original calculation modules
+unchanged. Only navigation/includes/logout hooks added in Index.html.
+Real Apps Script data and live browser layout have not been exercised locally.
+No push, merge or deployment performed.
+
+Execution decisions: native Windows commands replace unavailable bash bookkeeping;
+stock calculation units retain precedence for existing safety/pack configuration;
+ambiguous receipt factors fail explicitly instead of guessing. These decisions
+preserve source semantics; a differing unit convention must be configured explicitly.
+
 ## Global Constraints
 
 - Không sửa Code.js, BaoCaoGs.js, DonDatHangGs.js và các module cũ.

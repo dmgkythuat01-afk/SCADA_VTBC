@@ -66,14 +66,27 @@ function mktBuildInputs(snapshot,options) {
     if(!materialConfig[material])materialConfig[material]={name:material,unit:unit(fallback),safety:0,pack:1,leadDays:0};
     const cfg=materialConfig[material];if(!cfg.unit)cfg.unit=unit(fallback);return cfg;
   };
-  const stocks=[],receipts=[],demands=[],bomBySP=new Map(),bomIds=new Set(),factors=new Map();
-  (snapshot.stocks||[]).filter(r=>text(r.trangThai)===text(p.trangThaiTonDuocTinh||'Dat')).sort((a,b)=>text(a.maNguyenLieu).localeCompare(text(b.maNguyenLieu))||text(a.MaKeToan).localeCompare(text(b.MaKeToan))).forEach(r=>{
+  const stocks=[],receipts=[],demands=[],bomBySP=new Map(),bomIds=new Set(),factors=new Map(),factorUnits=new Map(),sourceFactors=new Map();
+  const stockRows=(snapshot.stocks||[]).filter(r=>text(r.trangThai)===text(p.trangThaiTonDuocTinh||'Dat')).sort((a,b)=>text(a.maNguyenLieu).localeCompare(text(b.maNguyenLieu))||text(a.MaKeToan).localeCompare(text(b.MaKeToan))||unit(a.doViTinhToan||a.donViKho||a.donVi).localeCompare(unit(b.doViTinhToan||b.donViKho||b.donVi)));
+  const selectedUnits=new Set();
+  // Legacy configuration (safety/pack) is expressed in the stock calculation
+  // unit, which takes precedence over the material master unit.
+  stockRows.forEach(r=>{
+    const material=text(r.maNguyenLieu),u=unit(r.doViTinhToan||r.donViKho||r.donVi);
+    if(u&&!selectedUnits.has(material)){ensure(material,u).unit=u;selectedUnits.add(material);}
+  });
+  stockRows.forEach(r=>{
     const material=text(r.maNguyenLieu),code=text(r.MaKeToan),u=unit(r.doViTinhToan||r.donViKho||r.donVi),cfg=ensure(material,u);
     if(!code)throw new Error('TonKho thiếu MaKeToan: '+material);
     const factor=mktNumber_(r.heSoQuyDoiKho,'heSoQuyDoiKho '+material,1);if(!factor)throw new Error('Hệ số quy đổi phải lớn hơn 0');
     const value=r.tonDauTuanQuyDoi!=='' && r.tonDauTuanQuyDoi!=null?mktNumber_(r.tonDauTuanQuyDoi,'tonDauTuanQuyDoi'):mktNumber_(r.khoiLuongNhap,'khoiLuongNhap')*factor;
     stocks.push({material,code,quantity:value*convert(u,cfg.unit)});
-    const key=JSON.stringify([material,code]);if(!factors.has(key))factors.set(key,new Set());factors.get(key).add(factor);
+    const key=JSON.stringify([material,code]);
+    if(!factors.has(key)){factors.set(key,new Set());factorUnits.set(key,new Set());}
+    factors.get(key).add(factor*convert(u,cfg.unit));factorUnits.get(key).add(u);
+    const sourceKey=JSON.stringify([material,code,unit(r.donViKho||r.donVi||u)]);
+    if(!sourceFactors.has(sourceKey))sourceFactors.set(sourceKey,new Set());
+    sourceFactors.get(sourceKey).add(factor*convert(u,cfg.unit));
   });
   (snapshot.bom||[]).forEach(r=>{
     if(text(r.trangThai)!=='Dang dung')return;
@@ -106,13 +119,20 @@ function mktBuildInputs(snapshot,options) {
     if(text(r.trangThai)!==text(p.trangThaiHangVeDuocTinh||'Dang ve'))return;
     const weekIndex=index(r.ngayDuKienVe);if(weekIndex<0||weekIndex>=count)return;
     const material=text(r.maNguyenLieu),code=text(r.MaKeToan);if(!code)throw new Error('KeHoachHangVe thiếu MaKeToan: '+material);
-    const cfg=ensure(material,r.doViTinhToan||r.donVi),known=factors.get(JSON.stringify([material,code]));
+    const cfg=ensure(material,r.doViTinhToan||r.donVi),key=JSON.stringify([material,code]),known=factors.get(key),targets=factorUnits.get(key);
     let factor;
-    if(r.heSoQuyDoiKho!==''&&r.heSoQuyDoiKho!=null)factor=mktNumber_(r.heSoQuyDoiKho,'heSoQuyDoiKho hàng về');
-    else {if(known&&known.size>1)throw new Error('Hàng về cần heSoQuyDoiKho rõ ràng: '+code);factor=known&&known.size?[...known][0]:convert(r.donVi||cfg.unit,cfg.unit);}
+    if(r.heSoQuyDoiKho!==''&&r.heSoQuyDoiKho!=null) {
+      if(!r.doViTinhToan && targets && targets.size>1)throw new Error('Hàng về cần doViTinhToan rõ ràng: '+code);
+      const target=r.doViTinhToan||(targets&&targets.size?[...targets][0]:cfg.unit);
+      factor=mktNumber_(r.heSoQuyDoiKho,'heSoQuyDoiKho hàng về')*convert(target,cfg.unit);
+    }
+    else {
+      const matching=r.donVi?sourceFactors.get(JSON.stringify([material,code,unit(r.donVi)])):known;
+      if(matching&&matching.size>1)throw new Error('Hàng về cần heSoQuyDoiKho rõ ràng: '+code);
+      factor=matching&&matching.size?[...matching][0]:convert(r.donVi||cfg.unit,cfg.unit);
+    }
     if(!(factor>0))throw new Error('Hệ số hàng về phải lớn hơn 0');
-    const normalized=r.doViTinhToan?convert(r.doViTinhToan,cfg.unit):1;
-    receipts.push({material,code,weekIndex,quantity:mktNumber_(r.soLuongVeDuKien,'soLuongVeDuKien')*factor*normalized});
+    receipts.push({material,code,weekIndex,quantity:mktNumber_(r.soLuongVeDuKien,'soLuongVeDuKien')*factor});
   });
   return {today,weeks,visibleWeeks:visible,reserveWeeks:reserve,bufferDays:mktNumber_(p.soNgayDuPhongDatHang,'soNgayDuPhongDatHang',3),demands,stocks,receipts,materialConfig,warnings};
 }
@@ -127,8 +147,8 @@ function mktSimulate(input) {
   const arrivals=(week,material)=>input.receipts.filter(r=>r.weekIndex===week&&r.material===material);
   const solve=(stocks,demands)=>mktAllocate({stocks,demands});
   const balances=(r,material)=>r.balances.map(s=>({...s,material}));
-  const permitted=material=>{
-    const map=new Map();input.demands.filter(d=>d.material===material).forEach(d=>d.choices.forEach(c=>map.set(c.code,Math.min(map.get(c.code)??3,c.priority))));
+  const permitted=(material,weekIndex)=>{
+    const map=new Map();input.demands.filter(d=>d.material===material&&(weekIndex===undefined||d.weekIndex===weekIndex)).forEach(d=>d.choices.forEach(c=>map.set(c.code,Math.min(map.get(c.code)??3,c.priority))));
     return [...map].map(([code,priority])=>({code,priority})).sort((a,b)=>a.priority-b.priority||(a.code<b.code?-1:a.code>b.code?1:0));
   };
   const physical={},virtual={};
@@ -137,13 +157,13 @@ function mktSimulate(input) {
     materials.forEach(material=>{
       const cfg=input.materialConfig[material],demands=needs(week.index,material),receipts=arrivals(week.index,material),opening=copy(physical[material]);
       const result=solve(opening.concat(receipts),demands);physical[material]=balances(result,material);
-      const choices=permitted(material),allowed=new Set(demands.flatMap(d=>d.choices.map(c=>c.code)));
+      const choices=permitted(material,week.index),allowed=new Set(demands.flatMap(d=>d.choices.map(c=>c.code)));
       const available=total(opening.concat(receipts).filter(s=>allowed.has(s.code)));
       const row={weekIndex:week.index,year:week.year,week:week.week,start:week.start,material,name:cfg.name,unit:cfg.unit,choices,available,demand:result.totals.demand,allocated:result.totals.allocated,shortage:result.totals.shortage,receipts:total(receipts),closing:total(physical[material])};
       if(week.visible) {
         demandReport.push(row);
-        details.push({...row,opening,arrivals:receipts,balances:physical[material],demands,allocations:result.allocations,shortages:result.shortages});
       }
+      details.push({...row,visible:week.visible,opening,arrivals:receipts,balances:physical[material],demands,allocations:result.allocations,shortages:result.shortages});
     });
   });
   const scheduled=(week,material)=>[...orders.values()].filter(o=>o.needWeek===week&&o.material===material).map(o=>({material,code:o.code,quantity:o.proposed}));
@@ -175,7 +195,8 @@ function mktSimulate(input) {
         groups.forEach(g=>addOrder(planningWeek,week,material,g.choice,g.quantity,week===planningWeek?'baseShortage':'reserve',g.products));
         result=solve(before.concat(scheduled(week,material)),demands);
         projected=balances(result,material);
-        if(week===end) {
+        // Safety is needed at each projected week, not only the horizon end.
+        {
           const choices=permitted(material),allowed=new Set(choices.map(c=>c.code)),cfg=input.materialConfig[material];
           const missing=Math.max(0,cfg.safety-total(projected.filter(s=>allowed.has(s.code))));
           if(missing>EPS) {
