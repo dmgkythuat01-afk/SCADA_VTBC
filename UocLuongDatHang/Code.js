@@ -2137,13 +2137,7 @@ function capNhatTonKhoDauTuan() {
 
     const lastRow = sh.getLastRow();
 
-    if (lastRow < 2) {
-      throw new Error(
-        'Sheet TonKho chưa có danh sách nguyên liệu.'
-      );
-    }
-
-    const values = sh
+    const values = lastRow < 2 ? [] : sh
       .getRange(
         2,
         1,
@@ -2153,6 +2147,7 @@ function capNhatTonKhoDauTuan() {
       .getValues();
 
     let updatedCount = 0;
+    let addedCount = 0;
     let notFoundCount = 0;
     let invalidTonKhoCount = 0;
 
@@ -2208,7 +2203,33 @@ function capNhatTonKhoDauTuan() {
       updatedCount++;
     });
 
-    if (updatedCount > 0) {
+    // Mỗi cặp mã nguồn đã được cộng các lô trong getTonThucTeMap_.
+    // Chỉ tạo dòng cho cặp chưa có; giữ trống cấu hình đặt hàng riêng.
+    Object.keys(sourceMap).forEach(key => {
+      if (matchedSourceKeys[key]) return;
+      const source = sourceMap[key];
+      const row = headers.map(() => '');
+      const fields = {
+        maNguyenLieu: source.maNguyenLieu,
+        MaKeToan: source.MaKeToan,
+        tenNguyenLieu: source.tenNguyenLieu,
+        donVi: source.donVi,
+        doViTinhToan: source.doViTinhToan,
+        heSoQuyDoiKho: source.heSoQuyDoiKho,
+        khoiLuongNhap: round3_(source.tongKhoiLuongNhap),
+        tonDauTuanQuyDoi: round3_(source.tonThucTe)
+      };
+      Object.keys(fields).forEach(field => {
+        if (Object.prototype.hasOwnProperty.call(headerIndex, field)) {
+          row[headerIndex[field]] = fields[field] === undefined ? '' : fields[field];
+        }
+      });
+      values.push(row);
+      matchedSourceKeys[key] = true;
+      addedCount++;
+    });
+
+    if (updatedCount > 0 || addedCount > 0) {
       sh.getRange(
         2,
         1,
@@ -2230,11 +2251,13 @@ function capNhatTonKhoDauTuan() {
       message:
         'Đã cập nhật tồn đầu tuần. ' +
         'Cập nhật: ' + updatedCount +
+        ', thêm mới: ' + addedCount +
         ', không tìm thấy ở file 2: ' + notFoundCount +
         ', nguồn không map được vào TonKho: ' +
         sourceNotMatched.length +
         '.',
       updatedCount,
+      addedCount,
       notFoundCount,
       invalidTonKhoCount,
       invalidSourceCount:
