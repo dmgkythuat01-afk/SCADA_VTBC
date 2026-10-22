@@ -8,6 +8,7 @@ function setup(initial) {
  const sheet={getLastRow:()=>rows.length+1,getRange:(start,col,count,width)=>({getValues:()=>rows.slice(start-2,start-2+count).map(r=>r.slice()),setValues:values=>values.forEach((r,i)=>{rows[start-2+i]=r.slice();})})};
  const ctx=load(['Code.js'],{LockService:{getScriptLock:()=>({waitLock(){},releaseLock(){}})},SpreadsheetApp:{flush(){}}});
  ctx.getSheet_=()=>sheet;ctx.getHeaders_=()=>headers;ctx.ghiNgayCapNhatTonKho_=()=>{};
+ ctx.dongBoDanhMucNguyenLieu_=()=>({updatedCount:0,addedCount:0,invalidSourceCount:0});
  ctx.getExternalKhoNguyenLieuRows_=()=>[{maNguyenLieu:'NL',MaKeToan:'001',tenNguyenLieu:'Nguyên liệu',donVi:'kg',doViTinhToan:'kg',heSoQuyDoiKho:2,khoiLuongNhap:12},{maNguyenLieu:'MISSING'}];
  return {ctx,rows};
 }

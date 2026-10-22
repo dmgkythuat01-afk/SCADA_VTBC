@@ -2244,6 +2244,7 @@ function capNhatTonKhoDauTuan() {
       .filter(key => !matchedSourceKeys[key])
       .map(key => sourceMap[key]);
 
+    const materialSync = dongBoDanhMucNguyenLieu_();
     ghiNgayCapNhatTonKho_();
 
     SpreadsheetApp.flush();
@@ -2254,12 +2255,15 @@ function capNhatTonKhoDauTuan() {
         'Đã cập nhật tồn đầu tuần. ' +
         'Cập nhật: ' + updatedCount +
         ', thêm mới: ' + addedCount +
+        '. Danh mục nguyên liệu cập nhật: ' + materialSync.updatedCount +
+        ', thêm mới: ' + materialSync.addedCount +
         ', không tìm thấy ở file 2: ' + notFoundCount +
         ', nguồn không map được vào TonKho: ' +
         sourceNotMatched.length +
         '.',
       updatedCount,
       addedCount,
+      materialSync,
       notFoundCount,
       invalidTonKhoCount,
       invalidSourceCount:
