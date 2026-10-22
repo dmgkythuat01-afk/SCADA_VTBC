@@ -14,3 +14,11 @@ Thay thế phần giao diện/khóa nhóm của thiết kế 2026-10-21 theo yê
 
 Kiểm chứng: 39 ca node:test qua; trang ghép template động parse được, ID cũ/mới không trùng. Review độc lập: hai phát hiện Important được tái hiện và sửa bằng kiểm thử (nguồn tồn thực tế mơ hồ, Excel lẫn chữ nút). Không có minor để lại.
 Chưa xác minh trực quan hoặc chạy nguồn Sheets thật: công cụ trình duyệt cục bộ lỗi Windows sandbox. Chưa push/deploy lần điều chỉnh này.
+
+## Đối chiếu ảnh hai menu
+
+Đồng bộ bảng Yêu cầu đặt hàng bằng đúng class ô, chiều rộng cột tuần, xuống dòng tiêu đề, ô số 0 trống, ngày dd/MM/yyyy, màu âm/PO và summary khoảng tuần của báo cáo cũ. Render lại đưa cuộn ngang về đầu để cột tên/mã không nằm ngoài vùng nhìn.
+
+Leadtime dùng TonKho.soNgayVeKho của mã kế toán; chỉ dùng cấu hình mặc định danh mục khi không có giá trị kho. Nếu nhóm có nhiều leadtime thì hiển thị danh sách giá trị, không chọn tùy ý một nhà cung cấp. PO của báo cáo dùng thứ Hai tuần kích hoạt trừ leadtime, ngày nhập dự kiến là đầu tuần kích hoạt, như BaoCaoGs.js; ngày cần dùng thật vẫn giữ trong chi tiết đề xuất. Chính sách này chỉ áp dụng đường báo cáo (reportCalendar=legacy).
+
+Cột Tồn cuối là số dư dự kiến có thể âm: tồn vật lý còn lại của các mã hợp lệ trừ thiếu tích lũy. Không đổi số dư của bộ giải thành âm. Popup vẫn đối chiếu tồn vật lý không âm và phần thiếu riêng; XLSX lấy số dự kiến gốc. Nguồn đối chiếu tồn thực tế không đủ dữ liệu tiếp tục hiển thị dấu gạch và cảnh báo, không tự lấy tồn đầu để thay thế.

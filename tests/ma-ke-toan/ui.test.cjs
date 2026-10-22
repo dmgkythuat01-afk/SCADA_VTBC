@@ -32,3 +32,10 @@ test('demand Excel export contains raw numeric amounts without detail button lab
 test('forecast responses from a logged-out session cannot populate the new namespace cache',async()=>{
  let done;const {api}=setup(()=>new Promise(r=>done=r));const pending=api.request('getBaoCaoForecastBanHang',4,'');const check=a.rejects(pending);api.reset();done({ok:true,weeks:[],products:[],customers:[]});await check;
 });
+
+test('purchase table matches legacy cell classes, multiline weeks, signed ending and VN dates',async()=>{
+ const data=sample(),row=data.matrix.rows[0];row.leadtime=30;row.orderDate='2026-09-19';row.needDate='2026-10-19';row.weeks['2026|43'].closing=-5;
+ const {api,el}=setup(async()=>data);await api.show('mktPurchase');const html=el('mkt_orderRequestTable').innerHTML;
+ for(const name of ['order-request-name','order-request-week-demand','order-request-week-inbound','order-request-week-ending','order-request-negative','order-request-date','order-request-number'])a.ok(html.includes(name),name);
+ a.ok(html.includes('19/09/2026'));a.ok(html.includes('19/10/2026'));a.ok(html.includes('<br>'));
+});

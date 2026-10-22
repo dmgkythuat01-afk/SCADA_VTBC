@@ -13,6 +13,12 @@ test('ambiguous display-only actual stock warns without blocking operational all
  s.actual=[{maNguyenLieu:'N',MaKeToan:'A',khoiLuongNhap:100,doViTinhToan:'kg'}];
  const r=build(s);a.equal(r.matrix.rows.find(x=>x.name==='Name').weeks['2026|43'].allocated,10);a.ok(r.matrix.rows.every(x=>x.actual===null));a.ok(r.warnings.some(x=>x.includes('tồn thực tế')));
 });
+test('report uses stock leadtime and legacy planning calendar, and shows cumulative signed shortage',()=>{
+ const s=source();s.materials[0].soNgayVeKhoMacDinh=45;s.stocks.forEach(x=>x.soNgayVeKho=30);
+ const r=build(s),row=r.matrix.rows[0];a.equal(row.leadtime,30);a.equal(row.orderDate,'2026-09-19');a.equal(row.needDate,'2026-10-19');
+ a.equal(row.weeks['2026|43'].closing,-10);a.equal(row.weeks['2026|44'].closing,-10);a.equal(row.weeks['2026|43'].physicalClosing,0);
+ a.equal(r.details[0].balances.reduce((n,x)=>n+x.quantity,0),0);
+});
 test('prefixed forecast controls are transformed exactly once',()=>{
  const fs=require('node:fs'),path=require('node:path');const ctx=load(['BaoCaoMaKeToanViewGs.js'],{HtmlService:{createHtmlOutputFromFile:f=>({getContent:()=>fs.readFileSync(path.join(__dirname,'../../UocLuongDatHang',f+'.html'),'utf8')})}});
  const markup=ctx.mktLegacyMarkup_();a.ok(markup.includes('id="mkt_forecastCustomerMultiOptions"'));a.ok(!markup.includes('mkt_mkt_'));

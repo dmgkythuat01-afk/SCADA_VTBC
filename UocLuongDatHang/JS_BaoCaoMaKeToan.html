@@ -5,6 +5,7 @@ const MktReports = (function() {
   const el=id=>document.getElementById(id);
   const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const num=v=>Number(v||0).toLocaleString('vi-VN',{maximumFractionDigits:3});
+  const dateVN=v=>{const match=String(v||'').match(/^(\d{4})-(\d{2})-(\d{2})/);return match?match[3]+'/'+match[2]+'/'+match[1]:String(v||'');};
   const codes=choices=>(choices||[]).map(c=>c.code+' ('+c.priority+')').join(', ');
   const isKey=key=>menu.some(m=>m.key===key);
   function renderMenu(){return `<div class="menu-group"><button class="nav nav-parent ${open?'open':''}" onclick="MktReports.toggle()"><span class="nav-parent-main"><span>🔢</span><span>Báo cáo theo mã kế toán</span></span><span class="nav-arrow">›</span></button><div class="submenu ${open?'open':''}">${menu.map(m=>`<button class="nav nav-sub ${active===m.key&&typeof currentView!=='undefined'&&currentView===m.key?'active':''}" onclick="showView('${m.key}')"><span>•</span><span>${m.label}</span></button>`).join('')}</div></div>`;}
@@ -45,8 +46,17 @@ const MktReports = (function() {
   }
   function renderPurchase(data){
     const target=prepare(data,'purchase');
-    const heads=['Mã nguyên liệu vật tư','Mã kế toán được dùng (ưu tiên)','Tên nguyên liệu vật tư','Đơn vị','Tồn đầu tuần','Tồn thực tế',...data.weeks.flatMap(w=>['Nhu cầu SX tuần '+w.tuan,'Hàng về tuần '+w.tuan,'Tồn cuối tuần '+w.tuan]),'Leadtime','Ngày cần đặt hàng (PO)','Ngày nhập kho dự kiến','Đề xuất đặt','Xem phân bổ'];
-    target.innerHTML=table(heads,data.rows.map(row=>[esc(row.code),esc(codes(row.choices)),esc(row.name),esc(row.unit),num(row.opening),row.actual==null?'—':num(row.actual),...data.weeks.flatMap(w=>{const v=row.weeks[w.nam+'|'+w.tuan];return v?[num(v.demand),num(v.receipts),num(v.closing)]:['','',''];}),num(row.leadtime),esc(row.orderDate),esc(row.needDate),num(row.proposed),snapshot.weeks.filter(w=>w.visible||row.purchases.some(p=>p.needWeek===w.index)).map(w=>action(w.index,row.key,'Tuần '+w.week)).join(' ')]));
+    const heads=[['','Mã nguyên<br>liệu vật tư'],['mkt-accounting','Mã kế toán<br>được dùng<br>(ưu tiên)'],['','Tên nguyên liệu vật tư'],['','Đơn vị'],['','Tồn đầu<br>tuần '+esc(data.weeks[0]?.tuan||'')],['','Tồn thực tế'],...data.weeks.flatMap(w=>[['order-request-week-demand','Nhu cầu<br>SX<br>tuần '+esc(w.tuan)],['order-request-week-inbound','Hàng về<br>tuần '+esc(w.tuan)],['order-request-week-ending','Tồn cuối<br>tuần '+esc(w.tuan)]]),['order-request-center','Leadtime'],['order-request-date','Ngày cần đặt<br>hàng (PO)'],['order-request-date','Ngày nhập kho dự<br>kiến'],['order-request-number','Đề xuất đặt'],['order-request-action','Xem phân bổ']];
+    const td=(cls,html)=>'<td class="'+cls+'">'+html+'</td>',qty=v=>Number(v||0)!==0?num(v):'';
+    const body=data.rows.map(row=>{
+      const weeks=data.weeks.map(w=>{const v=row.weeks[w.nam+'|'+w.tuan]||{};return td('order-request-number order-request-week-demand',qty(v.demand))+td('order-request-number order-request-week-inbound',qty(v.receipts))+td('order-request-number order-request-week-ending '+(v.closing<0?'order-request-negative':''),qty(v.closing));}).join('');
+      const lead=typeof row.leadtime==='number'?num(row.leadtime):esc(row.leadtime);
+      const calendar=row.canDat?'<small>'+(row.planningWeek?'Đặt từ tuần '+esc(row.planningWeek)+'<br>':'')+(row.shortageWeek?'Thiếu từ tuần '+esc(row.shortageWeek):'')+'</small>':'';
+      return '<tr class="'+(row.canDat?'order-request-row-need':'')+'">'+td('order-request-code',esc(row.code))+td('mkt-accounting',esc(codes(row.choices)))+td('order-request-name',esc(row.name))+td('order-request-unit',esc(row.unit))+td('order-request-number',num(row.opening))+td('order-request-number',row.actual==null?'—':num(row.actual))+weeks+td('order-request-center',lead)+td('order-request-date '+(row.canDat?'order-request-po':''),esc(dateVN(row.orderDate))+calendar)+td('order-request-date',esc(dateVN(row.needDate)))+td('order-request-number',qty(row.proposed))+td('order-request-action',snapshot.weeks.filter(w=>w.visible||row.purchases.some(p=>p.needWeek===w.index)).map(w=>action(w.index,row.key,'Tuần '+w.week)).join(' '))+'</tr>';
+    }).join('');
+    target.innerHTML='<thead><tr>'+heads.map(([cls,html])=>'<th class="'+cls+'">'+html+'</th>').join('')+'</tr></thead><tbody>'+(body||'<tr><td class="empty" colspan="'+heads.length+'">Không có dữ liệu.</td></tr>')+'</tbody>';
+    if(target.parentElement)target.parentElement.scrollLeft=0;
+    el('mkt_orderRequestSummary').innerHTML='<div class="order-summary-title">Hiển thị '+data.weeks.length+' tuần • '+data.rows.length+' nguyên liệu</div><div class="order-summary-weeks">'+data.weeks.map(w=>'<div class="order-summary-week"><b>Tuần '+esc(w.tuan)+'/'+esc(w.nam)+'</b><span>'+esc(dateVN(w.start||w.ngayDauTuan))+' → '+esc(dateVN(w.end||w.ngayCuoiTuan))+'</span></div>').join('')+'</div>';
   }
   function exportExcel(){
     if(!displayed)return alert('Chưa có dữ liệu báo cáo.');

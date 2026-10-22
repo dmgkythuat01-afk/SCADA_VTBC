@@ -186,7 +186,10 @@ function mktSimulate(input) {
   function addOrder(planningWeek,needWeek,material,choice,quantity,kind,products) {
     if(quantity<=EPS)return;
     const key=JSON.stringify([needWeek,material,choice.code]),cfg=input.materialConfig[material],week=input.weeks[needWeek];
-    if(!orders.has(key))orders.set(key,{planningWeek,needWeek,material,name:cfg.name,unit:cfg.unit,code:choice.code,priority:choice.priority,baseShortage:0,reserve:0,safety:0,proposed:0,products:[],needDate:week.start,orderDate:mktAddDays_(week.start,-Math.ceil(cfg.leadDays+input.bufferDays)),year:week.year,week:week.week});
+    const leadDays=cfg.codeLeadDays?.[choice.code]??cfg.leadDays;
+    const receiptDate=input.reportCalendar==='legacy'?input.weeks[planningWeek].start:week.start;
+    const offset=input.reportCalendar==='legacy'?leadDays:leadDays+input.bufferDays;
+    if(!orders.has(key))orders.set(key,{planningWeek,needWeek,material,name:cfg.name,unit:cfg.unit,code:choice.code,priority:choice.priority,baseShortage:0,reserve:0,safety:0,proposed:0,products:[],needDate:week.start,receiptDate,leadDays,orderDate:mktAddDays_(receiptDate,-Math.ceil(offset)),year:week.year,week:week.week});
     const order=orders.get(key);order[kind]+=quantity;order.priority=Math.min(order.priority,choice.priority);
     order.products=[...new Set(order.products.concat(products||[]))].sort();
     const raw=order.baseShortage+order.reserve+order.safety;

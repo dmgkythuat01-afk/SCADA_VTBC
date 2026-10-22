@@ -20,19 +20,29 @@ function mktCreateReports_(source,options) {
     });
   });
   const input=mktBuildInputs(snapshot,options);
-  Object.keys(input.materialConfig).forEach(key=>{const pair=JSON.parse(key);input.materialConfig[key].code=pair[0];input.materialConfig[key].name=pair[1];});
+  input.reportCalendar='legacy';
+  Object.keys(input.materialConfig).forEach(key=>{const pair=JSON.parse(key);input.materialConfig[key].code=pair[0];input.materialConfig[key].name=pair[1];input.materialConfig[key].codeLeadDays={};});
+  (snapshot.stocks||[]).forEach(r=>{
+    const cfg=input.materialConfig[r.maNguyenLieu];
+    if(!cfg||text(r.trangThai)!==text((snapshot.params||{}).trangThaiTonDuocTinh||'Dat')||r.soNgayVeKho===''||r.soNgayVeKho==null)return;
+    const code=text(r.MaKeToan),days=mktNumber_(r.soNgayVeKho,'soNgayVeKho '+code);
+    cfg.codeLeadDays[code]=Math.max(cfg.codeLeadDays[code]??0,days);
+  });
   const result=mktSimulate(input),rows=new Map();
   const sum=(list,field='quantity')=>list.reduce((n,r)=>n+(r[field]||0),0);
   const codeLabel=choices=>choices.map(c=>c.code+' ('+c.priority+')').join(', ');
   result.details.filter(d=>d.visible).forEach(d=>{
     const cfg=input.materialConfig[d.material];
-    if(!rows.has(d.material))rows.set(d.material,{key:d.material,code:cfg.code,name:cfg.name,unit:d.unit,choices:[],weeks:{},opening:sum(d.opening),actual:Array.isArray(source.actual)?0:null,leadtime:cfg.leadDays,proposed:0,purchases:[],products:[]});
+    if(!rows.has(d.material))rows.set(d.material,{key:d.material,code:cfg.code,name:cfg.name,unit:d.unit,choices:[],weeks:{},opening:sum(d.opening),actual:Array.isArray(source.actual)?0:null,leadtime:cfg.leadDays,proposed:0,purchases:[],products:[],cumulativeShortage:0});
     const row=rows.get(d.material),weekKey=d.year+'|'+d.week;
     const choiceMap=new Map(row.choices.map(c=>[JSON.stringify([c.code,c.priority]),c]));
     d.demands.forEach(n=>n.choices.forEach(c=>choiceMap.set(JSON.stringify([c.code,c.priority]),c)));
     row.choices=[...choiceMap.values()].sort((a,b)=>a.priority-b.priority||a.code.localeCompare(b.code));
     row.products=[...new Set(row.products.concat(d.demands.map(n=>n.productName||n.product)))].sort();
-    row.weeks[weekKey]={...d,opening:sum(d.opening),receipts:sum(d.arrivals),closing:sum(d.balances),choices:d.choices};
+    row.cumulativeShortage+=d.shortage;
+    const allowed=new Set(input.demands.filter(n=>n.material===d.material).flatMap(n=>n.choices.map(c=>c.code)));
+    const usableClosing=sum(d.balances.filter(b=>allowed.has(b.code)));
+    row.weeks[weekKey]={...d,opening:sum(d.opening),receipts:sum(d.arrivals),physicalClosing:sum(d.balances),closing:usableClosing-row.cumulativeShortage,choices:d.choices};
   });
   result.purchaseReport.forEach(p=>{const row=rows.get(p.material);if(row){row.proposed+=p.proposed;row.purchases.push(p);}});
   if(source.actualError)result.warnings.push(source.actualError);
@@ -53,7 +63,12 @@ function mktCreateReports_(source,options) {
   matrixRows.forEach(row=>{
     row.maNguyenLieu=row.code;row.tenNguyenLieu=row.name;row.MaKeToan=codeLabel(row.choices);row.canDat=row.proposed>0;
     const earliest=row.purchases.slice().sort((a,b)=>a.orderDate.localeCompare(b.orderDate))[0];
-    row.orderDate=earliest?earliest.orderDate:'';row.needDate=earliest?earliest.needDate:'';
+    const cfg=input.materialConfig[row.key];
+    const leadCodes=row.choices.length?row.choices.map(c=>c.code):Object.keys(cfg.codeLeadDays);
+    const leadValues=[...new Set(leadCodes.map(code=>cfg.codeLeadDays[code]??cfg.leadDays))].sort((a,b)=>a-b);
+    row.leadtime=leadValues.length>1?leadValues.join(' / '):leadValues[0]??cfg.leadDays;
+    row.orderDate=earliest?earliest.orderDate:'';row.needDate=earliest?(earliest.receiptDate||earliest.needDate):'';
+    row.planningWeek=earliest?result.weeks[earliest.planningWeek].week:'';row.shortageWeek=earliest?earliest.week:'';
   });
   const weeks=result.weeks.filter(w=>w.visible).map(w=>({...w,nam:w.year,tuan:w.week,ngayDauTuan:w.start,ngayCuoiTuan:w.end}));
   return {success:true,...result,matrix:{weeks,rows:matrixRows},calculatedAt:new Date().toISOString()};
