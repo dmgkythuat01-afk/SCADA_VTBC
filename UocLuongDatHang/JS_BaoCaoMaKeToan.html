@@ -95,8 +95,24 @@ const MktReports = (function() {
     const stock=allCodes.map(code=>[esc(code),num(sum(d.opening,code)),num(sum(d.arrivals,code)),num(sum(d.allocations,code)),num(sum(d.balances,code))]);
     const permittedSelected=new Set([...demandById.values()].flatMap(n=>n.choices.map(c=>c.code)));
     const purchases=snapshot.purchaseReport.filter(r=>r.needWeek===weekIndex&&r.material===material&&(product===undefined||(r.products.includes(product)&&permittedSelected.has(r.code))));
-    el('mktDetailTitle').textContent='Chi tiết phân bổ — '+(product!==undefined?product+' — ':'')+(snapshot.matrix.rows.find(r=>r.key===material)?.code||material)+' — '+snapshot.weeks[weekIndex].start;
-    el('mktDetailBody').innerHTML='<p class="mkt-note">Phân bổ dưới đây chỉ dùng tồn và hàng về thực tế; không cộng mua đề xuất.</p><h3>Phân bổ theo sản phẩm và mã kế toán</h3><div class="mkt-scroll">'+table(['Sản phẩm','Mã kế toán','Ưu tiên','Đã cấp','Đơn vị'],allocations)+'</div><h3>Nhu cầu và phần thiếu</h3><div class="mkt-scroll">'+table(['Sản phẩm','Nhu cầu','Đã cấp','Thiếu','Mã được phép'],shortage)+'</div><h3>Đối chiếu tồn theo mã (toàn nguyên liệu, dùng chung)</h3><div class="mkt-scroll">'+table(['Mã kế toán','Tồn đầu','Hàng về','Đã cấp','Tồn cuối'],stock)+'</div><h3>Lý do đề xuất mua — số lượng gộp các sản phẩm liên quan</h3>'+ (purchases.length?purchases.map(r=>'<p class="mkt-note">'+esc(r.code)+' (ưu tiên '+esc(r.priority)+'): '+num(r.proposed)+' '+esc(r.unit)+'. '+esc(r.reason)+' Cấu hình: '+esc(r.configurationScope)+'.</p>').join(''):'<p>Không có đề xuất mua mới cho tuần/nguyên liệu này.</p>');
+    const row=snapshot.matrix.rows.find(r=>r.key===material),week=snapshot.weeks[weekIndex],unit=row?.unit||d.unit||'';
+    const selected=[...demandById.values()];
+    const totalDemand=selected.reduce((n,r)=>n+Number(r.quantity||0),0);
+    const totalAllocated=d.allocations.filter(r=>demandById.has(r.demandId)).reduce((n,r)=>n+r.quantity,0);
+    const totalShortage=d.shortages.filter(r=>demandById.has(r.demandId)).reduce((n,r)=>n+r.quantity,0);
+    const productNames=[...new Set(selected.map(n=>n.productName&&n.productName!==n.product?n.productName+' ('+n.product+')':n.product))].join(', ');
+    const numeric=(rows,columns)=>rows.map(cells=>cells.map((cell,i)=>columns.includes(i)?'<span class="mkt-num">'+cell+'</span>':cell));
+    const section=(title,heads,values,columns)=>'<section class="mkt-detail-section"><h3>'+title+'</h3><div class="mkt-scroll"><table>'+table(heads,numeric(values,columns))+'</table></div></section>';
+    const metric=(key,label,value,cls)=>'<div class="mkt-metric '+cls+'" data-metric="'+key+'" data-value="'+value+'"><span>'+label+'</span><strong>'+num(value)+' <small>'+esc(unit)+'</small></strong></div>';
+    el('mktDetailTitle').textContent='Chi tiết phân bổ — '+(row?.code||material);
+    const context='<div class="mkt-context"><div><span>Sản phẩm</span><strong>'+esc(productNames||'Tất cả sản phẩm')+'</strong></div><div><span>Nguyên liệu</span><strong>'+esc((row?.code||material)+' — '+(row?.name||d.name||''))+'</strong></div><div><span>Tuần '+esc(week.week||week.tuan||'')+'/'+esc(week.year||week.nam||'')+'</span><strong>'+esc(dateVN(week.start))+(week.end?' → '+esc(dateVN(week.end)):'')+'</strong></div></div>';
+    const metrics='<div class="mkt-metrics">'+metric('demand','Nhu cầu',totalDemand,'')+metric('allocated','Đã cấp từ tồn và hàng về',totalAllocated,'mkt-metric-allocated')+metric('shortage','Còn thiếu',totalShortage,totalShortage>0?'mkt-metric-shortage':'')+'</div>';
+    const purchaseRows=purchases.map(p=>{
+      const parts=[];if(p.baseShortage>0)parts.push('Thiếu tuần này: '+num(p.baseShortage)+' '+unit);if(p.reserve>0)parts.push('Giữ chỗ: '+num(p.reserve)+' '+unit);if(p.safety>0)parts.push('Tồn an toàn: '+num(p.safety)+' '+unit);if(p.rounding>0)parts.push('Làm tròn đặt hàng: '+num(p.rounding)+' '+unit);
+      return [esc(p.code),'Ưu tiên '+esc(p.priority),num(p.proposed)+' '+esc(p.unit||unit),esc(parts.join(' · ')||'Bổ sung cho nhu cầu chưa được đáp ứng.')+'<br><small>Số lượng gộp cho: '+esc((p.products||[]).join(', ')||'tồn an toàn')+'</small>'];
+    });
+    const stockSection='<details class="mkt-stock-details"><summary>Xem tồn kho dùng chung theo mã kế toán</summary><p class="mkt-note">Các số dư dưới đây thuộc toàn nguyên liệu, dùng chung cho các sản phẩm; không phải tồn riêng của sản phẩm đang xem.</p>'+section('Đối chiếu tồn kho',['Mã kế toán','Tồn đầu ('+unit+')','Hàng về ('+unit+')','Đã cấp ('+unit+')','Tồn cuối ('+unit+')'],stock,[1,2,3,4])+'</details>';
+    el('mktDetailBody').innerHTML=context+metrics+'<p class="mkt-note">“Được phép dùng” là mã đã bật trong BOM; “Đã cấp” là số lượng thực tế được phân bổ. Chưa cộng lượng mua đề xuất vào tồn.</p>'+section('1. Đã cấp từ những mã nào?',['Sản phẩm','Mã kế toán','Ưu tiên','Đã cấp','Đơn vị'],allocations,[2,3])+section('2. Nhu cầu và phần còn thiếu',['Sản phẩm','Nhu cầu ('+unit+')','Đã cấp ('+unit+')','Còn thiếu ('+unit+')','Mã được phép (ưu tiên)'],shortage,[1,2,3])+section('3. Đề xuất mua bổ sung',['Mã kế toán','Ưu tiên','Lượng đề xuất','Giải thích'],purchaseRows,[2])+stockSection;
     if(!el('mktDialog').open)el('mktDialog').showModal();
   }
   function closeDetail(){const dialog=el('mktDialog');if(dialog&&dialog.open)dialog.close();}

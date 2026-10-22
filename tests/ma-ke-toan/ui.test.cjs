@@ -58,12 +58,18 @@ test('product detail excludes another products allocation and shortlist',async()
 });
 
 test('variant detail does not suggest a code permitted only for another BOM variant',async()=>{
- const data=sample();data.purchaseReport=[{needWeek:0,material:key,products:['P'],code:'B',priority:0,proposed:99,unit:'kg',reason:'OTHER_VARIANT_PURCHASE',configurationScope:'Material'}];
- const {api,el}=setup(async()=>data);await api.show('mktDemand');api.openDetail(0,key,'P',['d']);a.ok(!el('mktDetailBody').innerHTML.includes('OTHER_VARIANT_PURCHASE'));
+ const data=sample();data.purchaseReport=[{needWeek:0,material:key,products:['P'],code:'OTHER_VARIANT_CODE',priority:0,proposed:99,unit:'kg',reason:'OTHER_VARIANT_PURCHASE',configurationScope:'Material'}];
+ const {api,el}=setup(async()=>data);await api.show('mktDemand');api.openDetail(0,key,'P',['d']);a.ok(!el('mktDetailBody').innerHTML.includes('OTHER_VARIANT_CODE'));
 });
 
 test('demand shows only demand warnings and other diagnostics are collapsed in purchase view',async()=>{
  const data=sample();data.warnings=['ACTUAL_STOCK_WARNING'];data.demandWarnings=['BOM_CONFIG_WARNING'];const {api,el}=setup(async()=>data);
  await api.show('mktDemand');const demand=el('mkt_materialDemandWarning').innerHTML;a.ok(demand.includes('BOM_CONFIG_WARNING'));a.ok(!demand.includes('ACTUAL_STOCK_WARNING'));a.ok(demand.includes('<details>'));
  await api.show('mktPurchase');a.ok(el('mkt_orderRequestWarning').innerHTML.includes('ACTUAL_STOCK_WARNING'));
+});
+
+test('popup uses real tables with clear totals and readable context',async()=>{
+ const {api,el}=setup(async()=>sample());await api.show('mktDemand');api.openDetail(0,key,'P',['d']);const html=el('mktDetailBody').innerHTML;
+ a.ok((html.match(/<table\b/g)||[]).length>=3);a.ok(html.includes('data-metric="demand"'));a.ok(html.includes('data-metric="allocated"'));a.ok(html.includes('data-metric="shortage"'));a.ok(html.includes('19/10/2026'));a.ok(html.includes('Ưu tiên'));a.ok(!html.includes('<img'));
+ a.ok(html.includes('data-value="10"'));a.ok(html.includes('data-value="5"'));a.ok(html.includes('mkt-num'));
 });

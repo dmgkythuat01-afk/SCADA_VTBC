@@ -13,6 +13,31 @@
 .mkt-reports .mkt-empty,.mkt-modal .mkt-empty{padding:24px;color:#64748b}
 .mkt-modal{width:min(1200px,94vw);max-height:90vh;border:0;border-radius:12px;padding:22px;color:#0f172a;background:#fff}
 .mkt-modal::backdrop{background:rgba(15,23,42,.5)}
+.mkt-modal{box-sizing:border-box;overflow:auto;max-width:94vw;font-family:inherit}
+.mkt-modal .mkt-toolbar{justify-content:space-between;align-items:flex-start;position:sticky;top:-22px;background:#fff;z-index:5;padding:12px 0;border-bottom:1px solid #e2e8f0}
+.mkt-modal .mkt-toolbar h2{flex:1;min-width:200px;margin:0;font-size:21px;line-height:1.4}
+.mkt-modal .mkt-toolbar .btn{flex:none;min-width:70px}
+.mkt-modal .mkt-context{display:grid;grid-template-columns:1.2fr 1.2fr 1fr;gap:12px;margin:16px 0}
+.mkt-modal .mkt-context span{display:block;color:#64748b;font-size:12px;margin-bottom:4px}
+.mkt-modal .mkt-context strong{display:block;font-size:13px;line-height:1.5;overflow-wrap:anywhere}
+.mkt-modal .mkt-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:16px 0}
+.mkt-modal .mkt-metric{border:1px solid #e2e8f0;border-radius:10px;padding:14px;background:#f8fafc}
+.mkt-modal .mkt-metric>span{display:block;font-size:12px;color:#475569;margin-bottom:7px}
+.mkt-modal .mkt-metric strong{display:block;font-size:23px;line-height:1.3;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.mkt-modal .mkt-metric strong small{font-size:13px;font-weight:500}
+.mkt-modal .mkt-metric-allocated{background:#ecfdf5;border-color:#a7f3d0;color:#065f46}
+.mkt-modal .mkt-metric-shortage{background:#fff1f2;border-color:#fecdd3;color:#b91c1c}
+.mkt-modal .mkt-detail-section{margin:20px 0}
+.mkt-modal .mkt-detail-section h3{margin:0 0 8px;font-size:15px}
+.mkt-modal .mkt-scroll{border:1px solid #e2e8f0;border-radius:8px;max-height:280px;margin:8px 0}
+.mkt-modal table{min-width:0;width:100%;font-size:13px;border-collapse:separate;border-spacing:0;white-space:normal}
+.mkt-modal th,.mkt-modal td{padding:11px 12px;border-right:1px solid #e2e8f0;vertical-align:top;line-height:1.5;white-space:normal}
+.mkt-modal th{font-weight:700;background:#f1f5f9}
+.mkt-modal tbody tr:nth-child(even){background:#f8fafc}
+.mkt-modal .mkt-num{display:block;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.mkt-modal .mkt-stock-details{margin-top:20px;border-top:1px solid #e2e8f0;padding-top:14px}
+.mkt-modal .mkt-stock-details>summary{cursor:pointer;font-weight:700;color:#475569}
+@media(max-width:650px){.mkt-modal .mkt-context,.mkt-modal .mkt-metrics{grid-template-columns:1fr}.mkt-modal{padding:14px}.mkt-modal .mkt-toolbar{top:-14px}.mkt-modal .mkt-metric strong{font-size:20px}}
 #mkt_orderRequestTable .mkt-accounting{white-space:normal;overflow-wrap:anywhere;line-height:1.25}
 #mkt_materialDemandTable .mkt-permitted-codes{min-width:200px;max-width:280px;white-space:normal}
 #mkt_materialDemandTable .mkt-priority{display:inline-block;margin:2px 4px 2px 0;padding:4px 7px;border-radius:7px;background:#f1f5f9;color:#475569;font-size:11px;white-space:normal;overflow-wrap:anywhere}
