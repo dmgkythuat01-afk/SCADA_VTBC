@@ -9,7 +9,12 @@ test('all assembled scripts parse and Apps Script basenames are unique',()=>{
  const root=path.join(__dirname,'../../UocLuongDatHang');
  function expand(text){return text.replace(/<\?!= include\('([^']+)'\); \?>/g,(_,f)=>expand(fs.readFileSync(path.join(root,f+'.html'),'utf8')));}
  const html=expand(fs.readFileSync(path.join(root,'Index.html'),'utf8'));
- for(const m of html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi))new vm.Script(m[1]);
+ const generator=load(['BaoCaoMaKeToanViewGs.js'],{HtmlService:{createHtmlOutputFromFile:f=>({getContent:()=>fs.readFileSync(path.join(root,f+'.html'),'utf8')})}});
+ const assembled=html.replace(/<\?!= (mktLegacy(?:Style|Markup|Script)_)\(\); \?>/g,(_,fn)=>generator[fn]());
+ for(const m of assembled.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi))new vm.Script(m[1]);
+ const generatedIds=[...generator.mktLegacyMarkup_().matchAll(/\bid="([^"]+)"/g)].map(m=>m[1]);
+ const originalIds=[...fs.readFileSync(path.join(root,'BaoCao.html'),'utf8').matchAll(/\bid="([^"]+)"/g)].map(m=>m[1]);
+ a.equal(new Set(generatedIds).size,generatedIds.length);a.ok(generatedIds.every(id=>!originalIds.includes(id)));
  const names=new Set();for(const f of fs.readdirSync(root).filter(f=>/\.(js|html)$/.test(f))){const name=f.replace(/\.(js|html)$/,'');a.ok(!names.has(name),'duplicate Apps Script file: '+name);names.add(name);if(f.endsWith('.js'))new vm.Script(fs.readFileSync(path.join(root,f),'utf8'));}
 });
 test('allocator agrees with exhaustive integer optimization for small graphs',()=>{

@@ -1,20 +1,3 @@
-<section id="mktReports" class="mkt-reports hidden">
-  <div class="card">
-    <div class="mkt-toolbar">
-      <div><h2 id="mktTitle">Báo cáo theo mã kế toán</h2><p>Tối đa lượng đáp ứng trước, sau đó ưu tiên mã 0 → 3.</p></div>
-      <label>Số tuần <select id="mktWeeks" onchange="MktReports.load(Number(this.value))"><option value="4">4 tuần</option><option value="8">8 tuần</option><option value="12">12 tuần</option></select></label>
-      <button id="mktLoad" class="btn btn-primary" onclick="MktReports.load(Number(document.getElementById('mktWeeks').value))">Tải lại dữ liệu</button>
-    </div>
-    <p class="mkt-note">Tồn và thiếu thực tế không bao gồm lượng mua đề xuất. Đề xuất giữ chỗ dùng sổ mua giả định riêng, chưa phải đơn hàng đã xác nhận.</p>
-    <div id="mktStatus" role="status"></div>
-    <div id="mktWarnings" class="mkt-warnings"></div>
-    <div class="mkt-toolbar">
-      <label>Tuần <select id="mktWeekFilter" onchange="MktReports.render()"><option value="">Tất cả</option></select></label>
-      <label>Nguyên liệu <select id="mktMaterialFilter" onchange="MktReports.render()"><option value="">Tất cả</option></select></label>
-    </div>
-    <div id="mktTable" class="mkt-scroll"></div>
-  </div>
-</section>
 <dialog id="mktDialog" class="mkt-modal" aria-labelledby="mktDetailTitle">
   <div class="mkt-toolbar"><h2 id="mktDetailTitle">Chi tiết phân bổ</h2><button class="btn btn-ghost" onclick="MktReports.closeDetail()">Đóng</button></div>
   <div id="mktDetailBody"></div>

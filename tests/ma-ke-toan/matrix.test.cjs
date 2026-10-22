@@ -1,0 +1,20 @@
+const {test}=require('node:test'),a=require('node:assert/strict'),{load}=require('./helpers.cjs');
+function source(){return {today:'2026-10-22',params:{soTuanGiuChoNguyenLieu:0},headers:{bom:['MaKeToan1','MaKeToan2','MaKeToan3','SuDung0','SuDung1','SuDung2','SuDung3']},materials:[{maNguyenLieu:'N',tenNguyenLieu:'Name',donVi:'kg'}],stocks:['A','B'].map(MaKeToan=>({maNguyenLieu:'N',tenNguyenLieu:'Name',MaKeToan,tonDauTuanQuyDoi:5,doViTinhToan:'kg',trangThai:'Dat'})),plans:[{maSanPham:'P',soLuongSKU:1,ngayDauTuan:'2026-10-19',trangThai:'Da duyet'}],bom:[{maDinhLuong:'BOM',maSanPham:'P',maNguyenLieu:'N',tenNguyenLieu:'Name',MaKeToan:'A',MaKeToan1:'B',SuDung0:true,SuDung1:true,dinhLuong1SKU:20,donViDinhLuong:'kg',trangThai:'Dang dung'}],receipts:[],conversions:[]};}
+const build=s=>load(['PhanBoMaKeToan.js','BaoCaoMaKeToanGs.js','BaoCaoMaKeToanViewGs.js']).mktCreateReports_(s,{weeks:4});
+test('matrix has one material row across accounting codes and horizontal weeks',()=>{const r=build(source());a.equal(r.matrix.rows.length,1);const row=r.matrix.rows[0];a.equal(row.code,'N');a.equal(row.name,'Name');a.equal(row.weeks['2026|43'].demand,20);a.equal(row.weeks['2026|43'].allocated,10);a.equal(row.proposed,10);a.equal(row.choices.length,2);a.equal(r.matrix.weeks.length,4);});
+test('same code different names and same name different codes remain distinct without stock reuse',()=>{const s=source();s.materials.push({...s.materials[0],tenNguyenLieu:'Other'});s.materials.push({...s.materials[0],maNguyenLieu:'N2'});s.bom.push({...s.bom[0],tenNguyenLieu:'Other'});s.bom.push({...s.bom[0],maNguyenLieu:'N2'});const r=build(s);a.equal(r.matrix.rows.length,3);a.equal(r.matrix.rows.find(x=>x.code==='N'&&x.name==='Other').weeks['2026|43'].allocated,0);a.equal(r.matrix.rows.reduce((n,x)=>n+x.weeks['2026|43'].allocated,0),10);});
+test('missing source name can only inherit a unique name, not mix ambiguous identities',()=>{const s=source();s.stocks[0].tenNguyenLieu='';a.equal(build(s).matrix.rows.length,1);s.materials.push({...s.materials[0],tenNguyenLieu:'Other'});a.throws(()=>build(s),/tên nguyên liệu/);});
+test('live actual stock is grouped by material identity and never added to opening allocation',()=>{
+ const s=source();s.actual=[{maNguyenLieu:'N',tenNguyenLieu:'Name',MaKeToan:'A',khoiLuongNhap:100,heSoQuyDoiKho:1,doViTinhToan:'kg'}];
+ const row=build(s).matrix.rows[0];a.equal(row.actual,100);a.equal(row.opening,10);a.equal(row.weeks['2026|43'].allocated,10);
+});
+test('ambiguous display-only actual stock warns without blocking operational allocation',()=>{
+ const s=source();s.materials.push({...s.materials[0],tenNguyenLieu:'Other'});
+ s.actual=[{maNguyenLieu:'N',MaKeToan:'A',khoiLuongNhap:100,doViTinhToan:'kg'}];
+ const r=build(s);a.equal(r.matrix.rows.find(x=>x.name==='Name').weeks['2026|43'].allocated,10);a.ok(r.matrix.rows.every(x=>x.actual===null));a.ok(r.warnings.some(x=>x.includes('tồn thực tế')));
+});
+test('prefixed forecast controls are transformed exactly once',()=>{
+ const fs=require('node:fs'),path=require('node:path');const ctx=load(['BaoCaoMaKeToanViewGs.js'],{HtmlService:{createHtmlOutputFromFile:f=>({getContent:()=>fs.readFileSync(path.join(__dirname,'../../UocLuongDatHang',f+'.html'),'utf8')})}});
+ const markup=ctx.mktLegacyMarkup_();a.ok(markup.includes('id="mkt_forecastCustomerMultiOptions"'));a.ok(!markup.includes('mkt_mkt_'));
+});
+test('legacy shell keeps forecast controls, isolated IDs and event handlers',()=>{const fs=require('node:fs'),path=require('node:path');const ctx=load(['BaoCaoMaKeToanViewGs.js'],{HtmlService:{createHtmlOutputFromFile:f=>({getContent:()=>fs.readFileSync(path.join(__dirname,'../../UocLuongDatHang',f+'.html'),'utf8')})}});const html=ctx.mktLegacyMarkup_();a.ok(html.includes('mkt_forecastWeekCount'));a.ok(html.includes('mkt_orderRequestDisplayFilter'));a.ok(html.includes('MktLegacy.exportCurrentReportExcel()'));a.ok(!html.includes('id="forecastWeekCount"'));const script=ctx.mktLegacyScript_();new (require('node:vm').Script)(script.replace(/^<script>/,'').replace(/<\/script>$/,''));});

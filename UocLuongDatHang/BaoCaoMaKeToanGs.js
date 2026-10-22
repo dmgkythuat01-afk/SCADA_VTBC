@@ -19,6 +19,8 @@ function mktReadSnapshot() {
     }).filter(Boolean);
   });
   snapshot.params={};snapshot.parameters.forEach(r=>{if(r.thamSo)snapshot.params[String(r.thamSo).trim()]=r.giaTri;});
+  try {snapshot.actual=getExternalKhoNguyenLieuRows_();}
+  catch(err){snapshot.actualError='Không đọc được tồn thực tế: '+err.message;}
   return snapshot;
 }
 
@@ -233,6 +235,5 @@ function mktSimulate(input) {
 }
 
 function mktGetReports(options) {
-  const input=mktBuildInputs(mktReadSnapshot(),options||{});
-  return {success:true,...mktSimulate(input),calculatedAt:new Date().toISOString()};
+  return mktCreateReports_(mktReadSnapshot(),options||{});
 }
