@@ -126,7 +126,7 @@ function mktBuildInputs(snapshot,options) {
     bom.forEach(b=>{
       const cfg=materialConfig[b.material],quantity=sku*mktNumber_(b.dinhLuong1SKU,'dinhLuong1SKU '+b.id)*convert(b.donViDinhLuong,cfg.unit)*(1+mktNumber_(b.haoHutPhanTram,'haoHutPhanTram '+b.id,0)/100);
       const id=JSON.stringify([weekIndex,product,b.id]);
-      if(!aggregated.has(id))aggregated.set(id,{id,product,productName:text(r.tenSanPham)||product,material:b.material,weekIndex,quantity:0,choices:b.choices});
+      if(!aggregated.has(id))aggregated.set(id,{id,product,productName:text(r.tenSanPham)||text(b.tenSanPham)||product,material:b.material,weekIndex,quantity:0,choices:b.choices});
       aggregated.get(id).quantity+=quantity;
     });
   });

@@ -1,6 +1,10 @@
-const {test}=require('node:test'),a=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm'),path=require('node:path'),{load}=require('./helpers.cjs');
+﻿const {test}=require('node:test'),a=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm'),path=require('node:path'),{load}=require('./helpers.cjs');
 const key=JSON.stringify(['NL','Material']);
-function sample(){const weeks=[{index:0,year:2026,week:43,nam:2026,tuan:43,start:'2026-10-19',visible:true}];return {success:true,calculatedAt:'test',warnings:[],weeks,matrix:{weeks,rows:[{key,code:'NL',name:'<img onerror=bad>',unit:'kg',choices:[{code:'A',priority:0}],weeks:{'2026|43':{demand:10,receipts:0,closing:0}},opening:5,actual:5,proposed:5,canDat:true,products:[],purchases:[],leadtime:0}]},purchaseReport:[],details:[{weekIndex:0,material:key,name:'NL',demands:[{id:'d',product:'P',choices:[]}],allocations:[],shortages:[],opening:[],arrivals:[],balances:[]}]};}
+function sample(){
+ const weeks=[{index:0,year:2026,week:43,nam:2026,tuan:43,start:'2026-10-19',visible:true}];
+ const material={key,variant:'vP',code:'NL',name:'<img onerror=bad>',unit:'kg',choices:[{code:'A',priority:0}],weeks:{'2026|43':{demand:10,allocated:5,shortage:5,receipts:0,closing:0,demandIds:['d']}},opening:5,actual:5,proposed:5,canDat:true,products:[],purchases:[],leadtime:0};
+ return {success:true,calculatedAt:'test',warnings:[],weeks,matrix:{weeks,rows:[material],products:[{code:'P',name:'Product P',materials:[material]}]},purchaseReport:[],details:[{weekIndex:0,material:key,name:'NL',unit:'kg',demands:[{id:'d',product:'P',quantity:10,choices:[{code:'A',priority:0}]}],allocations:[{demandId:'d',code:'A',priority:0,quantity:5}],shortages:[{demandId:'d',quantity:5}],opening:[],arrivals:[],balances:[]}]};
+}
 function setup(server){
  const elements=new Map();const el=id=>{if(!elements.has(id))elements.set(id,{value:id.includes('WeekCount')?'4':id.includes('DisplayFilter')?'all':'',innerHTML:'',textContent:'',disabled:false,classList:{add(){},remove(){}},style:{},showModal(){this.open=true;},close(){this.open=false;}});return elements.get(id);};
  const root=path.join(__dirname,'../../UocLuongDatHang');
@@ -26,7 +30,7 @@ test('purchase display filter keeps one material row and independent legacy cach
 
 
 test('demand Excel export contains raw numeric amounts without detail button labels',async()=>{
- const {api,exported}=setup(async()=>sample());await api.show('mktDemand');api.exportExcel();a.equal(exported.rows[1][4],10);a.equal(typeof exported.rows[1][4],'number');
+ const {api,exported}=setup(async()=>sample());await api.show('mktDemand');api.exportExcel();a.equal(exported.rows[1][5],10);a.equal(typeof exported.rows[1][5],'number');
 });
 
 test('forecast responses from a logged-out session cannot populate the new namespace cache',async()=>{
@@ -38,4 +42,22 @@ test('purchase table matches legacy cell classes, multiline weeks, signed ending
  const {api,el}=setup(async()=>data);await api.show('mktPurchase');const html=el('mkt_orderRequestTable').innerHTML;
  for(const name of ['order-request-name','order-request-week-demand','order-request-week-inbound','order-request-week-ending','order-request-negative','order-request-date','order-request-number'])a.ok(html.includes(name),name);
  a.ok(html.includes('19/09/2026'));a.ok(html.includes('19/10/2026'));a.ok(html.includes('<br>'));
+});
+
+
+test('demand table groups products and labels permitted priorities explicitly',async()=>{
+ const data=sample();data.matrix.products.push({code:'Q',name:'Product Q',materials:[{...data.matrix.rows[0],variant:'vQ',choices:[{code:'QONLY',priority:2}]}]});
+ const {api,el}=setup(async()=>data);await api.show('mktDemand');const html=el('mkt_materialDemandTable').innerHTML;
+ a.ok(html.includes('Product P'));a.ok(html.includes('Product Q'));a.ok(html.includes('Ưu tiên 0'));a.ok(html.includes('Ưu tiên 2'));a.ok(html.includes('mkt-priority-0'));a.ok(html.includes('data-product="P"'));
+ const pRow=html.match(/<tr[^>]*data-product="P"[^>]*>([\s\S]*?)<\/tr>/)[1];a.ok(!pRow.includes('QONLY'));
+});
+
+test('product detail excludes another products allocation and shortlist',async()=>{
+ const data=sample();data.details[0].demands.push({id:'q',product:'Q',quantity:999,choices:[{code:'QONLY',priority:0}]});data.details[0].allocations.push({demandId:'q',code:'QONLY',priority:0,quantity:999});data.details[0].shortages.push({demandId:'q',quantity:0});
+ const {api,el}=setup(async()=>data);await api.show('mktDemand');api.openDetail(0,key,'P',['d']);const html=el('mktDetailBody').innerHTML;a.ok(!html.includes('QONLY'));a.ok(html.includes('toàn nguyên liệu'));
+});
+
+test('variant detail does not suggest a code permitted only for another BOM variant',async()=>{
+ const data=sample();data.purchaseReport=[{needWeek:0,material:key,products:['P'],code:'B',priority:0,proposed:99,unit:'kg',reason:'OTHER_VARIANT_PURCHASE',configurationScope:'Material'}];
+ const {api,el}=setup(async()=>data);await api.show('mktDemand');api.openDetail(0,key,'P',['d']);a.ok(!el('mktDetailBody').innerHTML.includes('OTHER_VARIANT_PURCHASE'));
 });

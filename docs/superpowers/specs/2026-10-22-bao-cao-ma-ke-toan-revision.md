@@ -22,3 +22,9 @@ Chưa xác minh trực quan hoặc chạy nguồn Sheets thật: công cụ trì
 Leadtime dùng TonKho.soNgayVeKho của mã kế toán; chỉ dùng cấu hình mặc định danh mục khi không có giá trị kho. Nếu nhóm có nhiều leadtime thì hiển thị danh sách giá trị, không chọn tùy ý một nhà cung cấp. PO của báo cáo dùng thứ Hai tuần kích hoạt trừ leadtime, ngày nhập dự kiến là đầu tuần kích hoạt, như BaoCaoGs.js; ngày cần dùng thật vẫn giữ trong chi tiết đề xuất. Chính sách này chỉ áp dụng đường báo cáo (reportCalendar=legacy).
 
 Cột Tồn cuối là số dư dự kiến có thể âm: tồn vật lý còn lại của các mã hợp lệ trừ thiếu tích lũy. Không đổi số dư của bộ giải thành âm. Popup vẫn đối chiếu tồn vật lý không âm và phần thiếu riêng; XLSX lấy số dự kiến gốc. Nguồn đối chiếu tồn thực tế không đủ dữ liệu tiếp tục hiển thị dấu gạch và cảnh báo, không tự lấy tồn đầu để thay thế.
+
+## Nhu cầu nguyên liệu theo sản phẩm
+
+Theo xác nhận tiếp theo: chỉ báo cáo Yêu cầu đặt hàng tổng hợp theo nguyên liệu. Nhu cầu nguyên liệu phải nhóm theo sản phẩm, rồi mã+tên nguyên liệu, cột tuần hiển thị nhu cầu riêng sản phẩm. Danh sách mã được phép có nhãn Ưu tiên 0/1/2/3 và làm nổi bật ưu tiên cao nhất. Các dòng cùng nguyên liệu nhưng khác quyền BOM giữ riêng, không hợp quyền thành quyền chung.
+
+Popup nhu cầu lọc theo sản phẩm và tập demandIds của đúng dòng/tuần được bấm; phân bổ, thiếu và mã đề xuất không lẫn dòng khác. Bảng tồn trong popup ghi rõ là toàn nguyên liệu dùng chung, không phải tồn riêng sản phẩm. Đề xuất mua vẫn là số lượng gộp được ghi chú rõ. XLSX nhu cầu có tên sản phẩm và lượng tuần dạng số.

@@ -71,7 +71,23 @@ function mktCreateReports_(source,options) {
     row.planningWeek=earliest?result.weeks[earliest.planningWeek].week:'';row.shortageWeek=earliest?earliest.week:'';
   });
   const weeks=result.weeks.filter(w=>w.visible).map(w=>({...w,nam:w.year,tuan:w.week,ngayDauTuan:w.start,ngayCuoiTuan:w.end}));
-  return {success:true,...result,matrix:{weeks,rows:matrixRows},calculatedAt:new Date().toISOString()};
+  const productMap=new Map();
+  result.details.filter(d=>d.visible).forEach(d=>{
+    const cfg=input.materialConfig[d.material],weekKey=d.year+'|'+d.week;
+    d.demands.forEach(need=>{
+      if(!productMap.has(need.product))productMap.set(need.product,{code:need.product,name:need.productName||need.product,materials:new Map()});
+      const product=productMap.get(need.product),choices=need.choices.slice().sort((a,b)=>a.priority-b.priority||a.code.localeCompare(b.code));
+      const variant=JSON.stringify([d.material,choices.map(c=>[c.code,c.priority])]);
+      if(!product.materials.has(variant))product.materials.set(variant,{key:d.material,variant,code:cfg.code,name:cfg.name,unit:d.unit,choices,weeks:{}});
+      const row=product.materials.get(variant);
+      if(!row.weeks[weekKey])row.weeks[weekKey]={demand:0,allocated:0,shortage:0,demandIds:[]};
+      const value=row.weeks[weekKey];value.demand+=need.quantity;value.demandIds.push(need.id);
+      value.allocated+=sum(d.allocations.filter(a=>a.demandId===need.id));
+      value.shortage+=sum(d.shortages.filter(s=>s.demandId===need.id));
+    });
+  });
+  const products=[...productMap.values()].sort((a,b)=>a.name.localeCompare(b.name,'vi')||a.code.localeCompare(b.code)).map(p=>({...p,materials:[...p.materials.values()].sort((a,b)=>a.name.localeCompare(b.name,'vi')||a.code.localeCompare(b.code)||a.variant.localeCompare(b.variant))}));
+  return {success:true,...result,matrix:{weeks,rows:matrixRows,products},calculatedAt:new Date().toISOString()};
 }
 
 /** Reuse the existing report markup/script in a private namespace. Old files

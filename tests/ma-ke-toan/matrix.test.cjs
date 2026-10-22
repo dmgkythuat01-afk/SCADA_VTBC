@@ -19,6 +19,19 @@ test('report uses stock leadtime and legacy planning calendar, and shows cumulat
  a.equal(row.weeks['2026|43'].closing,-10);a.equal(row.weeks['2026|44'].closing,-10);a.equal(row.weeks['2026|43'].physicalClosing,0);
  a.equal(r.details[0].balances.reduce((n,x)=>n+x.quantity,0),0);
 });
+test('demand report groups by product and keeps each products own allowed priorities',()=>{
+ const s=source();s.plans.push({...s.plans[0],maSanPham:'Q',tenSanPham:'Product Q'});s.bom.push({...s.bom[0],maSanPham:'Q',dinhLuong1SKU:8,MaKeToan:'B',SuDung1:false});
+ const r=build(s);a.equal(r.matrix.rows.length,1);a.equal(r.matrix.products.length,2);
+ const p=r.matrix.products.find(p=>p.code==='P').materials[0],q=r.matrix.products.find(p=>p.code==='Q').materials[0];
+ a.equal(p.weeks['2026|43'].demand,20);a.equal(q.weeks['2026|43'].demand,8);a.equal(p.choices.map(c=>c.code).join(','),'A,B');a.equal(q.choices.map(c=>c.code).join(','),'B');a.equal(q.choices[0].priority,0);
+ a.equal(r.matrix.rows[0].weeks['2026|43'].demand,28);
+});
+test('same product ingredient with differing permission variants remains distinguishable',()=>{
+ const s=source();s.bom.push({...s.bom[0],MaKeToan:'B',SuDung1:false,dinhLuong1SKU:7});
+ const p=build(s).matrix.products[0];a.equal(p.materials.length,2);a.notEqual(p.materials[0].variant,p.materials[1].variant);
+ a.equal(p.materials.reduce((n,m)=>n+m.weeks['2026|43'].demand,0),27);
+});
+test('product title falls back to BOM name when plan has only product code',()=>{const s=source();s.bom[0].tenSanPham='Product from BOM';a.equal(build(s).matrix.products[0].name,'Product from BOM');});
 test('prefixed forecast controls are transformed exactly once',()=>{
  const fs=require('node:fs'),path=require('node:path');const ctx=load(['BaoCaoMaKeToanViewGs.js'],{HtmlService:{createHtmlOutputFromFile:f=>({getContent:()=>fs.readFileSync(path.join(__dirname,'../../UocLuongDatHang',f+'.html'),'utf8')})}});
  const markup=ctx.mktLegacyMarkup_();a.ok(markup.includes('id="mkt_forecastCustomerMultiOptions"'));a.ok(!markup.includes('mkt_mkt_'));
