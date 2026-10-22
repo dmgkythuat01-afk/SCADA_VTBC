@@ -1906,7 +1906,7 @@ function normalizeKhoKeyText_(value) {
 /**
  * Đọc toàn bộ dữ liệu KhoNguyenLieu từ file 2.
  */
-function getExternalKhoNguyenLieuRows_() {
+function getExternalKhoNguyenLieuRows_(byName) {
   const fileId = String(
     APP.EXTERNAL.KHO_NGUYEN_LIEU_FILE_ID || ''
   ).trim();
@@ -1945,7 +1945,7 @@ function getExternalKhoNguyenLieuRows_() {
     .map(value => String(value || '').trim());
 
   const requiredHeaders = [
-    'maNguyenLieu',
+    byName ? 'tenNguyenLieu' : 'maNguyenLieu',
     'MaKeToan',
     'khoiLuongNhap'
   ];
@@ -1974,6 +1974,7 @@ function getExternalKhoNguyenLieuRows_() {
 
     return obj;
   }).filter(row =>
+    row.tenNguyenLieu ||
     row.maNguyenLieu ||
     row.MaKeToan ||
     row.khoiLuongNhap
@@ -1989,8 +1990,8 @@ function getExternalKhoNguyenLieuRows_() {
  *
  * Các LotNo cùng maNguyenLieu + MaKeToan được cộng lại.
  */
-function getTonThucTeMap_() {
-  const rows = getExternalKhoNguyenLieuRows_();
+function getTonThucTeMap_(byName) {
+  const rows = getExternalKhoNguyenLieuRows_(byName);
 
   const map = {};
   const invalidRows = [];
@@ -2005,7 +2006,7 @@ function getTonThucTeMap_() {
     ).trim();
 
     const key = makeKhoNguyenLieuKey_(
-      maNguyenLieu,
+      byName ? row.tenNguyenLieu : maNguyenLieu,
       maKeToan
     );
 
@@ -2013,6 +2014,7 @@ function getTonThucTeMap_() {
       invalidRows.push({
         rowNumber: row.__rowNumber,
         maNguyenLieu,
+        tenNguyenLieu: row.tenNguyenLieu || '',
         MaKeToan: maKeToan
       });
 
@@ -2109,14 +2111,14 @@ function capNhatTonKhoDauTuan() {
   try {
     lock.waitLock(30000);
 
-    const sourceResult = getTonThucTeMap_();
+    const sourceResult = getTonThucTeMap_(true);
     const sourceMap = sourceResult.map;
 
     const sh = getSheet_(APP.SHEETS.TON_KHO);
     const headers = getHeaders_(sh);
 
     const requiredHeaders = [
-      'maNguyenLieu',
+      'tenNguyenLieu',
       'MaKeToan',
       'khoiLuongNhap',
       'tonDauTuanQuyDoi'
@@ -2154,14 +2156,14 @@ function capNhatTonKhoDauTuan() {
     const matchedSourceKeys = {};
 
     values.forEach(row => {
-      const maNguyenLieu =
-        row[headerIndex.maNguyenLieu];
+      const tenNguyenLieu =
+        row[headerIndex.tenNguyenLieu];
 
       const maKeToan =
         row[headerIndex.MaKeToan];
 
       const key = makeKhoNguyenLieuKey_(
-        maNguyenLieu,
+        tenNguyenLieu,
         maKeToan
       );
 
@@ -2203,8 +2205,8 @@ function capNhatTonKhoDauTuan() {
       updatedCount++;
     });
 
-    // Mỗi cặp mã nguồn đã được cộng các lô trong getTonThucTeMap_.
-    // Chỉ tạo dòng cho cặp chưa có; giữ trống cấu hình đặt hàng riêng.
+    // Đồng bộ theo tên nguyên liệu + mã kế toán, không phụ thuộc mã nguyên liệu.
+    // Các báo cáo cũ vẫn dùng chế độ ghép mã mặc định của getTonThucTeMap_.
     Object.keys(sourceMap).forEach(key => {
       if (matchedSourceKeys[key]) return;
       const source = sourceMap[key];
