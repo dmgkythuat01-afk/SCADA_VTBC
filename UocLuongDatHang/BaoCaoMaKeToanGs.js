@@ -118,9 +118,14 @@ function mktBuildInputs(snapshot,options) {
   });
   const aggregated=new Map();
   (snapshot.plans||[]).forEach(r=>{
-    if(text(r.trangThai)!==text(p.trangThaiKeHoachDuocTinh||'Da duyet'))return;
-    const weekIndex=index(r.ngaySanXuatDuKien||r.ngayDauTuan);if(weekIndex<0||weekIndex>=count)return;
-    const product=text(r.maSanPham),sku=r.soLuongSKU!==''&&r.soLuongSKU!=null?mktNumber_(r.soLuongSKU,'soLuongSKU'):mktNumber_(r.soLuongKeHoach,'soLuongKeHoach')*mktNumber_(r.heSoQuyDoiRaSKU,'heSoQuyDoiRaSKU',1);
+    const forecast=Boolean((options||{}).forecast);
+    if(!text(r.maSanPham))return;
+    if(!forecast&&text(r.trangThai)!==text(p.trangThaiKeHoachDuocTinh||'Da duyet'))return;
+    const weekIndex=forecast&&r.nam!==''&&r.nam!=null&&r.tuan!==''&&r.tuan!=null
+      ?weeks.findIndex(w=>w.year===Number(r.nam)&&w.week===Number(r.tuan))
+      :index(r.ngaySanXuatDuKien||r.ngayDauTuan);
+    if(weekIndex<0||weekIndex>=count)return;
+    const product=text(r.maSanPham),sku=forecast?mktNumber_(r.soLuongSKU,'soLuongSKU',0):r.soLuongSKU!==''&&r.soLuongSKU!=null?mktNumber_(r.soLuongSKU,'soLuongSKU'):mktNumber_(r.soLuongKeHoach,'soLuongKeHoach')*mktNumber_(r.heSoQuyDoiRaSKU,'heSoQuyDoiRaSKU',1);
     const bom=bomBySP.get(product)||[];
     if(!bom.length)throw new Error('Không có BOM đang dùng cho sản phẩm: '+product);
     bom.forEach(b=>{

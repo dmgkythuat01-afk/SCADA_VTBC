@@ -19,7 +19,7 @@ function mktCreateReports_(source,options) {
       return {...r,maNguyenLieu:JSON.stringify([code,name]),tenNguyenLieu:name};
     });
   });
-  const input=mktBuildInputs(snapshot,options);
+  const input=mktBuildInputs(snapshot,{...(options||{}),forecast:true});
   input.reportCalendar='legacy';
   Object.keys(input.materialConfig).forEach(key=>{const pair=JSON.parse(key);input.materialConfig[key].code=pair[0];input.materialConfig[key].name=pair[1];input.materialConfig[key].codeLeadDays={};});
   (snapshot.stocks||[]).forEach(r=>{
@@ -29,6 +29,7 @@ function mktCreateReports_(source,options) {
     cfg.codeLeadDays[code]=Math.max(cfg.codeLeadDays[code]??0,days);
   });
   const result=mktSimulate(input),rows=new Map();
+  result.demandWarnings=result.warnings.slice();
   const sum=(list,field='quantity')=>list.reduce((n,r)=>n+(r[field]||0),0);
   const codeLabel=choices=>choices.map(c=>c.code+' ('+c.priority+')').join(', ');
   result.details.filter(d=>d.visible).forEach(d=>{

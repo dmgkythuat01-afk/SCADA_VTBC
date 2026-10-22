@@ -33,12 +33,13 @@ const MktReports = (function() {
     }
     if(ticket!==epoch)throw new Error('Phiên báo cáo đã đóng.');
     snapshot=cache.get(weeks);
-    return {weeks:snapshot.matrix.weeks,rows:snapshot.matrix.rows,products:snapshot.matrix.products||[],warnings:snapshot.warnings,snapshot};
+    const warnings=fn==='getBaoCaoNhuCauNguyenLieu'?(snapshot.demandWarnings||snapshot.warnings):snapshot.warnings;
+    return {weeks:snapshot.matrix.weeks,rows:snapshot.matrix.rows,products:snapshot.matrix.products||[],warnings,snapshot};
   }
   function clearTables(){displayed=null;['mkt_materialDemandTable','mkt_orderRequestTable'].forEach(id=>{if(el(id))el(id).innerHTML='';});}
   function table(headers,rows){return '<thead><tr>'+headers.map(h=>'<th>'+esc(h)+'</th>').join('')+'</tr></thead><tbody>'+ (rows.length?rows.map(r=>'<tr>'+r.map(cell=>'<td>'+cell+'</td>').join('')+'</tr>').join(''):`<tr><td colspan="${headers.length}" class="empty">Không có dữ liệu phù hợp.</td></tr>`)+'</tbody>';}
   function action(week,key,label,product,ids){const scoped=product!==undefined;return `<button class="btn btn-ghost" data-week="${week}" data-material="${esc(key)}" ${scoped?'data-product="'+esc(product)+'" data-demand-ids="'+esc(JSON.stringify(ids||[]))+'"':''} onclick="MktReports.openDetail(Number(this.dataset.week),this.dataset.material${scoped?',this.dataset.product,JSON.parse(this.dataset.demandIds)':''})">${label}</button>`;}
-  function prepare(data,kind){snapshot=data.snapshot;displayed=data;displayedKind=kind;const prefix=kind==='demand'?'mkt_materialDemand':'mkt_orderRequest';el(prefix+'Summary').textContent='Hiển thị '+data.weeks.length+' tuần • '+data.rows.length+' nguyên liệu (nhóm theo mã + tên)';const warning=el(prefix+'Warning');warning.style.display=data.warnings.length?'':'none';warning.textContent=data.warnings.join('\n');return el(prefix+'Table');}
+  function prepare(data,kind){snapshot=data.snapshot;displayed=data;displayedKind=kind;const prefix=kind==='demand'?'mkt_materialDemand':'mkt_orderRequest';el(prefix+'Summary').textContent='Hiển thị '+data.weeks.length+' tuần • '+data.rows.length+' nguyên liệu (nhóm theo mã + tên)';const warning=el(prefix+'Warning');warning.style.display=data.warnings.length?'':'none';warning.innerHTML=data.warnings.length?'<details><summary>Có '+data.warnings.length+' cảnh báo dữ liệu — bấm để xem</summary><div class="mkt-warning-list">'+data.warnings.map(w=>'<div>• '+esc(w)+'</div>').join('')+'</div></details>':'';return el(prefix+'Table');}
   function renderDemand(data){
     const target=prepare(data,'demand');
     const heads=['Tên sản phẩm','Mã nguyên liệu','Tên nguyên liệu/vật tư','Đơn vị tính','Mã kế toán được phép dùng',...data.weeks.map(w=>'Tuần '+w.tuan+'/'+w.nam)];
@@ -50,7 +51,8 @@ const MktReports = (function() {
       return '<tr data-product="'+esc(product.code)+'" class="'+(i===0?'material-product-start':'')+'"><td class="material-product-cell">'+(i===0?esc(product.name)+'<small class="mkt-product-code">'+esc(product.code)+'</small>':'')+'</td><td>'+esc(row.code)+'</td><td class="material-name-cell">'+esc(row.name)+'</td><td class="material-unit-cell">'+esc(row.unit)+'</td><td class="mkt-permitted-codes">'+badges+'</td>'+weeks+'</tr>';
     }).join('')).join('');
     target.innerHTML='<thead><tr>'+heads.map(h=>'<th>'+esc(h)+'</th>').join('')+'</tr></thead><tbody>'+(body||'<tr><td colspan="'+heads.length+'" class="empty">Không có nhu cầu nguyên liệu trong khoảng tuần đang xem.</td></tr>')+'</tbody>';
-    el('mkt_materialDemandSummary').textContent='Hiển thị '+data.weeks.length+' tuần • '+products.length+' sản phẩm. Mã được phép dùng được liệt kê theo ưu tiên; bấm Chi tiết để xem mã thực tế đã cấp.';
+    const first=data.weeks[0],last=data.weeks[data.weeks.length-1];
+    el('mkt_materialDemandSummary').textContent='Hiển thị '+data.weeks.length+' tuần'+(first?': Tuần '+first.tuan+'/'+first.nam+' → Tuần '+last.tuan+'/'+last.nam:'')+' • '+products.length+' sản phẩm';
   }
   function renderPurchase(data){
     const target=prepare(data,'purchase');

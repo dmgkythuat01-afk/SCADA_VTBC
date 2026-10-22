@@ -32,6 +32,24 @@ test('same product ingredient with differing permission variants remains disting
  a.equal(p.materials.reduce((n,m)=>n+m.weeks['2026|43'].demand,0),27);
 });
 test('product title falls back to BOM name when plan has only product code',()=>{const s=source();s.bom[0].tenSanPham='Product from BOM';a.equal(build(s).matrix.products[0].name,'Product from BOM');});
+test('report demand follows forecast year/week and all customers without production approval filter',()=>{
+ const s=source();s.plans=[{maSanPham:'P',nam:2026,tuan:43,soLuongSKU:2,soLuongSKUThucHien:999,trangThai:'Draft',ngayDauTuan:'2030-01-07'},{maSanPham:'P',nam:'2026',tuan:'43',soLuongSKU:3,trangThai:''}];
+ const r=build(s);a.equal(r.matrix.products.length,1);a.equal(r.matrix.products[0].materials[0].weeks['2026|43'].demand,100);
+});
+test('display stock conversion warnings are separated from material demand diagnostics',()=>{
+ const s=source();s.actual=[{maNguyenLieu:'N',tenNguyenLieu:'Name',MaKeToan:'A',khoiLuongNhap:1,doViTinhToan:'cai'}];
+ const r=build(s);a.ok(r.warnings.some(w=>w.includes('tồn thực tế')));a.ok(!r.demandWarnings.some(w=>w.includes('tồn thực tế')));a.equal(r.matrix.products.length,1);
+});
+test('new product demand matches unchanged legacy forecast report on the same weekly input',()=>{
+ const s=source();s.plans=[{maSanPham:'P',nam:2026,tuan:43,soLuongSKU:2,trangThai:'Draft'},{maSanPham:'P',nam:2026,tuan:43,soLuongSKU:3,trangThai:''}];
+ class FixedDate extends Date {constructor(...args){super(...(args.length?args:['2026-10-22T12:00:00Z']));}}
+ const old=load(['Code.js','BaoCaoGs.js'],{Date:FixedDate});
+ const tables={KeHoachBanHang:s.plans,DinhLuong:s.bom,TonKho:s.stocks,NguyenLieuVatTu:s.materials};
+ old.getSheetObjects_=name=>tables[name]||[];old.getQuyDoiDonViMap_=()=>({});old.fmtDate_=d=>d.toISOString().slice(0,10);
+ const legacy=old.getBaoCaoNhuCauNguyenLieu(4),modern=build(s);
+ a.equal(legacy.products.length,modern.matrix.products.length);
+ a.equal(legacy.products[0].materials[0].weeks['2026|43'],modern.matrix.products[0].materials[0].weeks['2026|43'].demand);
+});
 test('prefixed forecast controls are transformed exactly once',()=>{
  const fs=require('node:fs'),path=require('node:path');const ctx=load(['BaoCaoMaKeToanViewGs.js'],{HtmlService:{createHtmlOutputFromFile:f=>({getContent:()=>fs.readFileSync(path.join(__dirname,'../../UocLuongDatHang',f+'.html'),'utf8')})}});
  const markup=ctx.mktLegacyMarkup_();a.ok(markup.includes('id="mkt_forecastCustomerMultiOptions"'));a.ok(!markup.includes('mkt_mkt_'));

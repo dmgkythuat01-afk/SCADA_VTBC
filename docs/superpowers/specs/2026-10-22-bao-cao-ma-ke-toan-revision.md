@@ -28,3 +28,9 @@ Cột Tồn cuối là số dư dự kiến có thể âm: tồn vật lý còn 
 Theo xác nhận tiếp theo: chỉ báo cáo Yêu cầu đặt hàng tổng hợp theo nguyên liệu. Nhu cầu nguyên liệu phải nhóm theo sản phẩm, rồi mã+tên nguyên liệu, cột tuần hiển thị nhu cầu riêng sản phẩm. Danh sách mã được phép có nhãn Ưu tiên 0/1/2/3 và làm nổi bật ưu tiên cao nhất. Các dòng cùng nguyên liệu nhưng khác quyền BOM giữ riêng, không hợp quyền thành quyền chung.
 
 Popup nhu cầu lọc theo sản phẩm và tập demandIds của đúng dòng/tuần được bấm; phân bổ, thiếu và mã đề xuất không lẫn dòng khác. Bảng tồn trong popup ghi rõ là toàn nguyên liệu dùng chung, không phải tồn riêng sản phẩm. Đề xuất mua vẫn là số lượng gộp được ghi chú rõ. XLSX nhu cầu có tên sản phẩm và lượng tuần dạng số.
+
+## Sửa nguồn Forecast gây báo cáo rỗng
+
+Đường báo cáo dùng KeHoachBanHang.nam + tuan và soLuongSKU, cộng các khách hàng như báo cáo cũ; không lọc trạng thái duyệt của kế hoạch sản xuất, không lấy soLuongSKUThucHien. Chỉ dùng ngày kế hoạch làm fallback khi dữ liệu cũ không có năm/tuần. Bộ lọc trạng thái BOM và quyền SuDung vẫn giữ nguyên. Chế độ này là options.forecast của adapter, không đổi chế độ kế hoạch sản xuất ở các lời gọi khác.
+
+Cảnh báo riêng nguồn tồn thực tế không hiện trong Nhu cầu nguyên liệu; vẫn giữ ở báo cáo đặt hàng. Cảnh báo hiển thị theo danh sách trong details đóng mặc định, có giới hạn chiều cao. Có kiểm thử đối chiếu trực tiếp với backend báo cáo cũ trên cùng fixture Forecast nhiều khách hàng/chưa duyệt.

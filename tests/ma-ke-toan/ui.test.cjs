@@ -61,3 +61,9 @@ test('variant detail does not suggest a code permitted only for another BOM vari
  const data=sample();data.purchaseReport=[{needWeek:0,material:key,products:['P'],code:'B',priority:0,proposed:99,unit:'kg',reason:'OTHER_VARIANT_PURCHASE',configurationScope:'Material'}];
  const {api,el}=setup(async()=>data);await api.show('mktDemand');api.openDetail(0,key,'P',['d']);a.ok(!el('mktDetailBody').innerHTML.includes('OTHER_VARIANT_PURCHASE'));
 });
+
+test('demand shows only demand warnings and other diagnostics are collapsed in purchase view',async()=>{
+ const data=sample();data.warnings=['ACTUAL_STOCK_WARNING'];data.demandWarnings=['BOM_CONFIG_WARNING'];const {api,el}=setup(async()=>data);
+ await api.show('mktDemand');const demand=el('mkt_materialDemandWarning').innerHTML;a.ok(demand.includes('BOM_CONFIG_WARNING'));a.ok(!demand.includes('ACTUAL_STOCK_WARNING'));a.ok(demand.includes('<details>'));
+ await api.show('mktPurchase');a.ok(el('mkt_orderRequestWarning').innerHTML.includes('ACTUAL_STOCK_WARNING'));
+});
