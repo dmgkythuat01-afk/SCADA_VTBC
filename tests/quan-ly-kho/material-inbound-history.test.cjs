@@ -1,11 +1,12 @@
 const test=require('node:test'),a=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm'),path=require('node:path');
 const root=path.join(__dirname,'../../QuanLyKho');
 function setup(){const ctx=vm.createContext({console});for(const name of ['Code.js','LichSuNhapNguyenLieuService.js'])vm.runInContext(fs.readFileSync(path.join(root,name),'utf8'),ctx);return ctx;}
-const headers=['ngayNhap','ngayPheDuyet','nhaCungCap','maNguyenLieu','tenNguyenLieu','donVi','khoiLuongNhap','LotNo'];
-test('inbound history uses approval date and maps all nine columns including blank description',()=>{
- const ctx=setup();const source={ngayNhap:'2026-10-01',ngayPheDuyet:'2026-10-28 10:00:00',nhaCungCap:'NCC',maNguyenLieu:'NL01',tenNguyenLieu:'Nguyên liệu',donVi:'kg',khoiLuongNhap:0,LotNo:'LOT-01'};
- const result=ctx.buildMaterialInboundHistory_({headers,rows:[source,{...source,ngayPheDuyet:'2026-10-29'},{...source,ngayPheDuyet:''}]},'2026-10-28','2026-10-28');
- a.equal(result.headers.length,9);a.equal(result.rows.length,1);a.equal(result.rows[0]['Tên NCC'],'NCC');a.equal(result.rows[0]['Thời gian tạo'],'2026-10-01');a.equal(result.rows[0]['Diễn giải'],'');a.equal(result.rows[0]['Số lượng'],0);a.equal(result.rows[0]['Lot No'],'LOT-01');
+const headers=['ngayNhap','ngayPheDuyet','nhaCungCap','maNguyenLieu','MaKeToan','tenNguyenLieu','donVi','khoiLuongNhap','LotNo'];
+test('inbound history uses receipt date and places accounting code after material code',()=>{
+ const ctx=setup();const source={ngayNhap:'2026-10-28 08:00:00',ngayPheDuyet:'2026-10-29 10:00:00',nhaCungCap:'NCC',maNguyenLieu:'NL01',MaKeToan:'00123',tenNguyenLieu:'Nguyên liệu',donVi:'kg',khoiLuongNhap:0,LotNo:'LOT-01'};
+ const result=ctx.buildMaterialInboundHistory_({headers,rows:[source,{...source,ngayNhap:'2026-10-29',ngayPheDuyet:'2026-10-28'},{...source,ngayNhap:'',ngayPheDuyet:'2026-10-28'}]},'2026-10-28','2026-10-28');
+ a.equal(result.headers.length,10);a.equal(result.rows.length,1);a.equal(result.rows[0]['Tên NCC'],'NCC');a.equal(result.rows[0]['Thời gian tạo'],'2026-10-28 08:00:00');a.equal(result.rows[0]['Thời gian duyệt'],'2026-10-29 10:00:00');a.equal(result.rows[0]['Diễn giải'],'');a.equal(result.rows[0]['Số lượng'],0);a.equal(result.rows[0]['Lot No'],'LOT-01');
+ a.equal(result.headers[result.headers.indexOf('Mã NLVT')+1],'Mã kế toán');a.equal(result.rows[0]['Mã kế toán'],'00123');
  a.throws(()=>ctx.buildMaterialInboundHistory_({headers:[],rows:[]},'2026-10-28','2026-10-28'),/thiếu cột/);
 });
 test('inbound API enforces inventory role and validates date range',()=>{

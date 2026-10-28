@@ -16,7 +16,7 @@
 <div class="card report-card">
   <div class="card-title"><div>
     <h2>Dữ liệu phiếu nhập nguyên liệu</h2>
-    <p>Dữ liệu từ KhoNguyenLieu, lọc theo thời gian duyệt (ngayPheDuyet).</p>
+    <p>Dữ liệu từ KhoNguyenLieu, lọc theo ngày nhập (ngayNhap).</p>
   </div></div>
   <div class="report-filter-row material-inbound-filters">
     <div class="field"><label for="materialInboundFrom">Từ ngày</label><input id="materialInboundFrom" type="date"></div>
@@ -82,7 +82,7 @@ const MaterialInboundHistory = (function() {
       if (!result || !result.success) { fail({message:'Không tải được dữ liệu phiếu nhập.'}); return; }
       rows = result.rows || []; headers = result.headers || []; loadedRange = range;
       resetOptions(); render(); el('materialInboundLoad').disabled = false;
-      showMessage('materialInboundMessage','success','Đã tải ' + rows.length + ' dòng, theo ngày duyệt từ ' + range.fromDate + ' đến ' + range.toDate + '.');
+      showMessage('materialInboundMessage','success','Đã tải ' + rows.length + ' dòng, theo ngày nhập từ ' + range.fromDate + ' đến ' + range.toDate + '.');
     }).withFailureHandler(fail).getMaterialInboundHistory(token,range);
   }
   function download() {

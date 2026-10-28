@@ -1,4 +1,4 @@
-/** Lịch sử nhập chỉ đọc từ KhoNguyenLieu, lọc theo ngayPheDuyet. */
+/** Lịch sử nhập chỉ đọc từ KhoNguyenLieu, lọc theo ngayNhap. */
 function getMaterialInboundHistory(token, filter) {
   requireInventoryRole_(token);
   filter = filter || {};
@@ -19,6 +19,7 @@ function buildMaterialInboundHistory_(data, from, to) {
   const columns = [
     ['Thời gian tạo', 'ngayNhap'], ['Thời gian duyệt', 'ngayPheDuyet'],
     ['Tên NCC', 'nhaCungCap'], ['Diễn giải', ''], ['Mã NLVT', 'maNguyenLieu'],
+    ['Mã kế toán', 'MaKeToan'],
     ['Tên nguyên vật liệu', 'tenNguyenLieu'], ['Đvt', 'donVi'],
     ['Số lượng', 'khoiLuongNhap'], ['Lot No', 'LotNo']
   ];
@@ -26,7 +27,7 @@ function buildMaterialInboundHistory_(data, from, to) {
     if (column[1] && data.headers.indexOf(column[1]) < 0) throw new Error('KhoNguyenLieu thiếu cột ' + column[1]);
   });
   const rows = data.rows.filter(function(row) {
-    const day = extractDateTextForReport_(row.ngayPheDuyet);
+    const day = extractDateTextForReport_(row.ngayNhap);
     return /^\d{4}-\d{2}-\d{2}$/.test(day) && day >= from && day <= to;
   }).map(function(source) {
     const row = {};
@@ -35,6 +36,6 @@ function buildMaterialInboundHistory_(data, from, to) {
     });
     return row;
   });
-  rows.sort(function(a, b) { return String(b['Thời gian duyệt']).localeCompare(String(a['Thời gian duyệt'])); });
+  rows.sort(function(a, b) { return String(b['Thời gian tạo']).localeCompare(String(a['Thời gian tạo'])); });
   return {success:true, headers:columns.map(function(column) { return column[0]; }), rows:rows};
 }
