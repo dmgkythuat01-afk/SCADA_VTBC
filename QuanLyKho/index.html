@@ -5240,7 +5240,7 @@
       rows.forEach(function(row) {
         html += `<tr>`;
         headers.forEach(function(header) {
-          html += `<td>${escapeHtml(formatReportCell(row[header]))}</td>`;
+          html += `<td>${escapeHtml(formatReportCell(row[header], header))}</td>`;
         });
         html += `</tr>`;
       });
@@ -5253,9 +5253,15 @@
       box.innerHTML = html;
     }
 
-    function formatReportCell(value) {
+    function isAccountingCodeHeader(header) {
+      const key = String(header || "").trim().toLowerCase().replace(/\s+/g, "");
+      return key === "maketoan" || key === "mãkếtoán";
+    }
+
+    function formatReportCell(value, header) {
       if (value === null || value === undefined) return "";
       const text = String(value);
+      if (isAccountingCodeHeader(header)) return text;
       if (text.trim() === "") return "";
 
       const num = Number(text);
@@ -5417,7 +5423,8 @@
       rows.forEach(function(row) {
         html += `<tr>`;
         headers.forEach(function(header) {
-          html += `<td>${escapeHtml(formatReportCell(row[header]))}</td>`;
+          const cellStyle = isAccountingCodeHeader(header) ? ` style="mso-number-format:'\\@'"` : "";
+          html += `<td${cellStyle}>${escapeHtml(formatReportCell(row[header], header))}</td>`;
         });
         html += `</tr>`;
       });
