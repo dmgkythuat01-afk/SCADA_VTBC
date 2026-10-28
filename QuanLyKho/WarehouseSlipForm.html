@@ -42,8 +42,8 @@ const WarehouseSlipForm = (function() {
     @media print { html,body { margin:0; padding:0; background:white; } .warehouse-slip { width:100%; padding:0; } .slip-print-toolbar { display:none; } }
   `;
   const editorStyles = `
-    .warehouse-slip [contenteditable] { display:inline-block; min-width:42px; min-height:1.3em; padding:0 3px; background:#fff8d6; outline:1px dashed #b7a873; white-space:pre-wrap; vertical-align:bottom; }
-    .warehouse-slip [contenteditable]:focus { outline:2px solid #2563eb; }
+    .warehouse-slip [contenteditable] { display:inline-block; min-width:42px; min-height:1.3em; padding:0 3px; background:transparent; outline:none; white-space:pre-wrap; vertical-align:bottom; }
+    .warehouse-slip [contenteditable]:focus { outline:none; }
     .warehouse-slip [contenteditable]:empty::before { content:attr(data-placeholder); color:#777; pointer-events:none; }
     .warehouse-slip .slip-cell-edit { display:block; min-width:0; }
     .warehouse-slip .slip-filled { white-space:pre-wrap; overflow-wrap:anywhere; }
