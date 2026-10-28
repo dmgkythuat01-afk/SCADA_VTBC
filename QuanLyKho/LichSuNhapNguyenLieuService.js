@@ -34,6 +34,7 @@ function buildMaterialInboundHistory_(data, from, to) {
     columns.forEach(function(column) {
       row[column[0]] = column[1] ? (source[column[1]] ?? '') : '';
     });
+    row._slip = {manufactured:source.ngaySanXuat ?? '', expires:source.hanSuDung ?? ''};
     return row;
   });
   rows.sort(function(a, b) { return String(b['Thời gian tạo']).localeCompare(String(a['Thời gian tạo'])); });

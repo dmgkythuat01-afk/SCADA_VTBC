@@ -57,6 +57,7 @@ const MaterialInboundHistory = (function() {
     const table = el('materialInboundTable').querySelector('table');
     if (table) { table.style.minWidth = '1450px'; table.style.whiteSpace = 'nowrap'; }
     el('materialInboundExcel').disabled = !visible.length;
+    MaterialInboundSlip.setData(el('materialInboundIngredient').value,visible);
   }
   function load() {
     const range = {fromDate:el('materialInboundFrom').value, toDate:el('materialInboundTo').value};

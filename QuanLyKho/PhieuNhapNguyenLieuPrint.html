@@ -1,0 +1,68 @@
+<style>
+  #materialInboundSlipCard { margin-top:18px; }
+  #materialInboundSlipCard[hidden] { display:none; }
+  #materialInboundSlipPreview { overflow:auto; border:1px solid #d1d5db; padding:16px; background:#eee; }
+  #materialInboundSlipPreview .warehouse-slip { min-width:1100px; padding:20px; background:white; }
+  #materialInboundSlipMessage { color:#92400e; margin:10px 0; }
+</style>
+<div id="materialInboundSlipCard" class="card" hidden>
+  <div class="card-title"><div><h2>Phiếu nhập kho</h2><p>Bấm vào các ô nền vàng để nhập nội dung trước khi in. Phiếu lấy nguyên liệu theo combobox phía trên; chọn Tất cả để in toàn bộ dữ liệu đã tải.</p></div>
+    <button class="btn btn-primary" onclick="MaterialInboundSlip.print()">In / Xuất PDF</button>
+  </div>
+  <div id="materialInboundSlipMessage" role="status"></div>
+  <div id="materialInboundSlipPreview" oninput="MaterialInboundSlip.edit(event)"></div>
+</div>
+<script>
+const MaterialInboundSlip = (function() {
+  const el = id => document.getElementById(id), esc = WarehouseSlipForm.esc;
+  const editor = WarehouseSlipForm.createEditor();
+  const styles = WarehouseSlipForm.styles + WarehouseSlipForm.editorStyles + `
+    .warehouse-slip .slip-signatures > div { width:16.666%; }
+    .warehouse-slip .slip-reference { margin:12px 0 5px; }
+  `;
+  let selection = '', rows = [];
+  function dateText(value) {
+    const text = String(value ?? '').trim(), match = text.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    return match ? match[3]+'/'+match[2]+'/'+match[1] : text;
+  }
+  function quantity(value) { return typeof value==='number' && Number.isFinite(value) ? value.toLocaleString('vi-VN',{maximumFractionDigits:10}) : String(value ?? ''); }
+  function markup(printing) {
+    const field = (key,initial='',placeholder='……………………') => editor.field(key,initial,placeholder,printing);
+    const auto = (value,key) => String(value ?? '').trim() ? esc(value) : field(key,'','');
+    const body = rows.map((row,index) => {
+      const meta = row._slip || {};
+      return `<tr class="slip-data"><td class="slip-center">${index+1}</td><td>${auto(row['Tên nguyên vật liệu'],'name'+index)}</td>
+        <td class="slip-center">${auto(row['Mã kế toán'],'code'+index)}</td><td class="slip-center">${auto(row['Đvt'],'unit'+index)}</td>
+        <td class="slip-number-cell">${auto(quantity(row['Số lượng']),'actual'+index)}</td><td>${field('documentQty'+index,'','')}</td><td>${field('convertedQty'+index,'','')}</td>
+        <td>${auto(row['Lot No'],'lot'+index)}</td><td>${auto(dateText(meta.manufactured),'manufactured'+index)}</td><td>${auto(dateText(meta.expires),'expires'+index)}</td><td>${field('warehouseRow'+index,'','')}</td></tr>`;
+    }).join('');
+    const signatures = ['Người lập phiếu','Người giao hàng','Người kiểm tra','Thủ kho','Kế toán trưởng','Ban Giám đốc'].map((title,index) => '<div><strong>'+title+'</strong><em>(Ký, họ tên)</em><div>'+field('signature'+index,'','')+'</div></div>').join('');
+    return `<section class="warehouse-slip">
+      <div class="slip-top"><div><div class="slip-company">CÔNG TY TNHH ĐỨC MINH ĐỒNG NAI</div><div class="slip-company-address">Đường D4-1, Khu Công nghiệp Long Đức, Xã Bình An, Tỉnh Đồng Nai, Việt Nam</div></div>
+      <div class="slip-document">Mã số: BM-QT.KHO-01.02<br>Ngày ban hành/Sửa đổi: 01/01/2026<br>Lần ban hành/Sửa đổi: 02<br>Người ban hành: Nguyễn Thị Kim Chung</div></div>
+      <h1>PHIẾU NHẬP KHO</h1><div class="slip-date">${field('date','','Ngày……tháng……năm………')}</div><div class="slip-number">Số: ${field('number')}</div>
+      <div class="slip-info"><div class="slip-info-row"><div>- Họ tên người giao hàng: ${field('deliverer')}</div><div>Số PO/HĐ: ${field('purchaseOrder')}</div></div>
+      <div class="slip-reference">- Theo ${field('referenceType')} số ${field('referenceNumber')} ngày ${field('referenceDate','','……tháng……năm………')} của: ${field('referenceIssuer')}</div>
+      <div class="slip-info-row"><div>- Nhập tại kho: ${field('warehouse')}</div><div>Địa điểm: ${field('location')}</div></div></div>
+      <table><colgroup>${[3,25,9,5,7,7,8,9,9,9,9].map(width=>'<col style="width:'+width+'%">').join('')}</colgroup><thead><tr>
+      <th rowspan="2">Stt</th><th rowspan="2">Tên, nhãn, quy cách phẩm chất vật tư, dụng cụ sản phẩm, hàng hóa</th><th rowspan="2">Mã số</th><th rowspan="2">Đơn vị tính</th><th colspan="2">Số lượng</th><th rowspan="2">Số lượng quy đổi</th><th rowspan="2">Lô</th><th rowspan="2">Ngày sản xuất</th><th rowspan="2">Ngày hết hạn</th><th rowspan="2">Tên kho thực tế</th>
+      </tr><tr><th>Thực nhập</th><th>Theo chứng từ</th></tr><tr class="slip-column-keys">${['A','B','C','D','1','2','3','4','5','6','7'].map(key=>'<td>'+key+'</td>').join('')}</tr></thead><tbody>${body}</tbody></table>
+      <div class="slip-signatures">${signatures}</div></section>`;
+  }
+  function refresh() {
+    el('materialInboundSlipCard').hidden = !rows.length;
+    el('materialInboundSlipPreview').innerHTML = rows.length ? '<style>'+styles+'</style>'+markup(false) : '';
+  }
+  function setData(key,visibleRows) {
+    const next = visibleRows || [];
+    if (key!==selection || next.length!==rows.length || next.some((row,index)=>row!==rows[index])) editor.reset();
+    selection = key; rows = next; el('materialInboundSlipMessage').textContent = ''; refresh();
+  }
+  function print() {
+    if (!rows.length) return;
+    editor.read(el('materialInboundSlipPreview'));
+    WarehouseSlipForm.openPrint('Phiếu nhập kho',styles,markup(true),message=>{el('materialInboundSlipMessage').textContent=message;});
+  }
+  return {setData:setData,refresh:refresh,print:print,edit:editor.capture};
+})();
+</script>

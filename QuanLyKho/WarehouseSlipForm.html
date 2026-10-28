@@ -1,0 +1,77 @@
+<script>
+// Chỉ lưu bản nháp trên trình duyệt; không ghi thay đổi trên phiếu về sheet.
+const WarehouseSlipForm = (function() {
+  const esc = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+  const baseStyles = `
+    .warehouse-slip { box-sizing:border-box; color:#000; font:12pt "Times New Roman",serif; line-height:1.3; }
+    .warehouse-slip * { box-sizing:border-box; }
+    .warehouse-slip .slip-top { display:flex; justify-content:space-between; gap:20px; align-items:flex-start; }
+    .warehouse-slip .slip-company { font-weight:bold; text-transform:uppercase; }
+    .warehouse-slip .slip-company-address { font-size:10pt; }
+    .warehouse-slip .slip-document { border:1px solid #000; padding:4px 7px; font-size:10pt; white-space:nowrap; line-height:1.5; }
+    .warehouse-slip h1 { margin:10px 0 2px; text-align:center; font:bold 20pt "Times New Roman",serif; }
+    .warehouse-slip .slip-date, .warehouse-slip .slip-number { text-align:center; margin:3px 0; }
+    .warehouse-slip .slip-date { font-style:italic; }
+    .warehouse-slip .slip-info { margin:12px 0 8px; }
+    .warehouse-slip .slip-info-row { display:flex; gap:24px; margin:3px 0; }
+    .warehouse-slip .slip-info-row > :first-child { flex:1; }
+    .warehouse-slip .slip-info-row > :nth-child(2) { width:30%; }
+    .warehouse-slip table { border-collapse:collapse; width:100%; table-layout:fixed; min-width:0; font:11pt "Times New Roman",serif; color:#000; }
+    .warehouse-slip th,.warehouse-slip td { border:1px solid #000; padding:5px 4px; vertical-align:middle; overflow-wrap:anywhere; background:white; position:static; white-space:normal; }
+    .warehouse-slip tbody tr:last-child td { border-bottom:1px solid #000; }
+    .warehouse-slip th { text-align:center; font-weight:bold; }
+    .warehouse-slip .slip-column-keys td { text-align:center; font-size:10pt; padding:3px; }
+    .warehouse-slip .slip-data td { height:34px; }
+    .warehouse-slip .slip-center { text-align:center; }
+    .warehouse-slip .slip-number-cell { text-align:right; font-variant-numeric:tabular-nums; }
+    .warehouse-slip td.slip-lot-group { padding:0; position:relative; }
+    .warehouse-slip td.slip-lot-group::before,.warehouse-slip td.slip-lot-group::after { content:""; position:absolute; top:0; bottom:0; border-left:1px solid #000; pointer-events:none; }
+    .warehouse-slip td.slip-lot-group::before { left:37.5%; }
+    .warehouse-slip td.slip-lot-group::after { left:68.75%; }
+    .warehouse-slip .slip-lot-row { display:grid; grid-template-columns:12fr 10fr 10fr; }
+    .warehouse-slip .slip-lot-row > div { padding:5px 4px; min-width:0; overflow-wrap:anywhere; }
+    .warehouse-slip .slip-lot-row + .slip-lot-row { border-top:1px solid #000; }
+    .warehouse-slip .slip-signatures { display:flex; justify-content:space-between; text-align:center; break-inside:avoid; page-break-inside:avoid; padding-top:26px; padding-bottom:65px; }
+    .warehouse-slip .slip-signatures > div { width:20%; }
+    .warehouse-slip .slip-signatures em { display:block; font-size:10pt; margin-top:4px; }
+    .warehouse-slip thead { display:table-header-group; }
+    .warehouse-slip tr { break-inside:avoid; page-break-inside:avoid; }
+    .slip-print-toolbar { font:14px Arial,sans-serif; padding:12px; margin-bottom:12px; background:#f1f5f9; display:flex; align-items:center; gap:16px; }
+    .slip-print-toolbar button { padding:10px 18px; cursor:pointer; font-weight:bold; }
+    @page { size:A4 landscape; margin:10mm; }
+    @media print { html,body { margin:0; padding:0; background:white; } .warehouse-slip { width:100%; padding:0; } .slip-print-toolbar { display:none; } }
+  `;
+  const editorStyles = `
+    .warehouse-slip [contenteditable] { display:inline-block; min-width:42px; min-height:1.3em; padding:0 3px; background:#fff8d6; outline:1px dashed #b7a873; white-space:pre-wrap; vertical-align:bottom; }
+    .warehouse-slip [contenteditable]:focus { outline:2px solid #2563eb; }
+    .warehouse-slip [contenteditable]:empty::before { content:attr(data-placeholder); color:#777; pointer-events:none; }
+    .warehouse-slip .slip-cell-edit { display:block; min-width:0; }
+    .warehouse-slip .slip-filled { white-space:pre-wrap; overflow-wrap:anywhere; }
+    @media print { .warehouse-slip [contenteditable] { outline:none; background:transparent; } }
+  `;
+  function createEditor() {
+    let values = Object.create(null);
+    function field(key, initial, placeholder, printing) {
+      const value = Object.prototype.hasOwnProperty.call(values,key) ? values[key] : String(initial ?? '');
+      if (printing) return '<span class="slip-filled">' + esc(value || placeholder || '') + '</span>';
+      return '<span contenteditable="plaintext-only" role="textbox" aria-label="' + esc(key) + '" data-slip-field="' + esc(key) + '" data-placeholder="' + esc(placeholder || '') + '">' + esc(value) + '</span>';
+    }
+    function capture(event) {
+      const node = event.target && (event.target.closest ? event.target.closest('[data-slip-field]') : event.target);
+      if (node && node.dataset && node.dataset.slipField) values[node.dataset.slipField] = String(node.textContent ?? '');
+    }
+    function read(root) {
+      if (root && root.querySelectorAll) root.querySelectorAll('[data-slip-field]').forEach(node => capture({target:node}));
+    }
+    return {field:field,capture:capture,read:read,reset:function() { values = Object.create(null); }};
+  }
+  function openPrint(title, styles, body, onError) {
+    const win = window.open('', '_blank', 'width=1200,height=850');
+    if (!win) { onError('Trình duyệt đang chặn cửa sổ in. Vui lòng cho phép popup rồi thử lại.'); return; }
+    win.document.open();
+    win.document.write('<!DOCTYPE html><html lang="vi"><head><meta charset="UTF-8"><title>' + esc(title) + '</title><style>' + styles + '</style></head><body><div class="slip-print-toolbar"><button type="button" onclick="window.print()">In / Lưu PDF</button><span>Chọn máy in hoặc Lưu dưới dạng PDF / Save as PDF trong hộp thoại in.</span></div>' + body + '</body></html>');
+    win.document.close(); win.focus(); win.print();
+  }
+  return {styles:baseStyles,esc:esc,createEditor:createEditor,editorStyles:editorStyles,openPrint:openPrint};
+})();
+</script>
