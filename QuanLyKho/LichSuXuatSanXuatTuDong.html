@@ -1,14 +1,38 @@
+<style>
+  .report-filter-row.auto-production-filters {
+    grid-template-columns: 150px 150px max-content max-content minmax(220px, 1fr);
+    gap: 10px;
+  }
+  .auto-production-filters .field { min-width: 0; }
+  .auto-production-filters .btn {
+    height: 36px;
+    padding: 0 12px;
+    font-size: 13px;
+    border-radius: 10px;
+    margin-bottom: 3px;
+  }
+  @media (max-width: 1100px) {
+    .report-filter-row.auto-production-filters {
+      grid-template-columns: minmax(125px, 1fr) minmax(125px, 1fr) max-content max-content minmax(150px, 1.5fr);
+      gap: 8px;
+    }
+  }
+  @media (max-width: 760px) {
+    .report-filter-row.auto-production-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .auto-production-filters .auto-production-plan { grid-column: 1 / -1; }
+  }
+</style>
 <div class="card report-card">
   <div class="card-title"><div>
     <h2>Dữ liệu phiếu xuất sản xuất tự động</h2>
     <p>Phiếu đã duyệt từ PhieuXuatNguyenLieu, lọc theo thời gian duyệt. Số lượng là tổng xuất của dòng; các lô được ghi Lot 1, Lot 2…</p>
   </div></div>
-  <div class="report-filter-row">
+  <div class="report-filter-row auto-production-filters">
     <div class="field"><label for="autoProductionHistoryFrom">Từ ngày</label><input id="autoProductionHistoryFrom" type="date"></div>
     <div class="field"><label for="autoProductionHistoryTo">Đến ngày</label><input id="autoProductionHistoryTo" type="date"></div>
     <button id="autoProductionHistoryLoad" class="btn btn-primary" onclick="AutoProductionExportHistory.load()">Tải dữ liệu</button>
     <button id="autoProductionHistoryExcel" class="btn btn-success" onclick="AutoProductionExportHistory.download()" disabled>Tải Excel</button>
-    <div class="field"><label for="autoProductionHistoryPlan">Số KHSX</label>
+    <div class="field auto-production-plan"><label for="autoProductionHistoryPlan">Số KHSX</label>
       <select id="autoProductionHistoryPlan" onchange="AutoProductionExportHistory.render()" disabled><option value="">Tất cả</option></select>
     </div>
   </div>
