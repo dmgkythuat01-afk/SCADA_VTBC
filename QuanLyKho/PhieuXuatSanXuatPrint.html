@@ -1,0 +1,128 @@
+<style>
+  #autoProductionSlipCard { margin-top: 18px; }
+  #autoProductionSlipCard[hidden] { display: none; }
+  .auto-slip-controls { display: flex; gap: 14px; align-items: end; flex-wrap: wrap; margin-bottom: 14px; }
+  .auto-slip-controls .field { flex: 1 1 240px; }
+  #autoProductionSlipPreview { overflow: auto; border: 1px solid #d1d5db; background: #eee; padding: 16px; }
+  #autoProductionSlipPreview .warehouse-slip { min-width: 1040px; padding: 20px; background: white; }
+  #autoProductionSlipWarning { color: #92400e; margin-bottom: 12px; }
+</style>
+<div id="autoProductionSlipCard" class="card" hidden>
+  <div class="card-title"><div><h2>Phiếu xuất kho</h2><p>Kiểm tra mẫu trước khi in. Để trống địa chỉ hoặc địa điểm sẽ in dấu … để điền tay.</p></div></div>
+  <div class="auto-slip-controls">
+    <div class="field"><label for="autoProductionSlipAddress">Địa chỉ (bộ phận)</label><input id="autoProductionSlipAddress" placeholder="Để trống để điền tay" oninput="AutoProductionSlip.refresh()"></div>
+    <div class="field"><label for="autoProductionSlipLocation">Địa điểm</label><input id="autoProductionSlipLocation" placeholder="Để trống để điền tay" oninput="AutoProductionSlip.refresh()"></div>
+    <button class="btn btn-primary" onclick="AutoProductionSlip.print()">In / Xuất PDF</button>
+  </div>
+  <div id="autoProductionSlipWarning" role="status"></div>
+  <div id="autoProductionSlipPreview"></div>
+</div>
+<script>
+const AutoProductionSlip = (function() {
+  const el = id => document.getElementById(id);
+  let selected = '', rows = [], recipient = '', warning = '';
+  const esc = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+  const blank = value => String(value ?? '').trim() || '……………………';
+  const styles = `
+    .warehouse-slip { box-sizing:border-box; color:#000; font:12pt "Times New Roman",serif; line-height:1.3; }
+    .warehouse-slip * { box-sizing:border-box; }
+    .warehouse-slip .slip-top { display:flex; justify-content:space-between; gap:20px; align-items:flex-start; }
+    .warehouse-slip .slip-company { font-weight:bold; text-transform:uppercase; }
+    .warehouse-slip .slip-company-address { font-size:10pt; }
+    .warehouse-slip .slip-document { border:1px solid #000; padding:4px 7px; font-size:10pt; white-space:nowrap; line-height:1.5; }
+    .warehouse-slip h1 { margin:10px 0 2px; text-align:center; font:bold 20pt "Times New Roman",serif; }
+    .warehouse-slip .slip-date, .warehouse-slip .slip-number { text-align:center; margin:3px 0; }
+    .warehouse-slip .slip-date { font-style:italic; }
+    .warehouse-slip .slip-info { margin:12px 0 8px; }
+    .warehouse-slip .slip-info-row { display:flex; gap:24px; margin:3px 0; }
+    .warehouse-slip .slip-info-row > :first-child { flex:1; }
+    .warehouse-slip .slip-info-row > :nth-child(2) { width:30%; }
+    .warehouse-slip table { border-collapse:collapse; width:100%; table-layout:fixed; min-width:0; font:11pt "Times New Roman",serif; color:#000; }
+    .warehouse-slip th,.warehouse-slip td { border:1px solid #000; padding:5px 4px; vertical-align:middle; overflow-wrap:anywhere; background:white; position:static; white-space:normal; }
+    .warehouse-slip th { text-align:center; font-weight:bold; }
+    .warehouse-slip .slip-column-keys td { text-align:center; font-size:10pt; padding:3px; }
+    .warehouse-slip .slip-data td { height:34px; }
+    .warehouse-slip .slip-center { text-align:center; }
+    .warehouse-slip .slip-number-cell { text-align:right; font-variant-numeric:tabular-nums; }
+    .warehouse-slip td.slip-lot-group { padding:0; }
+    .warehouse-slip .slip-lot-row { display:grid; grid-template-columns:12fr 10fr 10fr; }
+    .warehouse-slip .slip-lot-row > div { padding:5px 4px; min-width:0; overflow-wrap:anywhere; }
+    .warehouse-slip .slip-lot-row > div + div { border-left:1px solid #000; }
+    .warehouse-slip .slip-lot-row + .slip-lot-row { border-top:1px solid #000; }
+    .warehouse-slip .slip-signatures { display:flex; justify-content:space-between; text-align:center; break-inside:avoid; page-break-inside:avoid; padding-top:8px; padding-bottom:65px; }
+    .warehouse-slip .slip-signatures > div { width:20%; }
+    .warehouse-slip .slip-signatures em { display:block; font-size:10pt; margin-top:4px; }
+    .warehouse-slip thead { display:table-header-group; }
+    .warehouse-slip tr { break-inside:avoid; page-break-inside:avoid; }
+    @page { size:A4 landscape; margin:10mm; }
+    @media print { html,body { margin:0; padding:0; background:white; } .warehouse-slip { width:100%; padding:0; } }
+  `;
+  // Ngày theo từng vị trí lô; không sao chép ngày của lô đầu sang các lô còn lại.
+  function dateText(value) {
+    const text = String(value ?? '').trim();
+    const match = text.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    return match ? match[3] + '/' + match[2] + '/' + match[1] : text;
+  }
+  function list(value) { return String(value ?? '').split(/\s*,\s*|\r?\n/).map(part => part.trim()); }
+  function lotGroup(row) {
+    const meta = row._slip || {};
+    const lots = list(meta.lots);
+    const manufactured = list(meta.manufactured), expires = list(meta.expires);
+    const count = Math.max(lots.length, manufactured.length, expires.length);
+    return Array.from({length:count}, (_, index) => {
+      const label = count > 1 ? 'Lot ' + (index + 1) + ': ' : '';
+      const values = [lots[index], dateText(manufactured[index]), dateText(expires[index])];
+      return '<div class="slip-lot-row">' + values.map(value => '<div>' + label + esc(value || '…') + '</div>').join('') + '</div>';
+    }).join('');
+  }
+  function quantity(value) {
+    if (typeof value === 'number' && Number.isFinite(value)) return value.toLocaleString('vi-VN', {maximumFractionDigits:10});
+    return String(value ?? '');
+  }
+  function markup() {
+    const reasons = [...new Set(rows.map(row => String((row._slip || {}).recipe || '').trim()).filter(Boolean))].join('; ');
+    const body = rows.map((row,index) => {
+      const amount = esc(quantity(row['Số lượng']));
+      return '<tr class="slip-data"><td class="slip-center">' + (index+1) + '</td><td>' + esc(row['Tên nguyên vật liệu']) + '</td><td class="slip-center">' + esc((row._slip || {}).accountingCode) + '</td><td class="slip-center">' + esc(row['Đvt']) + '</td><td class="slip-number-cell">' + amount + '</td><td class="slip-number-cell">' + amount + '</td><td colspan="3" class="slip-lot-group">' + lotGroup(row) + '</td><td></td></tr>';
+    }).join('');
+    const signatures = ['Người lập phiếu','Người nhận hàng','Thủ kho','Kế toán trưởng','Ban Giám đốc'].map(title => '<div><strong>' + title + '</strong><em>(Ký, họ tên)</em></div>').join('');
+    return `<section class="warehouse-slip">
+      <div class="slip-top"><div><div class="slip-company">CÔNG TY TNHH ĐỨC MINH ĐỒNG NAI</div><div class="slip-company-address">Đường D4-1, Khu Công nghiệp Long Đức, Xã Bình An, TP Đồng Nai, Việt Nam</div></div>
+      <div class="slip-document">Mã số: BM-QT.KHO-01.05<br>Ngày ban hành/Sửa đổi: 01/01/2026<br>Lần ban hành/Sửa đổi: 02<br>Người ban hành: Nguyễn Thị Kim Chung</div></div>
+      <h1>PHIẾU XUẤT KHO</h1><div class="slip-date">Ngày……tháng……năm………</div><div class="slip-number">Số: ………………</div>
+      <div class="slip-info"><div class="slip-info-row"><div>Họ tên người nhận hàng: ${esc(blank(recipient))}</div><div>Địa chỉ (bộ phận): ${esc(blank(el('autoProductionSlipAddress').value))}</div></div>
+      <div>Theo KHSX số: ${esc(selected)}</div><div>Lý do xuất kho: ${esc(blank(reasons))}</div>
+      <div class="slip-info-row"><div>Xuất tại kho (ngăn lô): ………………………………</div><div>Địa điểm: ${esc(blank(el('autoProductionSlipLocation').value))}</div></div></div>
+      <table><colgroup>${[3,25,9,5,7,7,12,10,10,12].map(width => '<col style="width:'+width+'%">').join('')}</colgroup><thead><tr>
+        <th rowspan="2">Stt</th><th rowspan="2">Tên, nhãn hiệu, quy cách phẩm chất vật tư, dụng cụ sản phẩm, hàng hóa</th><th rowspan="2">Mã số</th><th rowspan="2">Đơn vị tính</th><th colspan="2">Số lượng</th><th rowspan="2">Lô</th><th rowspan="2">Ngày sản xuất</th><th rowspan="2">Ngày hết hạn</th><th rowspan="2">Tên kho thực tế</th>
+      </tr><tr><th>Thực xuất</th><th>Yêu cầu</th></tr><tr class="slip-column-keys">${['A','B','C','D','1','2','3','4','5','6'].map(key=>'<td>'+key+'</td>').join('')}</tr></thead><tbody>${body}</tbody></table>
+      <div class="slip-signatures">${signatures}</div>
+    </section>`;
+  }
+  function refresh() {
+    el('autoProductionSlipCard').hidden = !selected || !rows.length;
+    el('autoProductionSlipWarning').textContent = warning;
+    el('autoProductionSlipPreview').innerHTML = selected && rows.length ? '<style>' + styles + '</style>' + markup() : '';
+  }
+  function setData(plan, visibleRows, person, sourceWarning) {
+    if (selected !== plan) {
+      el('autoProductionSlipAddress').value = '';
+      el('autoProductionSlipLocation').value = '';
+    }
+    selected = plan; rows = visibleRows || []; recipient = (person || {}).recipient || '';
+    warning = sourceWarning || (person || {}).warning || (selected && !recipient ? 'Chưa tra được người nhận hàng; phiếu để dấu … để điền tay.' : '');
+    if (selected && rows.some(row => !(row._slip || {}).accountingCode)) warning += (warning ? ' ' : '') + 'Có dòng chưa có mã kế toán; kiểm tra PhieuXuatNguyenLieu trước khi in.';
+    refresh();
+  }
+  function print() {
+    if (!selected || !rows.length) return;
+    const win = window.open('', '_blank', 'width=1200,height=850');
+    if (!win) { el('autoProductionSlipWarning').textContent = 'Trình duyệt đang chặn cửa sổ in. Vui lòng cho phép popup rồi thử lại.'; return; }
+    win.addEventListener('load', function() { win.focus(); win.print(); }, {once:true});
+    win.document.open();
+    win.document.write('<!DOCTYPE html><html lang="vi"><head><meta charset="UTF-8"><title>Phiếu xuất kho - ' + esc(selected) + '</title><style>' + styles + '</style></head><body>' + markup() + '</body></html>');
+    win.document.close();
+  }
+  return {setData:setData, refresh:refresh, print:print};
+})();
+</script>

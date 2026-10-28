@@ -47,7 +47,7 @@
 </div>
 <script>
 const AutoProductionExportHistory = (function() {
-  let rows = [], headers = [], loadedRange = {}, requestId = 0;
+  let rows = [], headers = [], loadedRange = {}, requestId = 0, slipPeople = {}, slipWarning = '';
   const el = id => document.getElementById(id);
   function filteredRows() {
     const selected = el('autoProductionHistoryPlan').value;
@@ -67,6 +67,8 @@ const AutoProductionExportHistory = (function() {
     const table = el('autoProductionHistoryTable').querySelector('table');
     if (table) { table.style.minWidth = '1800px'; table.style.whiteSpace = 'nowrap'; }
     el('autoProductionHistoryExcel').disabled = !visible.length;
+    const plan = el('autoProductionHistoryPlan').value;
+    AutoProductionSlip.setData(plan, visible, slipPeople[plan], slipWarning);
   }
   function load() {
     const range = {fromDate: el('autoProductionHistoryFrom').value, toDate: el('autoProductionHistoryTo').value};
@@ -74,7 +76,7 @@ const AutoProductionExportHistory = (function() {
       showMessage('autoProductionHistoryMessage', 'error', 'Vui lòng chọn khoảng ngày hợp lệ.'); return;
     }
     const id = ++requestId, token = sessionToken;
-    rows = []; headers = []; resetPlans(); render();
+    rows = []; headers = []; slipPeople = {}; slipWarning = ''; resetPlans(); render();
     el('autoProductionHistoryWarnings').hidden = true;
     el('autoProductionHistoryLoad').disabled = true;
     showMessage('autoProductionHistoryMessage', 'info', 'Đang tải dữ liệu phiếu xuất sản xuất tự động...');
@@ -92,6 +94,7 @@ const AutoProductionExportHistory = (function() {
       if (!current()) return;
       if (!result || !result.success) { fail({message: 'Không tải được dữ liệu.'}); return; }
       rows = result.rows || []; headers = result.headers || []; loadedRange = range;
+      slipPeople = result.slipPeople || {}; slipWarning = result.slipWarning || '';
       resetPlans(); render(); el('autoProductionHistoryLoad').disabled = false;
       const list = el('autoProductionHistoryWarningList');
       list.replaceChildren();
