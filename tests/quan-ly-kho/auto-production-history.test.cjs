@@ -29,14 +29,17 @@ test('API checks role and rejects invalid dates before reading sheets',()=>{
 });
 test('card loads approval date range and exports the same loaded rows',()=>{
  const html=fs.readFileSync(path.join(root,'LichSuXuatSanXuatTuDong.html'),'utf8');
- const elements=new Map();const el=id=>{if(!elements.has(id))elements.set(id,{value:'2026-10-28',disabled:false,style:{},querySelector:()=>null,replaceChildren(){},appendChild(){}});return elements.get(id);};
+ const elements=new Map();const el=id=>{if(!elements.has(id))elements.set(id,{value:'2026-10-28',disabled:false,style:{},options:[],querySelector:()=>null,replaceChildren(...items){this.options=items;},add(item){this.options.push(item);},appendChild(){}});return elements.get(id);};
  let success, failure, request, exported, rendered;
  const runner={withSuccessHandler(fn){success=fn;return this;},withFailureHandler(fn){failure=fn;return this;},getAutoProductionExportHistory(token,range){request={token,range};}};
- const ctx=vm.createContext({Intl,Date,sessionToken:'token',document:{getElementById:el,addEventListener:(name,fn)=>fn(),createElement:()=>({})},google:{script:{run:runner}},showMessage(){},renderGenericReportTable:(id,heads,rows)=>{rendered=rows;},exportRowsToExcel:(...args)=>{exported=args;}});
+ const ctx=vm.createContext({Intl,Date,Option:function(text,value){this.text=text;this.value=value;},sessionToken:'token',document:{getElementById:el,addEventListener:(name,fn)=>fn(),createElement:()=>({})},google:{script:{run:runner}},showMessage(){},renderGenericReportTable:(id,heads,rows)=>{rendered=rows;},exportRowsToExcel:(...args)=>{exported=args;}});
  vm.runInContext(html.match(/<script>([\s\S]*?)<\/script>/)[1],ctx);
  vm.runInContext('AutoProductionExportHistory.load()',ctx);a.equal(request.token,'token');a.equal(request.range.fromDate,el('autoProductionHistoryFrom').value);
- const rows=[{'Số lượng':12,'Lot No':'Lot 1: A; Lot 2: B'}];success({success:true,headers:['Số lượng','Lot No'],rows,warnings:[]});
- a.equal(rendered,rows);a.equal(el('autoProductionHistoryExcel').disabled,false);
- vm.runInContext('AutoProductionExportHistory.download()',ctx);a.equal(exported[2],rows);
+ const rows=[{'Số KHSX':'KH01','Số lượng':12,'Lot No':'Lot 1: A; Lot 2: B'},{'Số KHSX':'KH02','Số lượng':3},{'Số KHSX':'KH01','Số lượng':4}];success({success:true,headers:['Số KHSX','Số lượng','Lot No'],rows,warnings:[]});
+ a.equal(rendered.length,3);a.equal(el('autoProductionHistoryExcel').disabled,false);
+ a.equal(el('autoProductionHistoryPlan').options.length,3);
+ el('autoProductionHistoryPlan').value='KH01';vm.runInContext('AutoProductionExportHistory.render()',ctx);a.equal(rendered.length,2);
+ vm.runInContext('AutoProductionExportHistory.download()',ctx);a.equal(exported[2].length,2);a.equal(exported[2][0],rows[0]);
+ el('autoProductionHistoryPlan').value='';vm.runInContext('AutoProductionExportHistory.render()',ctx);a.equal(rendered.length,3);
  vm.runInContext('AutoProductionExportHistory.load()',ctx);failure({message:'Failed'});a.equal(el('autoProductionHistoryExcel').disabled,true);a.equal(rendered.length,0);
 });

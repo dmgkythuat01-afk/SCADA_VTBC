@@ -8,6 +8,9 @@
     <div class="field"><label for="autoProductionHistoryTo">Đến ngày</label><input id="autoProductionHistoryTo" type="date"></div>
     <button id="autoProductionHistoryLoad" class="btn btn-primary" onclick="AutoProductionExportHistory.load()">Tải dữ liệu</button>
     <button id="autoProductionHistoryExcel" class="btn btn-success" onclick="AutoProductionExportHistory.download()" disabled>Tải Excel</button>
+    <div class="field"><label for="autoProductionHistoryPlan">Số KHSX</label>
+      <select id="autoProductionHistoryPlan" onchange="AutoProductionExportHistory.render()" disabled><option value="">Tất cả</option></select>
+    </div>
   </div>
   <div id="autoProductionHistoryTable" class="report-table-area" style="overflow-x:auto;max-width:100%">
     <div class="empty">Chọn khoảng ngày rồi bấm Tải dữ liệu.</div>
@@ -22,11 +25,24 @@
 const AutoProductionExportHistory = (function() {
   let rows = [], headers = [], loadedRange = {}, requestId = 0;
   const el = id => document.getElementById(id);
+  function filteredRows() {
+    const selected = el('autoProductionHistoryPlan').value;
+    return rows.filter(row => !selected || String(row['Số KHSX'] ?? '').trim() === selected);
+  }
+  function resetPlans() {
+    const select = el('autoProductionHistoryPlan');
+    select.replaceChildren(new Option('Tất cả', ''));
+    const plans = [...new Set(rows.map(row => String(row['Số KHSX'] ?? '').trim()).filter(Boolean))];
+    plans.sort((a, b) => a.localeCompare(b, 'vi', {numeric: true})).forEach(plan => select.add(new Option(plan, plan)));
+    select.value = '';
+    select.disabled = !plans.length;
+  }
   function render() {
-    renderGenericReportTable('autoProductionHistoryTable', headers, rows, 'Không có phiếu xuất sản xuất tự động đã duyệt trong khoảng ngày này.');
+    const visible = filteredRows();
+    renderGenericReportTable('autoProductionHistoryTable', headers, visible, 'Không có phiếu xuất sản xuất tự động phù hợp với bộ lọc.');
     const table = el('autoProductionHistoryTable').querySelector('table');
     if (table) { table.style.minWidth = '1800px'; table.style.whiteSpace = 'nowrap'; }
-    el('autoProductionHistoryExcel').disabled = !rows.length;
+    el('autoProductionHistoryExcel').disabled = !visible.length;
   }
   function load() {
     const range = {fromDate: el('autoProductionHistoryFrom').value, toDate: el('autoProductionHistoryTo').value};
@@ -34,7 +50,7 @@ const AutoProductionExportHistory = (function() {
       showMessage('autoProductionHistoryMessage', 'error', 'Vui lòng chọn khoảng ngày hợp lệ.'); return;
     }
     const id = ++requestId, token = sessionToken;
-    rows = []; headers = []; render();
+    rows = []; headers = []; resetPlans(); render();
     el('autoProductionHistoryWarnings').hidden = true;
     el('autoProductionHistoryLoad').disabled = true;
     showMessage('autoProductionHistoryMessage', 'info', 'Đang tải dữ liệu phiếu xuất sản xuất tự động...');
@@ -52,7 +68,7 @@ const AutoProductionExportHistory = (function() {
       if (!current()) return;
       if (!result || !result.success) { fail({message: 'Không tải được dữ liệu.'}); return; }
       rows = result.rows || []; headers = result.headers || []; loadedRange = range;
-      render(); el('autoProductionHistoryLoad').disabled = false;
+      resetPlans(); render(); el('autoProductionHistoryLoad').disabled = false;
       const list = el('autoProductionHistoryWarningList');
       list.replaceChildren();
       (result.warnings || []).forEach(function(message) {
@@ -63,7 +79,7 @@ const AutoProductionExportHistory = (function() {
     }).withFailureHandler(fail).getAutoProductionExportHistory(token, range);
   }
   function download() {
-    exportRowsToExcel('phieu-xuat-san-xuat-tu-dong_' + loadedRange.fromDate + '_' + loadedRange.toDate + '.xls', headers, rows, 'autoProductionHistoryMessage');
+    exportRowsToExcel('phieu-xuat-san-xuat-tu-dong_' + loadedRange.fromDate + '_' + loadedRange.toDate + '.xls', headers, filteredRows(), 'autoProductionHistoryMessage');
   }
   document.addEventListener('DOMContentLoaded', function() {
     const parts = new Intl.DateTimeFormat('en-CA', {timeZone: 'Asia/Ho_Chi_Minh', year: 'numeric', month: '2-digit', day: '2-digit'}).formatToParts(new Date());
@@ -71,6 +87,6 @@ const AutoProductionExportHistory = (function() {
     const today = value('year') + '-' + value('month') + '-' + value('day');
     el('autoProductionHistoryFrom').value = today; el('autoProductionHistoryTo').value = today;
   });
-  return {load: load, download: download};
+  return {load: load, render: render, download: download};
 })();
 </script>
