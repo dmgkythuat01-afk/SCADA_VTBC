@@ -22,3 +22,8 @@ test('edited header and table cells are escaped into print and drafts clear on f
  state.api.setData('second',[rows[1]]);state.api.print();a.ok(!state.output.includes('PO01'));a.ok(!state.output.includes('LOT-01'));
  state.api.setData('',[]);state.api.print();a.equal(state.prints,2);a.equal(state.el('materialInboundSlipCard').hidden,true);
 });
+test('inbound deliverer defaults to unique suppliers from the selected rows',()=>{
+ const state=setup();const selected=[{...rows[0],'Tên NCC':'NCC A'},{...rows[1],'Tên NCC':'NCC B'},{...rows[1],'Tên NCC':'NCC A'}];
+ state.api.setData('',selected);state.api.print();a.ok(state.output.includes('NCC A; NCC B'));a.equal((state.output.match(/NCC A/g)||[]).length,1);
+ state.api.setData('one',[selected[0]]);state.api.print();a.ok(state.output.includes('NCC A'));a.ok(!state.output.includes('NCC B'));
+});

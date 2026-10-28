@@ -28,6 +28,7 @@ const MaterialInboundSlip = (function() {
   function quantity(value) { return typeof value==='number' && Number.isFinite(value) ? value.toLocaleString('vi-VN',{maximumFractionDigits:10}) : String(value ?? ''); }
   function markup(printing) {
     const field = (key,initial='',placeholder='……………………') => editor.field(key,initial,placeholder,printing);
+    const deliverer = [...new Set(rows.map(row => String(row['Tên NCC'] ?? '').trim()).filter(Boolean))].join('; ');
     const auto = (value,key) => String(value ?? '').trim() ? esc(value) : field(key,'','');
     const body = rows.map((row,index) => {
       const meta = row._slip || {};
@@ -41,7 +42,7 @@ const MaterialInboundSlip = (function() {
       <div class="slip-top"><div><div class="slip-company">CÔNG TY TNHH ĐỨC MINH ĐỒNG NAI</div><div class="slip-company-address">Đường D4-1, Khu Công nghiệp Long Đức, Xã Bình An, Tỉnh Đồng Nai, Việt Nam</div></div>
       <div class="slip-document">Mã số: BM-QT.KHO-01.02<br>Ngày ban hành/Sửa đổi: 01/01/2026<br>Lần ban hành/Sửa đổi: 02<br>Người ban hành: Nguyễn Thị Kim Chung</div></div>
       <h1>PHIẾU NHẬP KHO</h1><div class="slip-date">${field('date','','Ngày……tháng……năm………')}</div><div class="slip-number">Số: ${field('number')}</div>
-      <div class="slip-info"><div class="slip-info-row"><div>- Họ tên người giao hàng: ${field('deliverer')}</div><div>Số PO/HĐ: ${field('purchaseOrder')}</div></div>
+      <div class="slip-info"><div class="slip-info-row"><div>- Họ tên người giao hàng: ${field('deliverer',deliverer)}</div><div>Số PO/HĐ: ${field('purchaseOrder')}</div></div>
       <div class="slip-reference">- Theo ${field('referenceType')} số ${field('referenceNumber')} ngày ${field('referenceDate','','……tháng……năm………')} của: ${field('referenceIssuer')}</div>
       <div class="slip-info-row"><div>- Nhập tại kho: ${field('warehouse')}</div><div>Địa điểm: ${field('location')}</div></div></div>
       <table><colgroup>${[3,25,9,5,7,7,8,9,9,9,9].map(width=>'<col style="width:'+width+'%">').join('')}</colgroup><thead><tr>
