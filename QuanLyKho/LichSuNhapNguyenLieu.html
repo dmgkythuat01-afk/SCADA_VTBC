@@ -1,0 +1,99 @@
+<style>
+  .report-filter-row.material-inbound-filters {
+    grid-template-columns:150px 150px max-content max-content minmax(220px,1fr);
+    gap:10px;
+  }
+  .material-inbound-filters .field { min-width:0; }
+  .material-inbound-filters .btn { height:36px; padding:0 12px; font-size:13px; margin-bottom:3px; }
+  @media (max-width:1100px) {
+    .report-filter-row.material-inbound-filters { grid-template-columns:minmax(125px,1fr) minmax(125px,1fr) max-content max-content minmax(150px,1.5fr); gap:8px; }
+  }
+  @media (max-width:760px) {
+    .report-filter-row.material-inbound-filters { grid-template-columns:repeat(2,minmax(0,1fr)); }
+    .material-inbound-filters .material-inbound-ingredient { grid-column:1 / -1; }
+  }
+</style>
+<div class="card report-card">
+  <div class="card-title"><div>
+    <h2>Dữ liệu phiếu nhập nguyên liệu</h2>
+    <p>Dữ liệu từ KhoNguyenLieu, lọc theo thời gian duyệt (ngayPheDuyet).</p>
+  </div></div>
+  <div class="report-filter-row material-inbound-filters">
+    <div class="field"><label for="materialInboundFrom">Từ ngày</label><input id="materialInboundFrom" type="date"></div>
+    <div class="field"><label for="materialInboundTo">Đến ngày</label><input id="materialInboundTo" type="date"></div>
+    <button id="materialInboundLoad" class="btn btn-primary" onclick="MaterialInboundHistory.load()">Tải dữ liệu</button>
+    <button id="materialInboundExcel" class="btn btn-success" onclick="MaterialInboundHistory.download()" disabled>Xuất Excel</button>
+    <div class="field material-inbound-ingredient"><label for="materialInboundIngredient">Nguyên liệu</label>
+      <select id="materialInboundIngredient" onchange="MaterialInboundHistory.render()" disabled><option value="">Tất cả</option></select>
+    </div>
+  </div>
+  <div id="materialInboundTable" class="report-table-area" style="overflow-x:auto;max-width:100%"><div class="empty">Chọn khoảng ngày rồi bấm Tải dữ liệu.</div></div>
+  <div id="materialInboundMessage" role="status"></div>
+</div>
+<script>
+const MaterialInboundHistory = (function() {
+  let rows = [], headers = [], loadedRange = {}, requestId = 0;
+  const el = id => document.getElementById(id);
+  const ingredientKey = row => JSON.stringify([String(row['Mã NLVT'] ?? '').trim(), String(row['Tên nguyên vật liệu'] ?? '').trim()]);
+  function filteredRows() {
+    const selected = el('materialInboundIngredient').value;
+    return rows.filter(row => !selected || ingredientKey(row) === selected);
+  }
+  function resetOptions() {
+    const select = el('materialInboundIngredient');
+    select.replaceChildren(new Option('Tất cả', ''));
+    const ingredients = new Map();
+    rows.forEach(row => {
+      const label = [row['Mã NLVT'], row['Tên nguyên vật liệu']].map(value => String(value ?? '').trim()).filter(Boolean).join(' - ');
+      if (label) ingredients.set(ingredientKey(row), label);
+    });
+    [...ingredients].sort((a,b) => a[1].localeCompare(b[1], 'vi', {numeric:true})).forEach(([key,label]) => select.add(new Option(label,key)));
+    select.value = '';
+    select.disabled = !ingredients.size;
+  }
+  function render() {
+    const visible = filteredRows();
+    renderGenericReportTable('materialInboundTable', headers, visible, 'Không có dữ liệu phiếu nhập phù hợp với bộ lọc.');
+    const table = el('materialInboundTable').querySelector('table');
+    if (table) { table.style.minWidth = '1450px'; table.style.whiteSpace = 'nowrap'; }
+    el('materialInboundExcel').disabled = !visible.length;
+  }
+  function load() {
+    const range = {fromDate:el('materialInboundFrom').value, toDate:el('materialInboundTo').value};
+    if (!range.fromDate || !range.toDate || range.fromDate > range.toDate) {
+      showMessage('materialInboundMessage','error','Vui lòng chọn khoảng ngày hợp lệ.'); return;
+    }
+    const id = ++requestId, token = sessionToken;
+    rows = []; headers = []; resetOptions(); render();
+    el('materialInboundLoad').disabled = true;
+    showMessage('materialInboundMessage','info','Đang tải dữ liệu phiếu nhập nguyên liệu...');
+    function current() {
+      if (id !== requestId) return false;
+      if (token !== sessionToken) { el('materialInboundLoad').disabled = false; return false; }
+      return true;
+    }
+    function fail(error) {
+      if (!current()) return;
+      el('materialInboundLoad').disabled = false;
+      showMessage('materialInboundMessage','error',error.message || 'Không tải được dữ liệu phiếu nhập.');
+    }
+    google.script.run.withSuccessHandler(function(result) {
+      if (!current()) return;
+      if (!result || !result.success) { fail({message:'Không tải được dữ liệu phiếu nhập.'}); return; }
+      rows = result.rows || []; headers = result.headers || []; loadedRange = range;
+      resetOptions(); render(); el('materialInboundLoad').disabled = false;
+      showMessage('materialInboundMessage','success','Đã tải ' + rows.length + ' dòng, theo ngày duyệt từ ' + range.fromDate + ' đến ' + range.toDate + '.');
+    }).withFailureHandler(fail).getMaterialInboundHistory(token,range);
+  }
+  function download() {
+    exportRowsToExcel('lich-su-nhap-nguyen-lieu_' + loadedRange.fromDate + '_' + loadedRange.toDate + '.xls',headers,filteredRows(),'materialInboundMessage');
+  }
+  document.addEventListener('DOMContentLoaded',function() {
+    const parts = new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Ho_Chi_Minh',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date());
+    const value = type => parts.find(part => part.type === type).value;
+    const today = value('year') + '-' + value('month') + '-' + value('day');
+    el('materialInboundFrom').value = today; el('materialInboundTo').value = today;
+  });
+  return {load:load,render:render,download:download};
+})();
+</script>

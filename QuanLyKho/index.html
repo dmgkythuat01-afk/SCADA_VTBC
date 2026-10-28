@@ -1315,6 +1315,10 @@
             <span class="side-menu-icon">🕘</span>
             <span>Lịch sử xuất nguyên liệu</span>
           </button>
+          <button id="menuMaterialInboundHistory" class="side-menu-btn" onclick="showFeaturePage('pageMaterialInboundHistory', this)">
+            <span class="side-menu-icon">📥</span>
+            <span>Lịch sử nhập nguyên liệu</span>
+          </button>
           <button id="menuStock" class="side-menu-btn" onclick="showFeaturePage('pageStock', this)">
             <span class="side-menu-icon">📦</span>
             <span>Tồn kho hiện tại</span>
@@ -2074,6 +2078,9 @@
           <?!= HtmlService.createHtmlOutputFromFile('LichSuXuatNguyenLieu').getContent(); ?>
           <?!= HtmlService.createHtmlOutputFromFile('LichSuXuatSanXuatTuDong').getContent(); ?>
           <?!= HtmlService.createHtmlOutputFromFile('PhieuXuatSanXuatPrint').getContent(); ?>
+        </div>
+        <div id="pageMaterialInboundHistory" class="feature-page">
+          <?!= HtmlService.createHtmlOutputFromFile('LichSuNhapNguyenLieu').getContent(); ?>
         </div>
         <div id="pagePending" class="feature-page">
 <div class="pending-grid">
