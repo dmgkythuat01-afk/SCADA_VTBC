@@ -1938,7 +1938,7 @@ function approveExportRequest(token, payload) {
         }
 
         const khoiLuongCanXuat = Number(clientItem.khoiLuongCanXuat);
-        const khoiLuongXuatThucTe = roundQty_(khoiLuongCanXuat * 1.05);
+        const khoiLuongXuatThucTe = roundQty_(khoiLuongCanXuat * 1);
         const cachXuat = normalizeText_(clientItem.cachXuat);
 
         if (!isFinite(khoiLuongCanXuat) || khoiLuongCanXuat <= 0) {
@@ -2169,7 +2169,7 @@ function cancelExportLine(token, payload) {
   const rowNumber = Number(payload && payload.rowNumber);
   const cachXuat = normalizeText_(payload && payload.cachXuat);
   const khoiLuongCanXuat = Number(payload && payload.khoiLuongCanXuat);
-  const khoiLuongXuatThucTe = roundQty_(khoiLuongCanXuat * 1.05);
+  const khoiLuongXuatThucTe = roundQty_(khoiLuongCanXuat * 1);
 
   if (!rowNumber || rowNumber < 2) {
     throw new Error("Thiếu dòng phiếu xuất cần hủy.");
