@@ -17,6 +17,7 @@ test('print metadata retains accounting code and aligned lot dates without chang
  const ctx=setup();const result=ctx.buildAutoProductionExportHistory_({headers,rows:[row({MaKeToan:'0012',ngaySanXuatKho:'2026-01-01, ',hanSuDung:'2027-01-01, 2027-02-01'})]},products,'2026-10-28','2026-10-28');
  a.equal(result.rows[0]._slip.accountingCode,'0012');a.equal(result.rows[0]._slip.recipe,'Bài 2');a.equal(result.rows[0]._slip.manufactured,'2026-01-01, ');a.equal(result.headers.length,12);
  a.equal(result.headers[result.headers.indexOf('Mã NLVT')+1],'Mã kế toán');a.equal(result.rows[0]['Mã kế toán'],'0012');
+ a.equal(result.rows[0]._slip.approvalDate,'2026-10-28');
 });
 test('print recipient resolves the unique batch username and does not select conflicting names',()=>{
  const ctx=setup();const accounts=[{useName:'can1',name:'Người Cân',passWord:'SECRET'},{useName:'can2',name:'Người Khác'}];

@@ -11,6 +11,7 @@
   <div class="card-title"><div><h2>Phiếu xuất kho</h2><p>Kiểm tra mẫu trước khi in. Các mục trống có thể điền tay sau khi in.</p></div></div>
   <div class="auto-slip-controls">
     <button class="btn btn-primary" onclick="AutoProductionSlip.print()">In / Xuất PDF</button>
+    <button class="btn btn-success" onclick="AutoProductionSlip.word()">Xuất Word</button>
   </div>
   <div id="autoProductionSlipWarning" role="status"></div>
   <div id="autoProductionSlipPreview" oninput="AutoProductionSlip.edit(event)"></div>
@@ -48,6 +49,11 @@ const AutoProductionSlip = (function() {
     const field = (key, initial='', placeholder='……………………') => editor.field(key,initial,placeholder,printing);
     const auto = (value,key) => String(value ?? '').trim() ? esc(value) : field(key,'','');
     const reasons = [...new Set(rows.map(row => String((row._slip || {}).recipe || '').trim()).filter(Boolean))].join('; ');
+    const approvalDate = [...new Set(rows.map(row => {
+      const value = dateText((row._slip || {}).approvalDate || row.thoiGianDuyet || row['Thời gian duyệt']).split(' ')[0];
+      const match = value.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+      return match ? 'Ngày '+match[1].padStart(2,'0')+' tháng '+match[2].padStart(2,'0')+' năm '+match[3] : value;
+    }).filter(Boolean))].join('; ');
     const body = rows.map((row,index) => {
       const amount = quantity(row['Số lượng']);
       return '<tr class="slip-data"><td class="slip-center">' + (index+1) + '</td><td>' + auto(row['Tên nguyên vật liệu'],'name'+index) + '</td><td class="slip-center">' + auto((row._slip || {}).accountingCode,'code'+index) + '</td><td class="slip-center">' + auto(row['Đvt'],'unit'+index) + '</td><td class="slip-number-cell">' + auto(amount,'actual'+index) + '</td><td class="slip-number-cell">' + auto(amount,'requested'+index) + '</td><td colspan="3" class="slip-lot-group">' + lotGroup(row,index,printing) + '</td><td>' + field('warehouseRow'+index,'','') + '</td></tr>';
@@ -56,7 +62,7 @@ const AutoProductionSlip = (function() {
     return `<section class="warehouse-slip">
       <div class="slip-top"><div><div class="slip-company">CÔNG TY TNHH ĐỨC MINH ĐỒNG NAI</div><div class="slip-company-address">Đường D4-1, Khu Công nghiệp Long Đức, Xã Bình An, TP Đồng Nai, Việt Nam</div></div>
       <div class="slip-document">Mã số: BM-QT.KHO-01.05<br>Ngày ban hành/Sửa đổi: 01/01/2026<br>Lần ban hành/Sửa đổi: 02<br>Người ban hành: Nguyễn Thị Kim Chung</div></div>
-      <h1>PHIẾU XUẤT KHO</h1><div class="slip-date">${field('date','','Ngày……tháng……năm………')}</div><div class="slip-number">Số: ${field('number')}</div>
+      <h1>PHIẾU XUẤT KHO</h1><div class="slip-date">${esc(approvalDate || 'Ngày……tháng……năm………')}</div><div class="slip-number">Số: ${field('number')}</div>
       <div class="slip-info"><div class="slip-info-row"><div>Họ tên người nhận hàng: ${field('recipient',recipient)}</div><div>Địa chỉ (bộ phận): ${field('address')}</div></div>
       <div>Theo KHSX số: ${esc(selected)}</div><div>Lý do xuất kho: ${reasons ? esc(reasons) : field('reason')}</div>
       <div class="slip-info-row"><div>Xuất tại kho (ngăn lô): ${field('warehouse')}</div><div>Địa điểm: ${field('location')}</div></div></div>
@@ -83,6 +89,11 @@ const AutoProductionSlip = (function() {
     editor.read(el('autoProductionSlipPreview'));
     WarehouseSlipForm.openPrint('Phiếu xuất kho - '+selected,styles,markup(true),message => { el('autoProductionSlipWarning').textContent=message; });
   }
-  return {setData:setData, refresh:refresh, print:print, edit:editor.capture};
+  function word() {
+    if (!selected || !rows.length) return;
+    editor.read(el('autoProductionSlipPreview'));
+    WarehouseSlipWord.download('phieu-xuat-kho_'+selected+'.docx',markup(true));
+  }
+  return {setData:setData, refresh:refresh, print:print, word:word, edit:editor.capture};
 })();
 </script>

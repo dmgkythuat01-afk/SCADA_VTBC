@@ -1,0 +1,133 @@
+<script>
+// Xuất DOCX thực (OOXML + ZIP), không cần CDN hay gửi dữ liệu sang dịch vụ khác.
+const WarehouseSlipWord = (function() {
+  const width = 15704;
+  const xml = value => String(value ?? '').replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g,'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}[c]));
+  function text(node) {
+    if (node.nodeType===3) return node.nodeValue;
+    if (node.nodeName==='BR') return '\n';
+    return Array.from(node.childNodes || []).map(child=>text(child)+(child.nodeName==='DIV'?'\n':'')).join('');
+  }
+  function p(value,options={}) {
+    const props = (options.title?'<w:pStyle w:val="Title"/>':'')+(options.keep?'<w:keepNext/>':'')+'<w:spacing w:before="'+(options.before || 0)+'" w:after="'+(options.after || 0)+'"/>'+(options.align?'<w:jc w:val="'+options.align+'"/>':'');
+    const runProps = '<w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman" w:eastAsia="Times New Roman"/><w:b w:val="'+(options.bold?'1':'0')+'"/><w:i w:val="'+(options.italic?'1':'0')+'"/><w:color w:val="000000"/><w:sz w:val="'+(options.size || 22)+'"/>';
+    const content = String(value ?? '').replace(/\r/g,'').trim().split('\n').map((line,index)=>(index?'<w:br/>':'')+'<w:t xml:space="preserve">'+xml(line)+'</w:t>').join('');
+    return '<w:p><w:pPr>'+props+'</w:pPr><w:r><w:rPr>'+runProps+'</w:rPr>'+content+'</w:r></w:p>';
+  }
+  function borders(enabled) {
+    return '<w:tblBorders>'+['top','left','bottom','right','insideH','insideV'].map(side=>'<w:'+side+' w:val="'+(enabled?'single':'nil')+'" w:sz="4" w:color="000000"/>').join('')+'</w:tblBorders>';
+  }
+  function tableStart(widths,enabled=true) {
+    return '<w:tbl><w:tblPr><w:tblW w:w="'+widths.reduce((a,b)=>a+b,0)+'" w:type="dxa"/>'+borders(enabled)+'<w:tblLayout w:type="fixed"/><w:tblCellMar><w:top w:w="55" w:type="dxa"/><w:left w:w="55" w:type="dxa"/><w:bottom w:w="55" w:type="dxa"/><w:right w:w="55" w:type="dxa"/></w:tblCellMar></w:tblPr><w:tblGrid>'+widths.map(w=>'<w:gridCol w:w="'+w+'"/>').join('')+'</w:tblGrid>';
+  }
+  function cell(content,cellWidth,options={}) {
+    return '<w:tc><w:tcPr><w:tcW w:w="'+cellWidth+'" w:type="dxa"/>'+(options.span>1?'<w:gridSpan w:val="'+options.span+'"/>':'')+(options.merge?'<w:vMerge'+(options.merge==='restart'?' w:val="restart"':'')+'/>':'')+'<w:vAlign w:val="center"/></w:tcPr>'+content+'</w:tc>';
+  }
+  function plainTable(contents,widths,enabled=false) {
+    return tableStart(widths,enabled)+'<w:tr><w:trPr><w:cantSplit/></w:trPr>'+contents.map((content,i)=>cell(content,widths[i])).join('')+'</w:tr></w:tbl>';
+  }
+  function cellContent(node,cellWidth,options) {
+    if (node.classList.contains('slip-lot-group')) {
+      const widths = [12,10,10].map(n=>Math.round(cellWidth*n/32));
+      return tableStart(widths,true)+Array.from(node.querySelectorAll('.slip-lot-row')).map(row=>'<w:tr><w:trPr><w:cantSplit/></w:trPr>'+Array.from(row.children).map((part,i)=>cell(p(text(part),{size:20}),widths[i])).join('')+'</w:tr>').join('')+'</w:tbl>'+p('');
+    }
+    return p(text(node),options);
+  }
+  function dataTable(node) {
+    const cols=Array.from(node.querySelectorAll('colgroup > col'));
+    const weights=cols.map(col=>parseFloat(col.style.width)), total=weights.reduce((a,b)=>a+b,0);
+    const widths=weights.map(weight=>Math.round(width*weight/total));
+    widths[widths.length-1]=width-widths.slice(0,-1).reduce((a,b)=>a+b,0);
+    let pending = new Map();
+    const content=Array.from(node.rows).map(row=>{
+      const lotGroup=row.querySelector('.slip-lot-group');
+      if(lotGroup) {
+        const lotRows=Array.from(lotGroup.querySelectorAll('.slip-lot-row'));
+        return lotRows.map((lotRow,lotIndex)=>{
+          let column=0,content='';
+          Array.from(row.cells).forEach(node=>{
+            if(node===lotGroup) {
+              Array.from(lotRow.children).forEach(part=>{content+=cell(p(text(part),{size:20}),widths[column++]);});
+            } else {
+              const options={size:20,align:node.classList.contains('slip-center')?'center':node.classList.contains('slip-number-cell')?'right':'left'};
+              content+=cell(lotIndex===0?p(text(node),options):p(''),widths[column++],{merge:lotRows.length>1?(lotIndex===0?'restart':'continue'):''});
+            }
+          });
+          return '<w:tr><w:trPr><w:cantSplit/><w:trHeight w:val="340" w:hRule="atLeast"/></w:trPr>'+content+'</w:tr>';
+        }).join('');
+      }
+      const next = new Map();let column=0, cells='';
+      function continueMerge() {
+        while(pending.has(column)) {
+          const item=pending.get(column), w=widths.slice(column,column+item.span).reduce((a,b)=>a+b,0);
+          cells+=cell(p(''),w,{span:item.span,merge:'continue'});
+          if(item.remaining>1)next.set(column,{span:item.span,remaining:item.remaining-1});
+          column+=item.span;
+        }
+      }
+      Array.from(row.cells).forEach(node=>{
+        continueMerge();const span=node.colSpan || 1, rowSpan=node.rowSpan || 1;
+        const w=widths.slice(column,column+span).reduce((a,b)=>a+b,0);
+        const header=node.nodeName==='TH', centered=header || node.classList.contains('slip-center') || row.classList.contains('slip-column-keys');
+        cells+=cell(cellContent(node,w,{size:20,bold:header,align:centered?'center':node.classList.contains('slip-number-cell')?'right':'left'}),w,{span:span,merge:rowSpan>1?'restart':''});
+        if(rowSpan>1)next.set(column,{span:span,remaining:rowSpan-1});column+=span;
+      });
+      continueMerge();pending=next;
+      return '<w:tr><w:trPr><w:cantSplit/><w:trHeight w:val="340" w:hRule="atLeast"/>'+(row.parentElement.nodeName==='THEAD'?'<w:tblHeader w:val="true"/>':'')+'</w:trPr>'+cells+'</w:tr>';
+    }).join('');
+    return tableStart(widths,true)+content+'</w:tbl>';
+  }
+  function documentXml(html) {
+    const root = new DOMParser().parseFromString(html,'text/html').querySelector('.warehouse-slip');
+    if(!root)throw new Error('Không có nội dung phiếu để xuất Word.');
+    function block(node) {
+      if(node.nodeName==='H1')return p(text(node),{size:36,bold:true,align:'center',before:160,after:60,title:true});
+      if(node.nodeName==='TABLE')return dataTable(node);
+      if(node.classList.contains('slip-top'))return plainTable([p(text(node.querySelector('.slip-company')),{size:22,bold:true})+p(text(node.querySelector('.slip-company-address')),{size:18}),p(text(node.children[1]),{size:18})],[Math.round(width*.72),Math.round(width*.28)]);
+      if(node.classList.contains('slip-date') || node.classList.contains('slip-number'))return p(text(node),{align:'center',italic:node.classList.contains('slip-date')});
+      if(node.classList.contains('slip-info-row'))return plainTable(Array.from(node.children).map(child=>p(text(child))),[Math.round(width*.7),Math.round(width*.3)]);
+      if(node.classList.contains('slip-info'))return Array.from(node.children).map(block).join('');
+      if(node.classList.contains('slip-signatures')) {
+        const columns=Array.from(node.children), widths=columns.map(()=>Math.floor(width/columns.length));
+        return p('',{before:240})+plainTable(columns.map(child=>{
+          const title=child.querySelector('strong'),hint=child.querySelector('em');
+          return p(text(title),{bold:true,align:'center',size:22,keep:true})+p(text(hint),{italic:true,align:'center',size:20,keep:true})+p(text(child.lastElementChild),{align:'center'});
+        }),widths)+p('',{after:600});
+      }
+      return p(text(node));
+    }
+    return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>'+Array.from(root.children).map(block).join('')+'<w:sectPr><w:pgSz w:w="16838" w:h="11906" w:orient="landscape"/><w:pgMar w:top="567" w:right="567" w:bottom="567" w:left="567" w:header="0" w:footer="0" w:gutter="0"/></w:sectPr></w:body></w:document>';
+  }
+  function parts(html) {
+    return {
+      '[Content_Types].xml':'<?xml version="1.0" encoding="UTF-8"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/><Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/></Types>',
+      '_rels/.rels':'<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>',
+      'word/document.xml':documentXml(html),
+      'word/_rels/document.xml.rels':'<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>',
+      'word/styles.xml':'<?xml version="1.0" encoding="UTF-8"?><w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman"/><w:sz w:val="22"/><w:lang w:val="vi-VN"/></w:rPr></w:rPrDefault><w:pPrDefault><w:pPr><w:spacing w:after="0" w:line="240" w:lineRule="auto"/></w:pPr></w:pPrDefault></w:docDefaults><w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/></w:style><w:style w:type="paragraph" w:styleId="Title"><w:name w:val="Title"/><w:basedOn w:val="Normal"/></w:style></w:styles>'
+    };
+  }
+  function zip(files) {
+    const encoder=new TextEncoder(), local=[], central=[];let offset=0;
+    function header(size) {const bytes=new Uint8Array(size);return {bytes:bytes,view:new DataView(bytes.buffer)};}
+    function crc(bytes) {let value=0xffffffff;for(const byte of bytes){value^=byte;for(let bit=0;bit<8;bit++)value=(value>>>1)^((value&1)?0xedb88320:0);}return (value^0xffffffff)>>>0;}
+    for(const [name,value] of Object.entries(files)) {
+      const filename=encoder.encode(name),data=encoder.encode(value),checksum=crc(data),h=header(30),c=header(46);
+      h.view.setUint32(0,0x04034b50,true);h.view.setUint16(4,20,true);h.view.setUint16(6,0x800,true);h.view.setUint16(12,33,true);h.view.setUint32(14,checksum,true);h.view.setUint32(18,data.length,true);h.view.setUint32(22,data.length,true);h.view.setUint16(26,filename.length,true);
+      c.view.setUint32(0,0x02014b50,true);c.view.setUint16(4,20,true);c.view.setUint16(6,20,true);c.view.setUint16(8,0x800,true);c.view.setUint16(14,33,true);c.view.setUint32(16,checksum,true);c.view.setUint32(20,data.length,true);c.view.setUint32(24,data.length,true);c.view.setUint16(28,filename.length,true);c.view.setUint32(42,offset,true);
+      local.push(h.bytes,filename,data);central.push(c.bytes,filename);offset+=30+filename.length+data.length;
+    }
+    const centralSize=central.reduce((sum,bytes)=>sum+bytes.length,0),end=header(22),count=Object.keys(files).length;
+    end.view.setUint32(0,0x06054b50,true);end.view.setUint16(8,count,true);end.view.setUint16(10,count,true);end.view.setUint32(12,centralSize,true);end.view.setUint32(16,offset,true);
+    const result=new Uint8Array(offset+centralSize+22);let cursor=0;
+    for(const bytes of [...local,...central,end.bytes]){result.set(bytes,cursor);cursor+=bytes.length;}return result;
+  }
+  function build(html) {return zip(parts(html));}
+  function download(filename,html) {
+    const blob=new Blob([build(html)],{type:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'});
+    const url=URL.createObjectURL(blob),link=document.createElement('a');
+    link.href=url;link.download=filename.replace(/[\\/:*?"<>|]/g,'-');document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+  }
+  return {build:build,parts:parts,download:download};
+})();
+</script>

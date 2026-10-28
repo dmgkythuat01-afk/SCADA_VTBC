@@ -73,6 +73,7 @@ function buildAutoProductionExportHistory_(exports, products, from, to) {
     const codes = Array.from(productMap.get(recipeKey(source.tenBaiLieu)) || []).sort();
     row['Mã sản phẩm'] = codes.join(', ');
     row._slip = {
+      approvalDate: extractDateTextForReport_(source.thoiGianDuyet),
       accountingCode: text(source.MaKeToan), recipe: text(source.tenBaiLieu),
       lots: text(source.LotNo), manufactured: String(source.ngaySanXuatKho || ''),
       expires: String(source.hanSuDung || ''), voucher: text(source.PhieuXuatId)

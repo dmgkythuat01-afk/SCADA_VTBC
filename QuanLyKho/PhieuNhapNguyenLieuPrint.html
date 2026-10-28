@@ -7,7 +7,8 @@
 </style>
 <div id="materialInboundSlipCard" class="card" hidden>
   <div class="card-title"><div><h2>Phiếu nhập kho</h2><p>Phiếu lấy nguyên liệu theo combobox phía trên; chọn Tất cả để in toàn bộ dữ liệu đã tải. Các mục trống có thể điền tay sau khi in.</p></div>
-    <button class="btn btn-primary" onclick="MaterialInboundSlip.print()">In / Xuất PDF</button>
+    <div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn btn-primary" onclick="MaterialInboundSlip.print()">In / Xuất PDF</button>
+    <button class="btn btn-success" onclick="MaterialInboundSlip.word()">Xuất Word</button></div>
   </div>
   <div id="materialInboundSlipMessage" role="status"></div>
   <div id="materialInboundSlipPreview" oninput="MaterialInboundSlip.edit(event)"></div>
@@ -69,6 +70,11 @@ const MaterialInboundSlip = (function() {
     editor.read(el('materialInboundSlipPreview'));
     WarehouseSlipForm.openPrint('Phiếu nhập kho',styles,markup(true),message=>{el('materialInboundSlipMessage').textContent=message;});
   }
-  return {setData:setData,refresh:refresh,print:print,edit:editor.capture};
+  function word() {
+    if (!rows.length) return;
+    editor.read(el('materialInboundSlipPreview'));
+    WarehouseSlipWord.download('phieu-nhap-kho.docx',markup(true));
+  }
+  return {setData:setData,refresh:refresh,print:print,word:word,edit:editor.capture};
 })();
 </script>
