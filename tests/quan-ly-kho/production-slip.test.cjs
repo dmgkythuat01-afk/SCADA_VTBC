@@ -7,7 +7,8 @@ const file=path.join(__dirname,'../../QuanLyKho/PhieuXuatSanXuatPrint.html');
 function setup(){
  const nodes=new Map();const el=id=>{if(!nodes.has(id))nodes.set(id,{value:'',innerHTML:'',hidden:false,textContent:''});return nodes.get(id);};
  let output='',printed=0,load;
- const win={document:{open(){},write(html){output=html;},close(){load();}},addEventListener:(name,fn)=>{load=fn;},focus(){},print(){printed++;}};
+ // document.open() thực tế xóa listener load đã gắn trên cửa sổ.
+ const win={document:{open(){load=undefined;},write(html){output=html;},close(){if(load)load();}},addEventListener:(name,fn)=>{load=fn;},focus(){},print(){printed++;}};
  const ctx=vm.createContext({console,Intl,document:{getElementById:el},window:{open:()=>win}});
  vm.runInContext(fs.readFileSync(file,'utf8').match(/<script>([\s\S]*?)<\/script>/)[1],ctx);
  const api=vm.runInContext('AutoProductionSlip',ctx);
@@ -24,6 +25,7 @@ test('slip renders accounting codes, both quantities, aligned lot dates and hand
 test('print uses edited fields, opens print dialog, and clears on all-plans selection',()=>{
  const state=setup();state.api.setData('KH01',rows,{recipient:'Người nhận'},'');state.el('autoProductionSlipAddress').value='Bộ phận A';state.el('autoProductionSlipLocation').value='Xưởng <A>';
  state.api.print();a.equal(state.printed,1);a.ok(state.output.includes('Bộ phận A'));a.ok(state.output.includes('Xưởng &lt;A&gt;'));a.ok(state.output.includes('@page'));a.ok(state.output.includes('table-header-group'));
+ a.ok(state.output.includes('onclick="window.print()"'));a.ok(state.output.includes('slip-print-toolbar'));
  state.api.setData('',rows,{},'');a.equal(state.el('autoProductionSlipCard').hidden,true);state.api.print();a.equal(state.printed,1);
 });
 test('all page scripts parse together with the new print module',()=>{
