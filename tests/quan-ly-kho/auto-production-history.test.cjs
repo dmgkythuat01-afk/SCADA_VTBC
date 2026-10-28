@@ -27,6 +27,13 @@ test('account lookup reads username and name columns only',()=>{
  const sheet={getLastColumn:()=>3,getLastRow:()=>2,getName:()=> 'account',getRange:(r,c)=>{reads.push([r,c]);return {getDisplayValues:()=>r===1?[['useName','passWord','name']]:[[c===1?'can1':'Tên người cân']]};}};
  const result=ctx.readAutoSlipColumns_(sheet,['useName','name']);a.equal(result[0].name,'Tên người cân');a.ok(!reads.some(([r,c])=>r===2&&c===2));a.ok(!JSON.stringify(result).includes('passWord'));
 });
+test('recipient lookup ignores username case and surrounding whitespace',()=>{
+ const ctx=setup();
+ const result=ctx.buildAutoProductionSlipPeople_([{KeHoachId:'KH01',nguoiCan:' vg.dung '},{KeHoachId:'KH01',nguoiCan:'VG.DUNG'}],[{useName:' Vg.dung ',name:'Nguyễn Văn Dũng'}],['KH01']);
+ a.equal(result.KH01.recipient,'Nguyễn Văn Dũng');a.equal(result.KH01.warning,'');
+ const conflict=ctx.buildAutoProductionSlipPeople_([{KeHoachId:'KH01',nguoiCan:'vg.dung'}],[{useName:'Vg.dung',name:'Tên A'},{useName:'VG.DUNG',name:'Tên B'}],['KH01']);
+ a.equal(conflict.KH01.recipient,'');a.ok(conflict.KH01.warning);
+});
 test('report filters approval date, maps either recipe field, labels lots and preserves quantity',()=>{
  const ctx=setup();const result=ctx.buildAutoProductionExportHistory_({headers,rows:[row(),row({tenBaiLieu:'Bài 1',LotNo:'C',khoiLuongXuatThucTe:12}),row({thoiGianDuyet:'2026-10-29'}),row({trangThaiPheDuyet:'Chờ duyệt'})]},products,'2026-10-28','2026-10-28');
  a.equal(result.rows.length,2);a.equal(result.headers.length,11);a.equal(result.rows[0]['Mã sản phẩm'],'SP01');a.equal(result.rows[0]['Lot No'],'Lot 1: A; Lot 2: B');a.equal(result.rows[0]['Số lượng'],0);a.equal(result.rows[1]['Lot No'],'C');a.equal(result.rows[1]['Số lượng'],12);

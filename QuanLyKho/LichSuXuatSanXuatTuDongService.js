@@ -104,9 +104,10 @@ function readAutoSlipColumns_(sheet, fields) {
 }
 
 function buildAutoProductionSlipPeople_(batchRows, accounts, plans) {
+  const usernameKey = function(value) { return String(value || '').trim().toLowerCase(); };
   const people = new Map();
   accounts.forEach(function(account) {
-    const username = String(account.useName || '').trim();
+    const username = usernameKey(account.useName);
     const name = String(account.name || '').trim();
     if (!username || !name) return;
     if (!people.has(username)) people.set(username, new Set());
@@ -114,7 +115,7 @@ function buildAutoProductionSlipPeople_(batchRows, accounts, plans) {
   });
   const usersByPlan = new Map();
   batchRows.forEach(function(row) {
-    const plan = String(row.KeHoachId || '').trim(), user = String(row.nguoiCan || '').trim();
+    const plan = String(row.KeHoachId || '').trim(), user = usernameKey(row.nguoiCan);
     if (!plan || !user) return;
     if (!usersByPlan.has(plan)) usersByPlan.set(plan, new Set());
     usersByPlan.get(plan).add(user);
