@@ -30,7 +30,7 @@ const MaterialInboundSlip = (function() {
     const field = (key,initial='',placeholder='……………………') => editor.field(key,initial,placeholder,printing);
     const deliverer = [...new Set(rows.map(row => String(row['Tên NCC'] ?? '').trim()).filter(Boolean))].join('; ');
     const receiptDate = [...new Set(rows.map(row => {
-      const value = dateText(row['Thời gian tạo']).split(' ')[0];
+      const value = dateText((row._slip || {}).receiptDate || row.ngayNhap || row['Thời gian tạo']).split(' ')[0];
       const match = value.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
       return match ? 'Ngày '+match[1].padStart(2,'0')+' tháng '+match[2].padStart(2,'0')+' năm '+match[3] : value;
     }).filter(Boolean))].join('; ');
@@ -46,7 +46,7 @@ const MaterialInboundSlip = (function() {
     return `<section class="warehouse-slip">
       <div class="slip-top"><div><div class="slip-company">CÔNG TY TNHH ĐỨC MINH ĐỒNG NAI</div><div class="slip-company-address">Đường D4-1, Khu Công nghiệp Long Đức, Xã Bình An, Tỉnh Đồng Nai, Việt Nam</div></div>
       <div class="slip-document">Mã số: BM-QT.KHO-01.02<br>Ngày ban hành/Sửa đổi: 01/01/2026<br>Lần ban hành/Sửa đổi: 02<br>Người ban hành: Nguyễn Thị Kim Chung</div></div>
-      <h1>PHIẾU NHẬP KHO</h1><div class="slip-date">${field('date',receiptDate,'Ngày……tháng……năm………')}</div><div class="slip-number">Số: ${field('number')}</div>
+      <h1>PHIẾU NHẬP KHO</h1><div class="slip-date">${esc(receiptDate || 'Ngày……tháng……năm………')}</div><div class="slip-number">Số: ${field('number')}</div>
       <div class="slip-info"><div class="slip-info-row"><div>- Họ tên người giao hàng: ${field('deliverer',deliverer)}</div><div>Số PO/HĐ: ${field('purchaseOrder')}</div></div>
       <div class="slip-reference">- Theo ${field('referenceType')} số ${field('referenceNumber')} ngày ${field('referenceDate','','……tháng……năm………')} của: ${field('referenceIssuer')}</div>
       <div class="slip-info-row"><div>- Nhập tại kho: ${field('warehouse')}</div><div>Địa điểm: ${field('location')}</div></div></div>

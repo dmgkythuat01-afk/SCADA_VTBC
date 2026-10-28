@@ -8,6 +8,7 @@ test('inbound history uses receipt date and places accounting code after materia
  a.equal(result.headers.length,10);a.equal(result.rows.length,1);a.equal(result.rows[0]['Tên NCC'],'NCC');a.equal(result.rows[0]['Thời gian tạo'],'2026-10-28 08:00:00');a.equal(result.rows[0]['Thời gian duyệt'],'2026-10-29 10:00:00');a.equal(result.rows[0]['Diễn giải'],'');a.equal(result.rows[0]['Số lượng'],0);a.equal(result.rows[0]['Lot No'],'LOT-01');
  a.equal(result.headers[result.headers.indexOf('Mã NLVT')+1],'Mã kế toán');a.equal(result.rows[0]['Mã kế toán'],'00123');
  a.equal(result.rows[0]._slip.manufactured,'2026-01-02');a.equal(result.rows[0]._slip.expires,'2027-01-02');
+ a.equal(result.rows[0]._slip.receiptDate,'2026-10-28');
  a.throws(()=>ctx.buildMaterialInboundHistory_({headers:[],rows:[]},'2026-10-28','2026-10-28'),/thiếu cột/);
 });
 test('inbound API enforces inventory role and validates date range',()=>{

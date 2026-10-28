@@ -11,7 +11,7 @@ const rows=[{'Tên nguyên vật liệu':'Material <A>','Mã kế toán':'001020
 test('all-materials inbound slip maps real quantity, codes and dates with blank manual columns',()=>{
  const state=setup();state.api.setData('',rows);a.equal(state.el('materialInboundSlipCard').hidden,false);
  const html=state.el('materialInboundSlipPreview').innerHTML;a.ok(html.includes('PHIẾU NHẬP KHO'));a.ok(html.includes('BM-QT.KHO-01.02'));a.ok(html.includes('00102010'));a.ok(html.includes('02/01/2026'));a.ok(html.includes('02/01/2027'));a.ok(html.includes('Material &lt;A&gt;'));a.ok(html.includes('Second'));a.equal((html.match(/1\.234,5/g)||[]).length,1);
- for(const key of ['deliverer','purchaseOrder','referenceType','referenceNumber','referenceDate','referenceIssuer','warehouse','location','documentQty0','convertedQty0','warehouseRow0','date','number'])a.ok(html.includes('data-slip-field="'+key+'"'));
+ for(const key of ['deliverer','purchaseOrder','referenceType','referenceNumber','referenceDate','referenceIssuer','warehouse','location','documentQty0','convertedQty0','warehouseRow0','number'])a.ok(html.includes('data-slip-field="'+key+'"'));
 });
 test('edited header and table cells are escaped into print and drafts clear on filter change',()=>{
  const state=setup();state.api.setData('',rows);
@@ -31,4 +31,12 @@ test('inbound slip date comes from receipt dates without duplicating the same da
  const state=setup();const selected=[{...rows[0],'Thời gian tạo':'2026-10-28 08:30:00'},{...rows[1],'Thời gian tạo':'2026-10-28 12:00:00'}];
  state.api.setData('',selected);state.api.print();a.ok(state.output.includes('Ngày 28 tháng 10 năm 2026'));a.equal((state.output.match(/Ngày 28 tháng 10 năm 2026/g)||[]).length,1);
  state.api.setData('',[...selected,{...rows[1],'Thời gian tạo':'2026-10-27'}]);state.api.print();a.ok(state.output.includes('Ngày 27 tháng 10 năm 2026'));a.ok(state.output.includes('Ngày 28 tháng 10 năm 2026'));
+});
+test('automatic receipt date cannot be blanked by a stale empty manual date draft',()=>{
+ const state=setup();state.api.setData('',[{...rows[0],'Thời gian tạo':'2026-10-28 08:30:00'}]);
+ state.api.edit({target:{dataset:{slipField:'date'},textContent:''}});state.api.refresh();
+ a.ok(state.el('materialInboundSlipPreview').innerHTML.includes('Ngày 28 tháng 10 năm 2026'));state.api.print();a.ok(state.output.includes('Ngày 28 tháng 10 năm 2026'));
+});
+test('slip date uses normalized source metadata independent of the display column label',()=>{
+ const state=setup();state.api.setData('',[{...rows[0],_slip:{...rows[0]._slip,receiptDate:'2026-10-28'}}]);state.api.print();a.ok(state.output.includes('Ngày 28 tháng 10 năm 2026'));
 });
