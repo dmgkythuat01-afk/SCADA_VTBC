@@ -1,0 +1,76 @@
+<div class="card report-card">
+  <div class="card-title"><div>
+    <h2>Dữ liệu phiếu xuất sản xuất tự động</h2>
+    <p>Phiếu đã duyệt từ PhieuXuatNguyenLieu, lọc theo thời gian duyệt. Số lượng là tổng xuất của dòng; các lô được ghi Lot 1, Lot 2…</p>
+  </div></div>
+  <div class="report-filter-row">
+    <div class="field"><label for="autoProductionHistoryFrom">Từ ngày</label><input id="autoProductionHistoryFrom" type="date"></div>
+    <div class="field"><label for="autoProductionHistoryTo">Đến ngày</label><input id="autoProductionHistoryTo" type="date"></div>
+    <button id="autoProductionHistoryLoad" class="btn btn-primary" onclick="AutoProductionExportHistory.load()">Tải dữ liệu</button>
+    <button id="autoProductionHistoryExcel" class="btn btn-success" onclick="AutoProductionExportHistory.download()" disabled>Tải Excel</button>
+  </div>
+  <div id="autoProductionHistoryTable" class="report-table-area" style="overflow-x:auto;max-width:100%">
+    <div class="empty">Chọn khoảng ngày rồi bấm Tải dữ liệu.</div>
+  </div>
+  <div id="autoProductionHistoryMessage" role="status"></div>
+  <details id="autoProductionHistoryWarnings" hidden style="margin-top:12px">
+    <summary>Kiểm tra đối chiếu mã sản phẩm</summary>
+    <ul id="autoProductionHistoryWarningList" style="max-height:180px;overflow:auto"></ul>
+  </details>
+</div>
+<script>
+const AutoProductionExportHistory = (function() {
+  let rows = [], headers = [], loadedRange = {}, requestId = 0;
+  const el = id => document.getElementById(id);
+  function render() {
+    renderGenericReportTable('autoProductionHistoryTable', headers, rows, 'Không có phiếu xuất sản xuất tự động đã duyệt trong khoảng ngày này.');
+    const table = el('autoProductionHistoryTable').querySelector('table');
+    if (table) { table.style.minWidth = '1800px'; table.style.whiteSpace = 'nowrap'; }
+    el('autoProductionHistoryExcel').disabled = !rows.length;
+  }
+  function load() {
+    const range = {fromDate: el('autoProductionHistoryFrom').value, toDate: el('autoProductionHistoryTo').value};
+    if (!range.fromDate || !range.toDate || range.fromDate > range.toDate) {
+      showMessage('autoProductionHistoryMessage', 'error', 'Vui lòng chọn khoảng ngày hợp lệ.'); return;
+    }
+    const id = ++requestId, token = sessionToken;
+    rows = []; headers = []; render();
+    el('autoProductionHistoryWarnings').hidden = true;
+    el('autoProductionHistoryLoad').disabled = true;
+    showMessage('autoProductionHistoryMessage', 'info', 'Đang tải dữ liệu phiếu xuất sản xuất tự động...');
+    function current() {
+      if (id !== requestId) return false;
+      if (token !== sessionToken) { el('autoProductionHistoryLoad').disabled = false; return false; }
+      return true;
+    }
+    function fail(error) {
+      if (!current()) return;
+      el('autoProductionHistoryLoad').disabled = false;
+      showMessage('autoProductionHistoryMessage', 'error', error.message || 'Không tải được dữ liệu.');
+    }
+    google.script.run.withSuccessHandler(function(result) {
+      if (!current()) return;
+      if (!result || !result.success) { fail({message: 'Không tải được dữ liệu.'}); return; }
+      rows = result.rows || []; headers = result.headers || []; loadedRange = range;
+      render(); el('autoProductionHistoryLoad').disabled = false;
+      const list = el('autoProductionHistoryWarningList');
+      list.replaceChildren();
+      (result.warnings || []).forEach(function(message) {
+        const item = document.createElement('li'); item.textContent = message; list.appendChild(item);
+      });
+      el('autoProductionHistoryWarnings').hidden = !(result.warnings || []).length;
+      showMessage('autoProductionHistoryMessage', 'success', 'Đã tải ' + rows.length + ' dòng, theo ngày duyệt từ ' + range.fromDate + ' đến ' + range.toDate + '.');
+    }).withFailureHandler(fail).getAutoProductionExportHistory(token, range);
+  }
+  function download() {
+    exportRowsToExcel('phieu-xuat-san-xuat-tu-dong_' + loadedRange.fromDate + '_' + loadedRange.toDate + '.xls', headers, rows, 'autoProductionHistoryMessage');
+  }
+  document.addEventListener('DOMContentLoaded', function() {
+    const parts = new Intl.DateTimeFormat('en-CA', {timeZone: 'Asia/Ho_Chi_Minh', year: 'numeric', month: '2-digit', day: '2-digit'}).formatToParts(new Date());
+    const value = type => parts.find(part => part.type === type).value;
+    const today = value('year') + '-' + value('month') + '-' + value('day');
+    el('autoProductionHistoryFrom').value = today; el('autoProductionHistoryTo').value = today;
+  });
+  return {load: load, download: download};
+})();
+</script>
