@@ -10,12 +10,13 @@ function setup(){
  vm.runInContext(fs.readFileSync(path.join(root,'LichSuXuatSanXuatTuDongService.js'),'utf8'),ctx);
  return ctx;
 }
-const headers=['ngayTao','thoiGianDuyet','nguoiTao','cachXuat','KeHoachId','maNguyenLieu','tenNguyenLieu','donViCanXuat','khoiLuongXuatThucTe','LotNo','tenBaiLieu','trangThaiPheDuyet'];
+const headers=['ngayTao','thoiGianDuyet','nguoiTao','cachXuat','KeHoachId','maNguyenLieu','MaKeToan','tenNguyenLieu','donViCanXuat','khoiLuongXuatThucTe','LotNo','tenBaiLieu','trangThaiPheDuyet'];
 const products={headers:['tenBaiLieu1','tenBaiLieu2','maSanPham'],rows:[{tenBaiLieu1:'Bài 1',tenBaiLieu2:'Bài 2',maSanPham:'SP01'}]};
 function row(extra={}){return {ngayTao:'2026-10-01 09:00:00',thoiGianDuyet:'2026-10-28 10:00:00',nguoiTao:'Nhân viên',cachXuat:'Theo kế hoạch',KeHoachId:'KH01',maNguyenLieu:'NL01',tenNguyenLieu:'Nguyên liệu',donViCanXuat:'kg',khoiLuongXuatThucTe:0,LotNo:'A, B',tenBaiLieu:'Bài 2',trangThaiPheDuyet:'Đã phê duyệt',...extra};}
 test('print metadata retains accounting code and aligned lot dates without changing Excel headers',()=>{
  const ctx=setup();const result=ctx.buildAutoProductionExportHistory_({headers,rows:[row({MaKeToan:'0012',ngaySanXuatKho:'2026-01-01, ',hanSuDung:'2027-01-01, 2027-02-01'})]},products,'2026-10-28','2026-10-28');
- a.equal(result.rows[0]._slip.accountingCode,'0012');a.equal(result.rows[0]._slip.recipe,'Bài 2');a.equal(result.rows[0]._slip.manufactured,'2026-01-01, ');a.equal(result.headers.length,11);
+ a.equal(result.rows[0]._slip.accountingCode,'0012');a.equal(result.rows[0]._slip.recipe,'Bài 2');a.equal(result.rows[0]._slip.manufactured,'2026-01-01, ');a.equal(result.headers.length,12);
+ a.equal(result.headers[result.headers.indexOf('Mã NLVT')+1],'Mã kế toán');a.equal(result.rows[0]['Mã kế toán'],'0012');
 });
 test('print recipient resolves the unique batch username and does not select conflicting names',()=>{
  const ctx=setup();const accounts=[{useName:'can1',name:'Người Cân',passWord:'SECRET'},{useName:'can2',name:'Người Khác'}];
@@ -36,7 +37,7 @@ test('recipient lookup ignores username case and surrounding whitespace',()=>{
 });
 test('report filters approval date, maps either recipe field, labels lots and preserves quantity',()=>{
  const ctx=setup();const result=ctx.buildAutoProductionExportHistory_({headers,rows:[row(),row({tenBaiLieu:'Bài 1',LotNo:'C',khoiLuongXuatThucTe:12}),row({thoiGianDuyet:'2026-10-29'}),row({trangThaiPheDuyet:'Chờ duyệt'})]},products,'2026-10-28','2026-10-28');
- a.equal(result.rows.length,2);a.equal(result.headers.length,11);a.equal(result.rows[0]['Mã sản phẩm'],'SP01');a.equal(result.rows[0]['Lot No'],'Lot 1: A; Lot 2: B');a.equal(result.rows[0]['Số lượng'],0);a.equal(result.rows[1]['Lot No'],'C');a.equal(result.rows[1]['Số lượng'],12);
+ a.equal(result.rows.length,2);a.equal(result.headers.length,12);a.equal(result.rows[0]['Mã sản phẩm'],'SP01');a.equal(result.rows[0]['Lot No'],'Lot 1: A; Lot 2: B');a.equal(result.rows[0]['Số lượng'],0);a.equal(result.rows[1]['Lot No'],'C');a.equal(result.rows[1]['Số lượng'],12);
 });
 test('unmatched and ambiguous recipes remain visible with explicit warnings',()=>{
  const ctx=setup();const p={...products,rows:[...products.rows,{tenBaiLieu1:'Bài 2',maSanPham:'SP02'}]};

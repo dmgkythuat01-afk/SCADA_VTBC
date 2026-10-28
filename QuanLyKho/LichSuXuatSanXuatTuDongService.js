@@ -35,7 +35,7 @@ function buildAutoProductionExportHistory_(exports, products, from, to) {
   const columns = [
     ['Thời gian tạo', 'ngayTao'], ['Thời gian duyệt', 'thoiGianDuyet'],
     ['Tên nhân viên', 'nguoiTao'], ['Diễn giải', 'cachXuat'], ['Số KHSX', 'KeHoachId'],
-    ['Mã NLVT', 'maNguyenLieu'], ['Tên nguyên vật liệu', 'tenNguyenLieu'],
+    ['Mã NLVT', 'maNguyenLieu'], ['Mã kế toán', 'MaKeToan'], ['Tên nguyên vật liệu', 'tenNguyenLieu'],
     ['Đvt', 'donViCanXuat'], ['Số lượng', 'khoiLuongXuatThucTe'], ['Lot No', 'LotNo']
   ];
   columns.map(function(column) { return column[1]; }).concat(['tenBaiLieu', 'trangThaiPheDuyet']).forEach(function(field) {
