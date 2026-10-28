@@ -27,3 +27,8 @@ test('inbound deliverer defaults to unique suppliers from the selected rows',()=
  state.api.setData('',selected);state.api.print();a.ok(state.output.includes('NCC A; NCC B'));a.equal((state.output.match(/NCC A/g)||[]).length,1);
  state.api.setData('one',[selected[0]]);state.api.print();a.ok(state.output.includes('NCC A'));a.ok(!state.output.includes('NCC B'));
 });
+test('inbound slip date comes from receipt dates without duplicating the same day',()=>{
+ const state=setup();const selected=[{...rows[0],'Thời gian tạo':'2026-10-28 08:30:00'},{...rows[1],'Thời gian tạo':'2026-10-28 12:00:00'}];
+ state.api.setData('',selected);state.api.print();a.ok(state.output.includes('Ngày 28 tháng 10 năm 2026'));a.equal((state.output.match(/Ngày 28 tháng 10 năm 2026/g)||[]).length,1);
+ state.api.setData('',[...selected,{...rows[1],'Thời gian tạo':'2026-10-27'}]);state.api.print();a.ok(state.output.includes('Ngày 27 tháng 10 năm 2026'));a.ok(state.output.includes('Ngày 28 tháng 10 năm 2026'));
+});
