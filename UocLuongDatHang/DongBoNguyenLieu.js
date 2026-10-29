@@ -10,7 +10,8 @@ function buildNguyenLieuSync_(sourceHeaders, sourceRows, headers, existing) {
   const codeIndex = headers.indexOf('MaKeToan');
   const sourceName = sourceHeaders.indexOf('tenNguyenLieu');
   const sourceCode = sourceHeaders.indexOf('MaKeToan');
-  const shared = headers.map((field, index) => ({index, source: sourceHeaders.indexOf(field)}))
+  const sourceFields = {nhaCungCap: 'nhaCungCapCap', nhaSanXuat: 'nhaCungCap1'};
+  const shared = headers.map((field, index) => ({index, source: sourceHeaders.indexOf(sourceFields[field] || field)}))
     .filter(column => column.source >= 0);
   const targets = {};
   rows.forEach((row, index) => {

@@ -1,6 +1,15 @@
 const test=require('node:test');
 const a=require('node:assert/strict');
 const {load}=require('./helpers.cjs');
+test('catalog maps supplier and manufacturer aliases for existing and new materials',()=>{
+ const ctx=load(['Code.js','DongBoNguyenLieu.js']);
+ const source=['tenNguyenLieu','MaKeToan','nhaCungCapCap','nhaCungCap1','nhaCungCap','nhaSanXuat'];
+ const target=['tenNguyenLieu','MaKeToan','nhaCungCap','nhaSanXuat'];
+ const result=ctx.buildNguyenLieuSync_(source,[['First','001','Vendor A','Maker A','Wrong','Wrong'],['Second','002','Vendor B','Maker B','Wrong','Wrong']],target,[['First','001','Old vendor','Old maker']]);
+ a.deepEqual(Array.from(result.rows[0]),['First','001','Vendor A','Maker A']);
+ a.deepEqual(Array.from(result.rows[1]),['Second','002','Vendor B','Maker B']);
+ a.equal(result.updatedCount,1);a.equal(result.addedCount,1);
+});
 test('catalog sync updates shared columns, inserts by name/code, preserves destination dates',()=>{
  const ctx=load(['Code.js','DongBoNguyenLieu.js']);
  const result=ctx.buildNguyenLieuSync_(['maNguyenLieu','tenNguyenLieu','MaKeToan','tonAnToan','nhaCungCap1'],[['NEW','Material','001',20,'Vendor'],['B','Second','002',0,'Other']],['maNguyenLieu','MaKeToan','tenNguyenLieu','tonAnToan','NgayDongCong'],[['OLD','001','Material',5,'KEEP'],['C','003','Unchanged',7,'KEEP2']]);
