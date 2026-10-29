@@ -17,6 +17,21 @@ function buildDonHangMaKeToanOptions_(name, headers, rows) {
   return Array.from(manufacturers.values());
 }
 
+function buildDonHangPaymentOptions_(name, headers, rows) {
+  const nameIndex = headers.indexOf('tenNguyenLieu');
+  if (nameIndex < 0) throw new Error('XuatNhapKhau thiếu cột: tenNguyenLieu');
+  const indices = [1, 2, 3].map(index => headers.indexOf('phuongThucTTNCC' + index));
+  const payments = new Set();
+  rows.forEach(row => {
+    if (String(row[nameIndex] || '').trim() !== String(name || '').trim()) return;
+    indices.forEach(index => {
+      const payment = index < 0 ? '' : String(row[index] == null ? '' : row[index]).trim();
+      if (payment) payments.add(payment);
+    });
+  });
+  return Array.from(payments);
+}
+
 function getThongTinDonHangMaKeToan(tenNguyenLieu) {
   const result = getThongTinXuatNhapKhauTheoNguyenLieu(tenNguyenLieu);
   const sheet = getSheet_(APP.SHEETS.NGUYEN_LIEU);
@@ -24,5 +39,8 @@ function getThongTinDonHangMaKeToan(tenNguyenLieu) {
   const values = sheet.getDataRange().getDisplayValues();
   result.data.manufacturers = buildDonHangMaKeToanOptions_(tenNguyenLieu,
     values[0].map(value => String(value).trim()), values.slice(1));
+  const importExportValues = getSheet_('XuatNhapKhau').getDataRange().getDisplayValues();
+  result.data.paymentOptions = buildDonHangPaymentOptions_(tenNguyenLieu,
+    importExportValues[0].map(value => String(value).trim()), importExportValues.slice(1));
   return result;
 }

@@ -61,7 +61,7 @@ const MktPurchaseOrder = (function() {
       const makers = material.manufacturers || [];
       if (makerSelect) makerSelect.innerHTML += makers.map((maker, index) =>
         '<option value="' + (index + 1) + '">' + escapeDonDatHangHtml(maker.name) + '</option>').join('');
-      const payments = [...new Set([1,2,3].map(index => String(material['phuongThucTTNCC' + index] || '').trim()).filter(Boolean))];
+      const payments = material.paymentOptions || [...new Set([1,2,3].map(index => String(material['phuongThucTTNCC' + index] || '').trim()).filter(Boolean))];
       if (paymentSelect) paymentSelect.innerHTML += payments.map(payment =>
         '<option value="' + escapeDonDatHangHtml(payment) + '">' + escapeDonDatHangHtml(payment) + '</option>').join('');
       if (DON_DAT_HANG_CURRENT_SUPPLIER && makerSelect) {

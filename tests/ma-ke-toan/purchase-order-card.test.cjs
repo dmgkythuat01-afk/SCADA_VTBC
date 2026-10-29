@@ -17,10 +17,11 @@ test('same PO form and history move between reports without duplicate nodes or l
 test('new PO selects manufacturer independently from payment and adds its accounting code',async()=>{
  const s=setup();s.node('poNguyenLieuSearch').value='Material';
  vm.runInContext('DON_DAT_HANG_CURRENT_MATERIALS=[{tenNguyenLieu:"Material"}]',s.ctx);
- s.ctx.server=async()=>({data:{tenNguyenLieu:'Material',MaKeToan:'WRONG',phuongThucTTNCC1:'Cash',phuongThucTTNCC2:'30 days',phuongThucTTNCC3:'Cash',manufacturers:[{name:'Maker A',codes:['001']},{name:'Maker B',codes:['002']}]}});
+ s.ctx.server=async()=>({data:{tenNguyenLieu:'Material',MaKeToan:'WRONG',phuongThucTTNCC1:'Cash',phuongThucTTNCC2:'30 days',phuongThucTTNCC3:'Cash',paymentOptions:['Cash','30 days','60 days','90 days','Deposit','Transfer'],manufacturers:[{name:'Maker A',codes:['001']},{name:'Maker B',codes:['002']}]}});
  await vm.runInContext('onDonDatHangMaterialSelected()',s.ctx);
  a.match(s.node('poNhaSanXuatSelect').innerHTML,/Maker B/);
  a.match(s.node('poMktPaymentSelect').innerHTML,/30 days/);
+ a.match(s.node('poMktPaymentSelect').innerHTML,/Transfer/);
  s.node('poMktPaymentSelect').value='30 days';vm.runInContext('MktPurchaseOrder.paymentChanged()',s.ctx);
  s.node('poNhaSanXuatSelect').value='2';vm.runInContext('onDonDatHangSupplierChange()',s.ctx);
  a.equal(s.node('poNhaSanXuat').value,'Maker B');a.equal(s.node('poPhuongThucThanhToan').value,'30 days');
