@@ -3,15 +3,99 @@
 const MktPurchaseOrder = (function() {
   const oldMount = mountDonDatHangCard;
   const oldScope = changeDonDatHangMaterialScope;
+  const oldSelect = onDonDatHangMaterialSelected;
+  const oldSupplier = onDonDatHangSupplierChange;
+  const oldAdd = addSelectedMaterialToOrder;
+  const oldPreparePrint = prepareDonDatHangPrintForm;
   const el = id => document.getElementById(id);
+  let selectionEpoch = 0;
+  let mountedView = '';
+  const isMkt = () => currentView === 'mktPurchase';
   function mount(key) {
     oldMount();
+    selectionEpoch++;
+    if (mountedView && mountedView !== key) {
+      DON_DAT_HANG_SELECTED_MATERIAL = null;
+      if (el('poNguyenLieuSearch')) el('poNguyenLieuSearch').value = '';
+      if (el('poNhaSanXuatSelect')) {
+        el('poNhaSanXuatSelect').innerHTML = '<option value="">Chọn nhà sản xuất</option>';
+        el('poNhaSanXuatSelect').value = '';
+      }
+    }
+    mountedView = key;
+    const paymentWrap = el('poMktPaymentWrap');
+    if (paymentWrap) paymentWrap.hidden = key !== 'mktPurchase';
     const target = el(key==='mktPurchase' ? 'mkt_reportView_mktPurchase' : 'reportView_baoCaoYeuCauDatHang');
     if (!target) return;
     ['donDatHangCard','donDatHangHistoryCard','poHistoryImageInput'].forEach(id => {
       const item = el(id);
       if (item && item.parentElement!==target) target.appendChild(item);
     });
+  }
+  function paymentChanged() {
+    const payment = el('poPhuongThucThanhToan');
+    if (payment) payment.value = el('poMktPaymentSelect')?.value || '';
+  }
+  function supplierChanged() {
+    if (!isMkt()) return oldSupplier();
+    const maker = DON_DAT_HANG_SELECTED_MATERIAL?.manufacturers?.[Number(el('poNhaSanXuatSelect')?.value) - 1];
+    if (el('poNhaSanXuat')) el('poNhaSanXuat').value = maker?.name || '';
+  }
+  async function selectMaterial() {
+    if (!isMkt()) return oldSelect();
+    const epoch = ++selectionEpoch;
+    const name = String(el('poNguyenLieuSearch')?.value || '').trim();
+    DON_DAT_HANG_SELECTED_MATERIAL = null;
+    const makerSelect = el('poNhaSanXuatSelect');
+    const paymentSelect = el('poMktPaymentSelect');
+    if (makerSelect) { makerSelect.innerHTML = '<option value="">Chọn nhà sản xuất</option>'; makerSelect.value = ''; }
+    if (paymentSelect) { paymentSelect.innerHTML = '<option value="">Chọn thanh toán</option>'; paymentSelect.value = ''; }
+    if (!name || !DON_DAT_HANG_CURRENT_MATERIALS.some(row => String(row.tenNguyenLieu || '').trim() === name)) return;
+    setLoading(true);
+    try {
+      const response = await server('getThongTinDonHangMaKeToan', name);
+      if (epoch !== selectionEpoch || !isMkt() || String(el('poNguyenLieuSearch')?.value || '').trim() !== name) return;
+      const material = response?.data;
+      if (!material) throw new Error('Không lấy được thông tin nguyên liệu.');
+      DON_DAT_HANG_SELECTED_MATERIAL = material;
+      const makers = material.manufacturers || [];
+      if (makerSelect) makerSelect.innerHTML += makers.map((maker, index) =>
+        '<option value="' + (index + 1) + '">' + escapeDonDatHangHtml(maker.name) + '</option>').join('');
+      const payments = [...new Set([1,2,3].map(index => String(material['phuongThucTTNCC' + index] || '').trim()).filter(Boolean))];
+      if (paymentSelect) paymentSelect.innerHTML += payments.map(payment =>
+        '<option value="' + escapeDonDatHangHtml(payment) + '">' + escapeDonDatHangHtml(payment) + '</option>').join('');
+      if (DON_DAT_HANG_CURRENT_SUPPLIER && makerSelect) {
+        const index = makers.findIndex(maker => maker.name === DON_DAT_HANG_CURRENT_SUPPLIER);
+        makerSelect.value = index < 0 ? '' : String(index + 1);
+      }
+      supplierChanged();
+      if (!makers.length) alert('Không có nhà sản xuất cho nguyên liệu này trong NguyenLieuVatTu.');
+    } catch (error) {
+      if (epoch === selectionEpoch && isMkt()) alert(error.message || error);
+    } finally { setLoading(false); }
+  }
+  async function addMaterial() {
+    if (!isMkt()) return oldAdd();
+    const name = String(el('poNguyenLieuSearch')?.value || '').trim();
+    const material = DON_DAT_HANG_SELECTED_MATERIAL;
+    if (!material || String(material.tenNguyenLieu || '').trim() !== name || !material.manufacturers) {
+      await selectMaterial();
+      alert('Vui lòng chọn nguyên liệu và nhà sản xuất trước khi thêm vào đơn.');
+      return;
+    }
+    const index = Number(el('poNhaSanXuatSelect')?.value || 0);
+    const maker = material.manufacturers[index - 1];
+    if (!maker) { alert('Vui lòng chọn nhà sản xuất.'); return; }
+    if (maker.codes.length !== 1) {
+      alert('Nguyên liệu + nhà sản xuất có ' + maker.codes.length + ' mã kế toán. Vui lòng kiểm tra NguyenLieuVatTu.');
+      return;
+    }
+    // Chuyển lựa chọn mới sang dữ liệu form cũ để giữ nguyên lưu, giá, VAT và in.
+    const prepared = {...material, MaKeToan: maker.codes[0]};
+    prepared['nhaCungCap' + index] = maker.name;
+    prepared['phuongThucTTNCC' + index] = el('poPhuongThucThanhToan')?.value || '';
+    DON_DAT_HANG_SELECTED_MATERIAL = prepared;
+    return oldAdd();
   }
   function refresh() {
     if (currentView!=='mktPurchase') return;
@@ -33,6 +117,13 @@ const MktPurchaseOrder = (function() {
   }
   mountDonDatHangCard=function() { mount(currentView); };
   changeDonDatHangMaterialScope=changeScope;
-  return {mount:mount,refresh:refresh};
+  onDonDatHangMaterialSelected=selectMaterial;
+  onDonDatHangSupplierChange=supplierChanged;
+  addSelectedMaterialToOrder=addMaterial;
+  prepareDonDatHangPrintForm=function(source, clone) {
+    oldPreparePrint(source, clone);
+    clone.querySelector('#poMktPaymentWrap')?.remove();
+  };
+  return {mount:mount,refresh:refresh,paymentChanged:paymentChanged};
 })();
 </script>

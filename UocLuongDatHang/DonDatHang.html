@@ -436,6 +436,13 @@
                 </td>
 
                 <td>
+                  <div id="poMktPaymentWrap" hidden>
+                    <select id="poMktPaymentSelect" class="po-party-select"
+                      aria-label="Phương thức và thời hạn thanh toán"
+                      onchange="MktPurchaseOrder.paymentChanged()">
+                      <option value="">Chọn thanh toán</option>
+                    </select>
+                  </div>
                   <textarea
                     id="poPhuongThucThanhToan"
                     class="po-cell-input"
