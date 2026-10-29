@@ -1,6 +1,17 @@
 const test=require('node:test');
 const a=require('node:assert/strict');
 const {load}=require('./helpers.cjs');
+test('import export catalog appends missing code/name pairs once and leaves existing data intact',()=>{
+ const ctx=load(['Code.js','DongBoNguyenLieu.js']);
+ const headers=['price','tenNguyenLieu','maNguyenLieu'];
+ const existing=[[100,'Material','001']];
+ const source=[['001','Material'],['002','Second'],['002','Second'],['003',''],['','Missing code'],['001','Another name']];
+ const result=ctx.buildXuatNhapKhauAppend_(['maNguyenLieu','tenNguyenLieu'],source,headers,existing);
+ a.deepEqual(Array.from(result.rows,row=>Array.from(row)),[['','Second','002'],['','Another name','001']]);
+ a.deepEqual(existing,[[100,'Material','001']]);
+ a.equal(ctx.buildXuatNhapKhauAppend_(['maNguyenLieu','tenNguyenLieu'],source,headers,existing.concat(Array.from(result.rows))).rows.length,0);
+ a.throws(()=>ctx.buildXuatNhapKhauAppend_(['maNguyenLieu'],[],headers,[]),/tenNguyenLieu/);
+});
 test('catalog maps supplier and manufacturer aliases for existing and new materials',()=>{
  const ctx=load(['Code.js','DongBoNguyenLieu.js']);
  const source=['tenNguyenLieu','MaKeToan','nhaCungCapCap','nhaCungCap1','nhaCungCap','nhaSanXuat'];

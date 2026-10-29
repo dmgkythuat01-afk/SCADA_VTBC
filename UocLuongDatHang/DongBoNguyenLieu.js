@@ -41,6 +41,46 @@ function buildNguyenLieuSync_(sourceHeaders, sourceRows, headers, existing) {
   return {rows, shared, updatedCount, addedCount, invalidSourceCount};
 }
 
+// XuatNhapKhau chỉ bổ sung cặp mã + tên chưa có, không sửa thông tin đang dùng.
+function buildXuatNhapKhauAppend_(sourceHeaders, sourceRows, headers, existing) {
+  const fields = ['maNguyenLieu', 'tenNguyenLieu'];
+  fields.forEach(field => {
+    if (!sourceHeaders.includes(field) || !headers.includes(field)) {
+      throw new Error('NguyenLieu / XuatNhapKhau thiếu cột: ' + field);
+    }
+  });
+  const sourceIndices = fields.map(field => sourceHeaders.indexOf(field));
+  const targetIndices = fields.map(field => headers.indexOf(field));
+  const identity = values => JSON.stringify(values.map(value => String(value == null ? '' : value).trim()));
+  const seen = new Set(existing.map(row => identity(targetIndices.map(index => row[index]))));
+  const rows = [];
+  sourceRows.forEach(source => {
+    const values = sourceIndices.map(index => String(source[index] == null ? '' : source[index]).trim());
+    if (values.some(value => !value)) return;
+    const key = identity(values);
+    if (seen.has(key)) return;
+    seen.add(key);
+    const row = headers.map(() => '');
+    targetIndices.forEach((index, position) => { row[index] = values[position]; });
+    rows.push(row);
+  });
+  return {rows};
+}
+
+function dongBoXuatNhapKhau_(sourceHeaders, sourceRows) {
+  const target = getSheet_('XuatNhapKhau');
+  const headers = getHeaders_(target);
+  const oldCount = Math.max(0, target.getLastRow() - 1);
+  const existing = oldCount ? target.getRange(2, 1, oldCount, headers.length).getValues() : [];
+  const result = buildXuatNhapKhauAppend_(sourceHeaders, sourceRows, headers, existing);
+  if (result.rows.length) {
+    const requiredRows = oldCount + result.rows.length + 1;
+    if (requiredRows > target.getMaxRows()) target.insertRowsAfter(target.getMaxRows(), requiredRows - target.getMaxRows());
+    target.getRange(oldCount + 2, 1, result.rows.length, headers.length).setValues(result.rows);
+  }
+  return {addedCount: result.rows.length};
+}
+
 function dongBoDanhMucNguyenLieu_() {
   const source = SpreadsheetApp.openById(APP.EXTERNAL.KHO_NGUYEN_LIEU_FILE_ID)
     .getSheetByName('NguyenLieu');
@@ -64,7 +104,8 @@ function dongBoDanhMucNguyenLieu_() {
     target.getRange(oldCount + 2, 1, result.addedCount, headers.length)
       .setValues(result.rows.slice(oldCount));
   }
-  return {updatedCount: result.updatedCount, addedCount: result.addedCount, invalidSourceCount: result.invalidSourceCount};
+  const xuatNhapKhau = dongBoXuatNhapKhau_(sourceHeaders, sourceRows);
+  return {updatedCount: result.updatedCount, addedCount: result.addedCount, invalidSourceCount: result.invalidSourceCount, xuatNhapKhau};
 }
 
 // Có thể chạy riêng danh mục; lịch đầu tuần gọi hàm nội bộ trong cùng khóa tồn kho.
