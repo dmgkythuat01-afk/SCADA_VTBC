@@ -36,7 +36,7 @@ const MktReports = (function() {
     const warnings=fn==='getBaoCaoNhuCauNguyenLieu'?(snapshot.demandWarnings||snapshot.warnings):snapshot.warnings;
     return {weeks:snapshot.matrix.weeks,rows:snapshot.matrix.rows,products:snapshot.matrix.products||[],warnings,snapshot};
   }
-  function clearTables(){displayed=null;['mkt_materialDemandTable','mkt_orderRequestTable'].forEach(id=>{if(el(id))el(id).innerHTML='';});}
+  function clearTables(){displayed=null;['mkt_materialDemandTable','mkt_orderRequestTable'].forEach(id=>{if(el(id))el(id).innerHTML='';});if(typeof MktPurchaseOrder!=='undefined')MktPurchaseOrder.refresh();}
   function table(headers,rows){return '<thead><tr>'+headers.map(h=>'<th>'+esc(h)+'</th>').join('')+'</tr></thead><tbody>'+ (rows.length?rows.map(r=>'<tr>'+r.map(cell=>'<td>'+cell+'</td>').join('')+'</tr>').join(''):`<tr><td colspan="${headers.length}" class="empty">Không có dữ liệu phù hợp.</td></tr>`)+'</tbody>';}
   function action(week,key,label,product,ids){const scoped=product!==undefined;return `<button class="btn btn-ghost" data-week="${week}" data-material="${esc(key)}" ${scoped?'data-product="'+esc(product)+'" data-demand-ids="'+esc(JSON.stringify(ids||[]))+'"':''} onclick="MktReports.openDetail(Number(this.dataset.week),this.dataset.material${scoped?',this.dataset.product,JSON.parse(this.dataset.demandIds)':''})">${label}</button>`;}
   function prepare(data,kind){snapshot=data.snapshot;displayed=data;displayedKind=kind;const prefix=kind==='demand'?'mkt_materialDemand':'mkt_orderRequest';el(prefix+'Summary').textContent='Hiển thị '+data.weeks.length+' tuần • '+data.rows.length+' nguyên liệu (nhóm theo mã + tên)';const warning=el(prefix+'Warning');warning.style.display=data.warnings.length?'':'none';warning.innerHTML=data.warnings.length?'<details><summary>Có '+data.warnings.length+' cảnh báo dữ liệu — bấm để xem</summary><div class="mkt-warning-list">'+data.warnings.map(w=>'<div>• '+esc(w)+'</div>').join('')+'</div></details>':'';return el(prefix+'Table');}
@@ -67,6 +67,7 @@ const MktReports = (function() {
     target.innerHTML='<thead><tr>'+heads.map(([cls,html])=>'<th class="'+cls+'">'+html+'</th>').join('')+'</tr></thead><tbody>'+(body||'<tr><td class="empty" colspan="'+heads.length+'">Không có dữ liệu.</td></tr>')+'</tbody>';
     if(target.parentElement)target.parentElement.scrollLeft=0;
     el('mkt_orderRequestSummary').innerHTML='<div class="order-summary-title">Hiển thị '+data.weeks.length+' tuần • '+data.rows.length+' nguyên liệu</div><div class="order-summary-weeks">'+data.weeks.map(w=>'<div class="order-summary-week"><b>Tuần '+esc(w.tuan)+'/'+esc(w.nam)+'</b><span>'+esc(dateVN(w.start||w.ngayDauTuan))+' → '+esc(dateVN(w.end||w.ngayCuoiTuan))+'</span></div>').join('')+'</div>';
+    if(typeof MktPurchaseOrder!=='undefined')MktPurchaseOrder.refresh();
   }
   function exportExcel(){
     if(!displayed)return alert('Chưa có dữ liệu báo cáo.');
@@ -116,6 +117,6 @@ const MktReports = (function() {
     if(!el('mktDialog').open)el('mktDialog').showModal();
   }
   function closeDetail(){const dialog=el('mktDialog');if(dialog&&dialog.open)dialog.close();}
-  return {isKey,renderMenu,toggle,show,hide,reset,invalidate,request,renderDemand,renderPurchase,openDetail,closeDetail,exportExcel};
+  return {isKey,renderMenu,toggle,show,hide,reset,invalidate,request,renderDemand,renderPurchase,openDetail,closeDetail,exportExcel,purchaseRows:()=>displayedKind==='purchase'&&displayed?displayed.rows:[]};
 })();
 </script>

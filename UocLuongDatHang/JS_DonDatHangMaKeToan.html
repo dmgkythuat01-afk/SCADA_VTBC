@@ -1,0 +1,38 @@
+<script>
+// Dùng cùng form PO và lịch sử, tránh trùng ID và giữ bản nháp khi đổi báo cáo.
+const MktPurchaseOrder = (function() {
+  const oldMount = mountDonDatHangCard;
+  const oldScope = changeDonDatHangMaterialScope;
+  const el = id => document.getElementById(id);
+  function mount(key) {
+    oldMount();
+    const target = el(key==='mktPurchase' ? 'mkt_reportView_mktPurchase' : 'reportView_baoCaoYeuCauDatHang');
+    if (!target) return;
+    ['donDatHangCard','donDatHangHistoryCard','poHistoryImageInput'].forEach(id => {
+      const item = el(id);
+      if (item && item.parentElement!==target) target.appendChild(item);
+    });
+  }
+  function refresh() {
+    if (currentView!=='mktPurchase') return;
+    changeScope();
+  }
+  function changeScope() {
+    const scope = el('poNguyenLieuScope');
+    if (currentView!=='mktPurchase' || !scope || scope.value==='all') return oldScope();
+    const search = el('poNguyenLieuSearch');
+    if (search) search.value='';
+    DON_DAT_HANG_SELECTED_MATERIAL=null;
+    DON_DAT_HANG_CURRENT_MATERIALS=MktReports.purchaseRows().filter(row=>row.canDat).map(row=>({
+      maNguyenLieu:row.code,tenNguyenLieu:row.name,donVi:row.unit,
+      MaKeToan:[...new Set((row.purchases||[]).map(item=>item.code).filter(Boolean))].join(', '),
+      canDat:true,soLuongThieu:Number(row.proposed||0),ngayCanDat:row.orderDate||'',
+      ngayNhapKhoDuKien:row.needDate||'',tuanKichHoatDat:row.planningWeek||'',tuanThieuSomNhat:row.shortageWeek||''
+    }));
+    renderDonDatHangMaterialOptions();
+  }
+  mountDonDatHangCard=function() { mount(currentView); };
+  changeDonDatHangMaterialScope=changeScope;
+  return {mount:mount,refresh:refresh};
+})();
+</script>

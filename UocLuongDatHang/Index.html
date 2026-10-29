@@ -4034,6 +4034,7 @@
 
     async function showView(key) {
       currentView = key;
+      if (typeof MktPurchaseOrder !== 'undefined') MktPurchaseOrder.mount(key);
       if (typeof MktReports !== 'undefined') {
         if (MktReports.isKey(key)) {
           currentSheet = '';
@@ -4112,6 +4113,7 @@
         * Module Báo cáo tự xử lý.
         */
         await showReportView(key);
+        if (key==='baoCaoYeuCauDatHang' && typeof MktPurchaseOrder !== 'undefined') changeDonDatHangMaterialScope();
 
         return;
       }
@@ -9662,6 +9664,7 @@
   <?!= include('DonDatHang_Style'); ?>
   <?!= include('DonDatHang'); ?>
   <?!= include('JS_DonDatHang'); ?>
+  <?!= include('JS_DonDatHangMaKeToan'); ?>
 
 </body>
 </html>
