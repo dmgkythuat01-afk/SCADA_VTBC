@@ -1,0 +1,304 @@
+<script>
+
+/**************************************************************
+ * MASTER DATA - COMMON FRONTEND
+ **************************************************************/
+
+
+let MASTER_CURRENT_ROLE = '';
+
+let MASTER_CURRENT_MODULE = '';
+
+
+/**
+ * ============================================================
+ * KHỞI TẠO MASTER DATA
+ * ============================================================
+ *
+ * Sau này index.html chỉ cần gọi:
+ *
+ * initMasterData(USER.role)
+ *
+ */
+async function initMasterData(role) {
+
+  MASTER_CURRENT_ROLE =
+    String(role || '')
+      .trim();
+
+
+  if (!MASTER_CURRENT_ROLE) {
+
+    console.warn(
+      'Master Data: chưa xác định Role.'
+    );
+
+    return;
+
+  }
+
+
+  await loadMasterMenu();
+
+}
+
+
+/**
+ * ============================================================
+ * LOAD MENU THEO ROLE
+ * ============================================================
+ */
+async function loadMasterMenu() {
+
+  try {
+
+    const menus =
+      await server(
+        'getMasterMenuTheoRole',
+        MASTER_CURRENT_ROLE
+      );
+
+
+    renderMasterMenu(
+      menus || []
+    );
+
+
+    /*
+     * Nếu chỉ có 1 menu
+     * → mở luôn menu đó.
+     */
+    if (
+      Array.isArray(menus) &&
+      menus.length === 1
+    ) {
+
+      openMasterModule(
+        menus[0].id
+      );
+
+    }
+
+
+  } catch (error) {
+
+    console.error(
+      'Lỗi tải Master Menu:',
+      error
+    );
+
+  }
+
+}
+
+
+/**
+ * ============================================================
+ * RENDER MENU BÊN PHẢI
+ * ============================================================
+ */
+function renderMasterMenu(menus) {
+
+  const container =
+    document.getElementById(
+      'masterRightMenu'
+    );
+
+
+  if (!container) {
+    return;
+  }
+
+
+  if (
+    !Array.isArray(menus) ||
+    !menus.length
+  ) {
+
+    container.innerHTML = `
+      <div class="master-no-permission">
+        Bạn chưa được cấp quyền nhập dữ liệu.
+      </div>
+    `;
+
+    return;
+
+  }
+
+
+  container.innerHTML =
+    menus.map(item => `
+
+      <button
+        type="button"
+        id="masterMenu_${item.id}"
+        class="master-menu-item"
+        onclick="
+          openMasterModule(
+            '${item.id}'
+          )
+        "
+      >
+
+        <span class="master-menu-icon">
+          ${item.icon || '📄'}
+        </span>
+
+
+        <span class="master-menu-text">
+          ${escapeMasterHtml(
+            item.title
+          )}
+        </span>
+
+      </button>
+
+    `).join('');
+
+}
+
+
+/**
+ * ============================================================
+ * MỞ MODULE
+ * ============================================================
+ */
+async function openMasterModule(
+  moduleName
+) {
+
+  MASTER_CURRENT_MODULE =
+    moduleName;
+
+
+  /*
+   * Active menu.
+   */
+  document
+    .querySelectorAll(
+      '.master-menu-item'
+    )
+    .forEach(el => {
+
+      el.classList.remove(
+        'active'
+      );
+
+    });
+
+
+  document
+    .getElementById(
+      'masterMenu_' +
+      moduleName
+    )
+    ?.classList
+    .add(
+      'active'
+    );
+
+
+  /*
+   * Ẩn tất cả module.
+   */
+  document
+    .querySelectorAll(
+      '.master-module'
+    )
+    .forEach(el => {
+
+      el.classList.add(
+        'hidden'
+      );
+
+    });
+
+
+  /*
+   * Hiện module được chọn.
+   */
+  const target =
+    document.getElementById(
+      'masterModule_' +
+      moduleName
+    );
+
+
+  if (!target) {
+
+    console.error(
+      'Không tìm thấy module:',
+      moduleName
+    );
+
+    return;
+
+  }
+
+
+  target.classList.remove(
+    'hidden'
+  );
+
+
+  /*
+   * Gọi hàm load riêng của từng phòng.
+   */
+  switch (moduleName) {
+
+    case 'keToan':
+
+      await loadMasterKeToan();
+
+      break;
+
+
+    case 'pcn':
+
+      await loadMasterPCN();
+
+      break;
+
+
+    case 'kho':
+
+      await loadMasterKho();
+
+      break;
+
+
+    case 'phongBan':
+
+      await loadMasterPhongBan();
+
+      break;
+
+
+    case 'phongMua':
+
+      await loadMasterPhongMua();
+
+      break;
+
+  }
+
+}
+
+
+/**
+ * Escape HTML.
+ */
+function escapeMasterHtml(value) {
+
+  return String(
+    value ?? ''
+  )
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+
+}
+
+</script>

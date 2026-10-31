@@ -1,0 +1,434 @@
+<!-- ============================================================
+ DMG MASTER DATA - PCN
+ File: MasterPCN.html
+============================================================ -->
+<section id="masterViewPCN" class="master-module hidden">
+  <style>
+    #masterViewPCN{--pcn:#065f46;--pcn2:#10b981;--line:#d9efe6;--muted:#64748b}
+    #masterViewPCN .pcn-tabs{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px}
+    #masterViewPCN .pcn-tab{border:1px solid var(--line);background:#fff;color:#065f46;padding:11px 17px;border-radius:14px;font-weight:900;cursor:pointer}
+    #masterViewPCN .pcn-tab.active{color:#fff;background:linear-gradient(135deg,#064e3b,#10b981);box-shadow:0 10px 22px rgba(5,150,105,.22)}
+    #masterViewPCN .pcn-panel{border:1px solid var(--line);border-radius:22px;background:#fff;overflow:hidden;box-shadow:0 12px 34px rgba(2,44,34,.08)}
+    #masterViewPCN .pcn-head{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:17px 18px;border-bottom:1px solid var(--line)}
+    #masterViewPCN .pcn-head h2{margin:0;color:#064e3b;font-size:19px}
+    #masterViewPCN .pcn-sub{margin-top:4px;color:var(--muted);font-size:12px}
+    #masterViewPCN .pcn-actions{display:flex;gap:8px;flex-wrap:wrap}
+    #masterViewPCN .pcn-search{min-width:260px;padding:10px 12px;border:1px solid #dbe7e2;border-radius:12px;outline:none}
+    #masterViewPCN .pcn-btn{border:0;border-radius:12px;padding:10px 13px;font-weight:900;cursor:pointer}
+    #masterViewPCN .pcn-primary{color:#fff;background:linear-gradient(135deg,#065f46,#10b981)}
+    #masterViewPCN .pcn-ghost{color:#065f46;background:#ecfdf5}
+    #masterViewPCN .pcn-danger{color:#991b1b;background:#fee2e2}
+    #masterViewPCN .pcn-table-wrap{overflow:auto;max-height:calc(100vh - 300px)}
+    #masterViewPCN table{width:100%;min-width:1100px;border-collapse:separate;border-spacing:0;font-size:13px}
+    #masterViewPCN th{position:sticky;top:0;z-index:3;padding:10px;color:#fff;background:#064e3b;text-align:left;white-space:nowrap}
+    #masterViewPCN td{padding:9px 10px;border-bottom:1px solid #edf4f1;vertical-align:middle}
+    #masterViewPCN tbody tr:hover td{background:#f0fdf4}
+    #masterViewPCN .pcn-empty{padding:28px;text-align:center;color:var(--muted)}
+    #masterViewPCN .pcn-modal-back{position:fixed;inset:0;z-index:9999;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(15,23,42,.55)}
+    #masterViewPCN .pcn-modal{width:min(1000px,96vw);max-height:92vh;overflow:auto;border-radius:22px;background:#fff;box-shadow:0 30px 90px rgba(0,0,0,.3)}
+    #masterViewPCN .pcn-modal-head{display:flex;justify-content:space-between;align-items:center;padding:17px 20px;border-bottom:1px solid #e2e8f0}
+    #masterViewPCN .pcn-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;padding:18px 20px}
+    #masterViewPCN .pcn-field{display:flex;flex-direction:column;gap:6px}
+    #masterViewPCN .pcn-field label{font-size:12px;font-weight:900;color:#334155}
+    #masterViewPCN .pcn-field input,#masterViewPCN .pcn-field select{width:100%;padding:10px 11px;border:1px solid #dbe7e2;border-radius:11px;outline:none}
+    #masterViewPCN .pcn-field input[readonly]{background:#f1f5f9;color:#475569}
+    #masterViewPCN .pcn-modal-foot{display:flex;justify-content:flex-end;gap:9px;padding:15px 20px;border-top:1px solid #e2e8f0;background:#f8fafc}
+    #masterViewPCN .pcn-bom-list{grid-column:1/-1;border:1px solid var(--line);border-radius:15px;overflow:hidden}
+    #masterViewPCN .pcn-bom-list-head{display:flex;justify-content:space-between;padding:11px 13px;background:#ecfdf5;color:#065f46;font-weight:900}
+    #masterViewPCN .pcn-bom-list table{min-width:850px}
+    @media(max-width:900px){#masterViewPCN .pcn-grid{grid-template-columns:1fr}}
+  </style>
+
+  <div class="pcn-tabs">
+    <button id="pcnTabSKU" class="pcn-tab active" onclick="masterPCN_openTab('sku')">🔁 Quy đổi SKU</button>
+    <button id="pcnTabDV" class="pcn-tab" onclick="masterPCN_openTab('donvi')">⚙️ Quy đổi đơn vị</button>
+    <button id="pcnTabBOM" class="pcn-tab" onclick="masterPCN_openTab('bom')">⚖️ Định lượng BOM</button>
+  </div>
+
+  <div class="pcn-panel">
+    <div class="pcn-head">
+      <div>
+        <h2 id="pcnTitle">Quy đổi SKU</h2>
+        <div id="pcnSummary" class="pcn-sub"></div>
+      </div>
+      <div class="pcn-actions">
+        <input id="pcnSearch" class="pcn-search" placeholder="Tìm kiếm..." oninput="masterPCN_render()">
+        <button class="pcn-btn pcn-ghost" onclick="masterPCN_init(true)">↻ Tải lại</button>
+        <button class="pcn-btn pcn-primary" onclick="masterPCN_openAdd()">+ Thêm mới</button>
+      </div>
+    </div>
+    <div class="pcn-table-wrap">
+      <table id="pcnTable"></table>
+    </div>
+  </div>
+
+  <div id="pcnModalBack" class="pcn-modal-back">
+    <div class="pcn-modal">
+      <div class="pcn-modal-head">
+        <h2 id="pcnModalTitle">Thêm dữ liệu</h2>
+        <button class="pcn-btn pcn-ghost" onclick="masterPCN_closeModal()">Đóng</button>
+      </div>
+      <div id="pcnModalBody" class="pcn-grid"></div>
+      <div id="pcnModalFoot" class="pcn-modal-foot"></div>
+    </div>
+  </div>
+
+<script>
+const MASTER_PCN = {
+  loaded:false,
+  tab:'sku',
+  data:null,
+  edit:null,
+  bomPending:[]
+};
+
+function masterPCN_server(fn,...args){
+  return new Promise((resolve,reject)=>{
+    google.script.run.withSuccessHandler(resolve).withFailureHandler(reject)[fn](...args);
+  });
+}
+function masterPCN_esc(v){
+  return String(v??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+}
+function masterPCN_msg(err){ alert(err && err.message ? err.message : err); }
+
+async function masterPCN_init(force=false){
+  if(MASTER_PCN.loaded && !force){ masterPCN_render(); return; }
+  try{
+    const data=await masterPCN_server('masterPCN_getInitData');
+    MASTER_PCN.data=data;
+    MASTER_PCN.loaded=true;
+    masterPCN_render();
+  }catch(e){ masterPCN_msg(e); }
+}
+
+function masterPCN_openTab(tab){
+  MASTER_PCN.tab=tab;
+  ['SKU','DV','BOM'].forEach(x=>document.getElementById('pcnTab'+x)?.classList.remove('active'));
+  document.getElementById(tab==='sku'?'pcnTabSKU':tab==='donvi'?'pcnTabDV':'pcnTabBOM')?.classList.add('active');
+  document.getElementById('pcnSearch').value='';
+  masterPCN_render();
+}
+
+function masterPCN_rows(){
+  if(!MASTER_PCN.data) return [];
+  if(MASTER_PCN.tab==='sku') return MASTER_PCN.data.quyDoiSKU.rows||[];
+  if(MASTER_PCN.tab==='donvi') return MASTER_PCN.data.quyDoiDonVi.rows||[];
+  return MASTER_PCN.data.dinhLuong.rows||[];
+}
+
+function masterPCN_headers(){
+  if(!MASTER_PCN.data) return [];
+  if(MASTER_PCN.tab==='sku') return MASTER_PCN.data.quyDoiSKU.headers||[];
+  if(MASTER_PCN.tab==='donvi') return MASTER_PCN.data.quyDoiDonVi.headers||[];
+  return MASTER_PCN.data.dinhLuong.headers||[];
+}
+
+function masterPCN_render(){
+  const table=document.getElementById('pcnTable');
+  if(!table) return;
+  if(!MASTER_PCN.data){
+    table.innerHTML='<tbody><tr><td class="pcn-empty">Đang chờ tải dữ liệu...</td></tr></tbody>';
+    return;
+  }
+
+  const title=MASTER_PCN.tab==='sku'?'Quy đổi SKU':MASTER_PCN.tab==='donvi'?'Quy đổi đơn vị':'Định lượng BOM';
+  document.getElementById('pcnTitle').textContent=title;
+
+  const q=(document.getElementById('pcnSearch').value||'').trim().toLowerCase();
+  const headers=masterPCN_headers();
+  const rows=masterPCN_rows().filter(r=>!q || headers.some(h=>String(r[h]||'').toLowerCase().includes(q)));
+  document.getElementById('pcnSummary').textContent=rows.length+' dòng dữ liệu';
+
+  if(!rows.length){
+    table.innerHTML='<tbody><tr><td class="pcn-empty">Không có dữ liệu.</td></tr></tbody>';
+    return;
+  }
+
+  table.innerHTML=`
+    <thead><tr>
+      <th>STT</th>
+      ${headers.map(h=>`<th>${masterPCN_esc(masterPCN_label(h))}</th>`).join('')}
+      <th>Thao tác</th>
+    </tr></thead>
+    <tbody>
+      ${rows.map((r,i)=>`
+        <tr>
+          <td>${i+1}</td>
+          ${headers.map(h=>`<td>${masterPCNBom_cell(r,h)}</td>`).join('')}
+          <td style="white-space:nowrap">
+            <button class="pcn-btn pcn-ghost" onclick="masterPCN_edit(${r.__rowNumber})">Sửa</button>
+            <button class="pcn-btn pcn-danger" onclick="masterPCN_delete(${r.__rowNumber})">Xóa</button>
+            ${masterPCNBom_actions(r)}
+          </td>
+        </tr>`).join('')}
+    </tbody>`;
+}
+
+function masterPCN_label(h){
+  const m={
+    maQuyDoi:'Mã quy đổi',nhomSanPham:'Nhóm sản phẩm',maSanPham:'Mã sản phẩm',
+    tenSanPham:'Tên sản phẩm',donViKeHoach:'Đơn vị kế hoạch',donViSKU:'Đơn vị SKU',
+    heSoQuyDoiRaSKU:'Hệ số quy đổi ra SKU',donViNguon:'Đơn vị nguồn',
+    donViDich:'Đơn vị đích',heSoQuyDoi:'Hệ số quy đổi',trangThai:'Trạng thái',
+    maDinhLuong:'Mã định lượng',loaiNguyenLieu:'Loại nguyên liệu / vật tư',
+    tenNguyenLieu:'Tên nguyên liệu / vật tư',maNguyenLieu:'Mã nguyên liệu / vật tư',
+    MaKeToan:'Mã kế toán',dinhLuong1SKU:'Định lượng 1 SKU',
+    donViDinhLuong:'Đơn vị định lượng',haoHutPhanTram:'Hao hụt %',ghiChu:'Ghi chú'
+  };
+  return m[h]||h;
+}
+
+function masterPCN_openAdd(){
+  MASTER_PCN.edit=null;
+  MASTER_PCN.bomPending=[];
+  if(MASTER_PCN.tab==='bom') masterPCN_openBOM(null);
+  else masterPCN_openSimple(null);
+}
+
+function masterPCN_edit(rowNumber){
+  const row=masterPCN_rows().find(r=>Number(r.__rowNumber)===Number(rowNumber));
+  if(!row) return;
+  MASTER_PCN.edit={...row};
+  MASTER_PCN.bomPending=[];
+  if(MASTER_PCN.tab==='bom') masterPCN_openBOM(row);
+  else masterPCN_openSimple(row);
+}
+
+function masterPCN_field(name,label,value='',type='text',readonly=false){
+  return `<div class="pcn-field"><label>${masterPCN_esc(label)}</label>
+    <input data-pcn="${name}" type="${type}" value="${masterPCN_esc(value)}" ${readonly?'readonly':''}></div>`;
+}
+function masterPCN_select(name,label,options,value=''){
+  return `<div class="pcn-field"><label>${masterPCN_esc(label)}</label><select data-pcn="${name}">
+    <option value=""></option>
+    ${(options||[]).map(o=>{
+      const v=typeof o==='string'?o:o.value, l=typeof o==='string'?o:o.label;
+      return `<option value="${masterPCN_esc(v)}" ${String(v)===String(value)?'selected':''}>${masterPCN_esc(l)}</option>`;
+    }).join('')}
+  </select></div>`;
+}
+
+function masterPCN_openSimple(row){
+  row=row||{};
+  const body=document.getElementById('pcnModalBody');
+  const foot=document.getElementById('pcnModalFoot');
+  const dd=MASTER_PCN.data.dropdowns||{};
+
+  if(MASTER_PCN.tab==='sku'){
+    let ma=row.maQuyDoi||masterPCN_nextQD();
+    body.innerHTML=
+      masterPCN_field('maQuyDoi','Mã quy đổi',ma)+
+      masterPCN_select('nhomSanPham','Nhóm sản phẩm',dd.nhomSanPham||[],row.nhomSanPham||'')+
+      masterPCN_select('maSanPham','Mã sản phẩm',(MASTER_PCN.data.sanPham||[]).map(x=>({value:x.maSanPham,label:(x.maSanPham||'')+' - '+(x.tenSanPham||'')})),row.maSanPham||'')+
+      masterPCN_field('tenSanPham','Tên sản phẩm',row.tenSanPham||'','text',true)+
+      masterPCN_select('donViKeHoach','Đơn vị kế hoạch',dd.donViPhoBien||[],row.donViKeHoach||'')+
+      masterPCN_select('donViSKU','Đơn vị SKU',dd.donViPhoBien||[],row.donViSKU||'')+
+      masterPCN_field('heSoQuyDoiRaSKU','Hệ số quy đổi ra SKU',row.heSoQuyDoiRaSKU||'','number');
+    setTimeout(()=>{
+      document.querySelector('[data-pcn="maSanPham"]')?.addEventListener('change',masterPCN_fillSP);
+      document.querySelector('[data-pcn="nhomSanPham"]')?.addEventListener('change',masterPCN_filterSP);
+      masterPCN_filterSP(false);
+    },0);
+  }else{
+    body.innerHTML=
+      masterPCN_select('donViNguon','Đơn vị nguồn',dd.donViPhoBien||[],row.donViNguon||'')+
+      masterPCN_select('donViDich','Đơn vị đích',dd.donViPhoBien||[],row.donViDich||'')+
+      masterPCN_field('heSoQuyDoi','Hệ số quy đổi',row.heSoQuyDoi||'','number')+
+      masterPCN_field('trangThai','Trạng thái',row.trangThai||'Dang dung');
+  }
+
+  foot.innerHTML=`<button class="pcn-btn pcn-ghost" onclick="masterPCN_closeModal()">Hủy</button>
+    <button class="pcn-btn pcn-primary" onclick="masterPCN_saveSimple()">💾 Lưu dữ liệu</button>`;
+  document.getElementById('pcnModalTitle').textContent=(row.__rowNumber?'Sửa ':'Thêm ')+(MASTER_PCN.tab==='sku'?'Quy đổi SKU':'Quy đổi đơn vị');
+  document.getElementById('pcnModalBack').style.display='flex';
+}
+
+function masterPCN_nextQD(){
+  let max=0;
+  (MASTER_PCN.data.quyDoiSKU.rows||[]).forEach(r=>{
+    const m=String(r.maQuyDoi||'').match(/QD(\d+)/i);
+    if(m) max=Math.max(max,Number(m[1]));
+  });
+  return 'QD'+String(max+1).padStart(3,'0');
+}
+
+function masterPCN_filterSP(clear=true){
+  const group=document.querySelector('[data-pcn="nhomSanPham"]')?.value||'';
+  const sel=document.querySelector('[data-pcn="maSanPham"]');
+  if(!sel) return;
+  const old=clear?'':sel.value;
+  const list=(MASTER_PCN.data.sanPham||[]).filter(x=>!group || String(x.nhomSanPham||'')===group);
+  sel.innerHTML='<option value=""></option>'+list.map(x=>`<option value="${masterPCN_esc(x.maSanPham)}">${masterPCN_esc((x.maSanPham||'')+' - '+(x.tenSanPham||''))}</option>`).join('');
+  if(old) sel.value=old;
+  if(clear) masterPCN_fillSP();
+}
+
+function masterPCN_fillSP(){
+  const code=document.querySelector('[data-pcn="maSanPham"]')?.value||'';
+  const sp=(MASTER_PCN.data.sanPham||[]).find(x=>String(x.maSanPham||'')===String(code));
+  const name=document.querySelector('[data-pcn="tenSanPham"]');
+  const sku=document.querySelector('[data-pcn="donViSKU"]');
+  if(name) name.value=sp?.tenSanPham||'';
+  if(sku && !sku.value) sku.value=sp?.donViSKU||'';
+}
+
+function masterPCN_collect(){
+  const r={};
+  document.querySelectorAll('#pcnModalBody [data-pcn]').forEach(el=>r[el.dataset.pcn]=el.value);
+  if(MASTER_PCN.edit?.__rowNumber) r.__rowNumber=MASTER_PCN.edit.__rowNumber;
+  return r;
+}
+
+async function masterPCN_saveSimple(){
+  try{
+    const r=masterPCN_collect();
+    const fn=MASTER_PCN.tab==='sku'?'masterPCN_saveQuyDoiSKU':'masterPCN_saveQuyDoiDonVi';
+    MASTER_PCN.data=await masterPCN_server(fn,r);
+    masterPCN_closeModal(); masterPCN_render();
+  }catch(e){ masterPCN_msg(e); }
+}
+
+function masterPCN_openBOM(row){
+  row=row||{};
+  const dd=MASTER_PCN.data.dropdowns||{};
+  const spOpts=(MASTER_PCN.data.sanPham||[]).map(x=>({value:x.maSanPham,label:(x.maSanPham||'')+' - '+(x.tenSanPham||'')}));
+  const nlOpts=(MASTER_PCN.data.nguyenLieu||[]).map(x=>({value:x.tenNguyenLieu,label:x.tenNguyenLieu}));
+
+  document.getElementById('pcnModalBody').innerHTML=
+    masterPCN_field('maDinhLuong','Mã định lượng',row.maDinhLuong||'')+
+    masterPCN_select('nhomSanPham','Nhóm sản phẩm',dd.nhomSanPham||[],row.nhomSanPham||'')+
+    masterPCN_select('maSanPham','Mã sản phẩm',spOpts,row.maSanPham||'')+
+    masterPCN_field('tenSanPham','Tên sản phẩm',row.tenSanPham||'','text',true)+
+    masterPCN_select('loaiNguyenLieu','Loại nguyên liệu / vật tư',dd.loaiNguyenLieu||[],row.loaiNguyenLieu||'')+
+    masterPCN_select('tenNguyenLieu','Tên nguyên liệu / vật tư',nlOpts,row.tenNguyenLieu||'')+
+    masterPCN_field('maNguyenLieu','Mã nguyên liệu / vật tư',row.maNguyenLieu||'','text',true)+
+    masterPCN_field('MaKeToan','Mã kế toán',row.MaKeToan||'','text',true)+
+    masterPCN_field('trangThai','Trạng thái',row.trangThai||'Dang dung','text',true)+
+    masterPCN_field('dinhLuong1SKU','Định lượng 1 SKU',row.dinhLuong1SKU||'','number')+
+    masterPCN_select('donViDinhLuong','Đơn vị định lượng',dd.donViPhoBien||[],String(row.donViDinhLuong||'').replace(/\/SKU$/i,''))+
+    masterPCN_field('haoHutPhanTram','Hao hụt %',row.haoHutPhanTram||0,'number')+
+    masterPCN_field('ghiChu','Ghi chú',row.ghiChu||'')+
+    `<div style="grid-column:1/-1;display:flex;justify-content:flex-end">
+      <button class="pcn-btn pcn-primary" onclick="masterPCN_addBOMPending()">+ Thêm vào danh sách</button>
+    </div>
+    <div class="pcn-bom-list">
+      <div class="pcn-bom-list-head"><span>Danh sách định lượng chờ lưu</span><span id="pcnBomCount">0 dòng</span></div>
+      <div id="pcnBomPending" class="pcn-empty">Chưa có dòng nào.</div>
+    </div>`;
+
+  document.getElementById('pcnModalFoot').innerHTML=
+    `<button class="pcn-btn pcn-ghost" onclick="masterPCN_closeModal()">Hủy</button>
+     <button class="pcn-btn pcn-primary" onclick="masterPCN_saveBOM()">💾 Lưu dữ liệu</button>`;
+
+  document.getElementById('pcnModalTitle').textContent=row.__rowNumber?'Sửa Định lượng BOM':'Thêm Định lượng BOM';
+  document.getElementById('pcnModalBack').style.display='flex';
+
+  setTimeout(()=>{
+    document.querySelector('[data-pcn="maSanPham"]')?.addEventListener('change',masterPCN_fillBOMSP);
+    document.querySelector('[data-pcn="tenNguyenLieu"]')?.addEventListener('change',masterPCN_fillBOMNL);
+    document.querySelector('[data-pcn="loaiNguyenLieu"]')?.addEventListener('change',masterPCN_filterNL);
+    masterPCN_filterNL(false);
+  },0);
+
+  if(row.__rowNumber){
+    MASTER_PCN.bomPending=[{...row}];
+    setTimeout(masterPCN_renderPending,0);
+  }
+}
+
+function masterPCN_fillBOMSP(){
+  const code=document.querySelector('[data-pcn="maSanPham"]')?.value||'';
+  const sp=(MASTER_PCN.data.sanPham||[]).find(x=>String(x.maSanPham||'')===String(code));
+  const e=document.querySelector('[data-pcn="tenSanPham"]');
+  if(e) e.value=sp?.tenSanPham||'';
+  const g=document.querySelector('[data-pcn="nhomSanPham"]');
+  if(g && !g.value) g.value=sp?.nhomSanPham||'';
+}
+
+function masterPCN_filterNL(clear=true){
+  const loai=document.querySelector('[data-pcn="loaiNguyenLieu"]')?.value||'';
+  const sel=document.querySelector('[data-pcn="tenNguyenLieu"]');
+  if(!sel) return;
+  const old=clear?'':sel.value;
+  const list=(MASTER_PCN.data.nguyenLieu||[]).filter(x=>!loai || String(x.loaiNguyenLieu||'')===loai);
+  sel.innerHTML='<option value=""></option>'+list.map(x=>`<option value="${masterPCN_esc(x.tenNguyenLieu)}">${masterPCN_esc(x.tenNguyenLieu)}</option>`).join('');
+  if(old) sel.value=old;
+  if(clear) masterPCN_fillBOMNL();
+}
+
+function masterPCN_fillBOMNL(){
+  const name=document.querySelector('[data-pcn="tenNguyenLieu"]')?.value||'';
+  const nl=(MASTER_PCN.data.nguyenLieu||[]).find(x=>String(x.tenNguyenLieu||'')===String(name));
+  const ma=document.querySelector('[data-pcn="maNguyenLieu"]');
+  const kt=document.querySelector('[data-pcn="MaKeToan"]');
+  const tt=document.querySelector('[data-pcn="trangThai"]');
+  if(ma) ma.value=nl?.maNguyenLieu||'';
+  if(kt) kt.value=nl?.MaKeToan||'';
+  if(tt) tt.value=nl?.trangThai||'Dang dung';
+}
+
+function masterPCN_addBOMPending(){
+  masterPCN_fillBOMSP(); masterPCN_fillBOMNL();
+  const r=masterPCN_collect();
+  if(!r.maDinhLuong) return alert('Chưa nhập Mã định lượng.');
+  if(!r.maSanPham) return alert('Chưa chọn Mã sản phẩm.');
+  if(!r.maNguyenLieu) return alert('Chưa chọn đúng Nguyên liệu / Vật tư.');
+  if(!(Number(r.dinhLuong1SKU)>0)) return alert('Định lượng 1 SKU phải lớn hơn 0.');
+  if(!r.donViDinhLuong) return alert('Chưa chọn Đơn vị định lượng.');
+  r.donViDinhLuong=String(r.donViDinhLuong).replace(/\/SKU$/i,'')+'/SKU';
+  r.haoHutPhanTram=r.haoHutPhanTram===''?0:r.haoHutPhanTram;
+  if(MASTER_PCN.edit?.__rowNumber && MASTER_PCN.bomPending.length===0) r.__rowNumber=MASTER_PCN.edit.__rowNumber;
+  MASTER_PCN.bomPending.push(r);
+  masterPCN_renderPending();
+  ['tenNguyenLieu','maNguyenLieu','MaKeToan','dinhLuong1SKU','donViDinhLuong','ghiChu'].forEach(n=>{
+    const e=document.querySelector(`[data-pcn="${n}"]`); if(e) e.value='';
+  });
+  const h=document.querySelector('[data-pcn="haoHutPhanTram"]'); if(h) h.value=0;
+}
+
+function masterPCN_renderPending(){
+  const el=document.getElementById('pcnBomPending');
+  const count=document.getElementById('pcnBomCount');
+  if(!el||!count) return;
+  count.textContent=MASTER_PCN.bomPending.length+' dòng';
+  if(!MASTER_PCN.bomPending.length){el.innerHTML='Chưa có dòng nào.';return;}
+  el.innerHTML=`<div style="overflow:auto"><table><thead><tr>
+    <th>Mã ĐL</th><th>Mã SP</th><th>Tên sản phẩm</th><th>Nguyên liệu / Vật tư</th>
+    <th>Định lượng</th><th>Đơn vị</th><th>Hao hụt</th><th></th>
+  </tr></thead><tbody>${MASTER_PCN.bomPending.map((r,i)=>`<tr>
+    <td>${masterPCN_esc(r.maDinhLuong)}</td><td>${masterPCN_esc(r.maSanPham)}</td>
+    <td>${masterPCN_esc(r.tenSanPham)}</td><td>${masterPCN_esc(r.tenNguyenLieu)}</td>
+    <td>${masterPCN_esc(r.dinhLuong1SKU)}</td><td>${masterPCN_esc(r.donViDinhLuong)}</td>
+    <td>${masterPCN_esc(r.haoHutPhanTram||0)}%</td>
+    <td><button class="pcn-btn pcn-danger" onclick="masterPCN_removePending(${i})">Xóa</button></td>
+  </tr>`).join('')}</tbody></table></div>`;
+}
+
+function masterPCN_removePending(i){ MASTER_PCN.bomPending.splice(i,1); masterPCN_renderPending(); }
+
+async function masterPCN_saveBOM(){
+  if(!MASTER_PCN.bomPending.length) return alert('Chưa có dòng định lượng nào để lưu.');
+  try{
+    MASTER_PCN.data=await masterPCN_server('masterPCN_saveDinhLuongList',MASTER_PCN.bomPending);
+    MASTER_PCN.bomPending=[];
+    masterPCN_closeModal(); masterPCN_render();
+  }catch(e){ masterPCN_msg(e); }
+}
+
+async function masterPCN_delete(rowNumber){
+  if(!confirm('Bạn có chắc muốn xóa dòng này không?')) return;
+  try{
+    const fn=MASTER_PCN.tab==='sku'?'masterPCN_deleteQuyDoiSKU':MASTER_PCN.tab==='donvi'?'masterPCN_deleteQuyDoiDonVi':'masterPCN_deleteDinhLuong';
+    MASTER_PCN.data=await masterPCN_server(fn,rowNumber);
+    masterPCN_render();
+  }catch(e){ masterPCN_msg(e); }
+}
+
+function masterPCN_closeModal(){
+  document.getElementById('pcnModalBack').style.display='none';
+  MASTER_PCN.edit=null;
+  MASTER_PCN.bomPending=[];
+}
+</script>
+</section>

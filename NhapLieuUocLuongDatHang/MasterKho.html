@@ -1,0 +1,2455 @@
+<!-- =========================================================
+     DMG MASTER DATA
+     MODULE: KHO
+     ========================================================= -->
+
+<section
+  id="masterViewKho"
+  class="master-module hidden"
+>
+
+  <!-- =======================================================
+       PAGE HEADER
+       ======================================================= -->
+
+  <div class="mk-page-head">
+
+    <div>
+
+      <h2>
+        Nhập dữ liệu Kho
+      </h2>
+
+      <p>
+        Quản lý tồn kho và danh mục nguyên liệu.
+      </p>
+
+    </div>
+
+  </div>
+
+
+
+  <!-- =======================================================
+       CARD 1 - TỒN KHO
+       ======================================================= -->
+
+  <div class="mk-card">
+
+    <div class="mk-card-head">
+
+      <div>
+
+        <h3>
+          Nhập dữ liệu tồn kho
+        </h3>
+
+        <p>
+          Dữ liệu từ sheet KhoNguyenLieu.
+        </p>
+
+      </div>
+
+
+      <div class="mk-card-actions">
+
+        <span
+          id="mkTonKhoCount"
+          class="mk-count"
+        >
+          0 dòng
+        </span>
+
+
+        <button
+          type="button"
+          class="mk-btn mk-btn-light"
+          onclick="masterKho_reloadTonKho()"
+        >
+          ↻ Tải lại
+        </button>
+
+
+        <button
+          type="button"
+          class="mk-btn mk-btn-primary"
+          onclick="masterKho_saveTonKhoAll()"
+        >
+          💾 Cập nhật tất cả
+        </button>
+
+      </div>
+
+    </div>
+
+
+    <!-- SEARCH -->
+
+    <div class="mk-toolbar">
+
+      <div class="mk-search">
+
+        <span>
+          🔎
+        </span>
+
+        <input
+          id="mkTonKhoSearch"
+          type="text"
+          placeholder="Tìm theo tên nguyên liệu..."
+          oninput="masterKho_renderTonKho()"
+        >
+
+      </div>
+
+    </div>
+
+
+    <!-- TABLE -->
+
+    <div class="mk-table-scroll">
+
+      <table class="mk-table">
+
+        <thead>
+
+          <tr>
+
+            <th class="mk-stt">
+              STT
+            </th>
+
+            <th>Id</th>
+            <th>maNguyenLieu</th>
+            <th class="mk-name">tenNguyenLieu</th>
+            <th>khoiLuongNhap</th>
+            <th>donVi</th>
+            <th>quyCachDongGoi</th>
+            <th>LotNo</th>
+            <th>ngaySanXuat</th>
+            <th>hanSuDung</th>
+            <th>nhaCungCap</th>
+            <th>ngayNhap</th>
+            <th>trangThai</th>
+            <th>nguoiPheDuyetChatLuong</th>
+            <th>ngayPheDuyet</th>
+            <th>anhChatLuong</th>
+            <th>trangThaiNguyenLieu</th>
+            <th>loaiNguyenLieu</th>
+            <th>MaKeToan</th>
+            <th>heSoQuyDoiKho</th>
+            <th>doViTinhToan</th>
+
+            <th class="mk-action-head">
+              Thao tác
+            </th>
+
+          </tr>
+
+        </thead>
+
+
+        <tbody id="mkTonKhoBody">
+
+          <tr>
+
+            <td
+              colspan="22"
+              class="mk-empty"
+            >
+              Đang tải dữ liệu...
+            </td>
+
+          </tr>
+
+        </tbody>
+
+      </table>
+
+    </div>
+
+
+    <div class="mk-card-footer">
+
+      <span>
+        Khóa cập nhật:
+        <strong>Id</strong>
+      </span>
+
+
+      <button
+        type="button"
+        class="mk-btn mk-btn-primary"
+        onclick="masterKho_saveTonKhoAll()"
+      >
+        💾 Cập nhật tất cả
+      </button>
+
+    </div>
+
+  </div>
+
+
+
+  <!-- =======================================================
+       CARD 2 - NGUYÊN LIỆU
+       ======================================================= -->
+
+  <div class="mk-card mk-card-second">
+
+    <div class="mk-card-head">
+
+      <div>
+
+        <h3>
+          Nhập dữ liệu nguyên liệu
+        </h3>
+
+        <p>
+          Dữ liệu từ sheet NguyenLieu.
+        </p>
+
+      </div>
+
+
+      <div class="mk-card-actions">
+
+        <span
+          id="mkNguyenLieuCount"
+          class="mk-count"
+        >
+          0 nguyên liệu
+        </span>
+
+
+        <button
+          type="button"
+          class="mk-btn mk-btn-add"
+          onclick="masterKho_openAddNguyenLieu()"
+        >
+          ＋ Thêm mới nguyên liệu
+        </button>
+
+
+        <button
+          type="button"
+          class="mk-btn mk-btn-light"
+          onclick="masterKho_reloadNguyenLieu()"
+        >
+          ↻ Tải lại
+        </button>
+
+
+        <button
+          type="button"
+          class="mk-btn mk-btn-primary"
+          onclick="masterKho_saveNguyenLieuAll()"
+        >
+          💾 Cập nhật tất cả
+        </button>
+
+      </div>
+
+    </div>
+
+
+    <!-- SEARCH -->
+
+    <div class="mk-toolbar">
+
+      <div class="mk-search">
+
+        <span>
+          🔎
+        </span>
+
+        <input
+          id="mkNguyenLieuSearch"
+          type="text"
+          placeholder="Tìm theo tên nguyên liệu..."
+          oninput="masterKho_renderNguyenLieu()"
+        >
+
+      </div>
+
+    </div>
+
+
+    <!-- TABLE -->
+
+    <div class="mk-table-scroll">
+
+      <table class="mk-table">
+
+        <thead>
+
+          <tr>
+
+            <th class="mk-stt">
+              STT
+            </th>
+
+            <th>maNguyenLieu</th>
+
+            <th class="mk-name">
+              tenNguyenLieu
+            </th>
+
+            <th>nhaCungCap1</th>
+            <th>nhaCungCap2</th>
+            <th>nhaCungCap3</th>
+            <th>MaKeToan</th>
+            <th>loaiNguyenLieu</th>
+            <th>donViKho</th>
+            <th>quyCachDatHang</th>
+            <th>tonAnToan</th>
+            <th>soNgayVeKhoMacDinh</th>
+            <th>nhaCungCapChinh</th>
+            <th>trangThai</th>
+            <th>ghiChu</th>
+            <th>heSoQuyDoiKho</th>
+            <th>doViTinhToan</th>
+
+            <th class="mk-action-head">
+              Thao tác
+            </th>
+
+          </tr>
+
+        </thead>
+
+
+        <tbody id="mkNguyenLieuBody">
+
+          <tr>
+
+            <td
+              colspan="18"
+              class="mk-empty"
+            >
+              Đang tải dữ liệu...
+            </td>
+
+          </tr>
+
+        </tbody>
+
+      </table>
+
+    </div>
+
+
+    <div class="mk-card-footer">
+
+      <span>
+        Khóa cập nhật:
+        <strong>maNguyenLieu</strong>
+      </span>
+
+
+      <button
+        type="button"
+        class="mk-btn mk-btn-primary"
+        onclick="masterKho_saveNguyenLieuAll()"
+      >
+        💾 Cập nhật tất cả
+      </button>
+
+    </div>
+
+  </div>
+
+
+  <!-- POPUP THÊM MỚI NGUYÊN LIỆU -->
+  <div id="mkNguyenLieuModal" class="mk-modal"
+       onclick="masterKho_modalBackdropClick(event)">
+    <div class="mk-modal-dialog">
+      <div class="mk-modal-head">
+        <div>
+          <h3>Thêm mới nguyên liệu</h3>
+          <p>Nhập đầy đủ thông tin cần thiết. Mã nguyên liệu không được trùng.</p>
+        </div>
+        <button type="button" class="mk-modal-close"
+                onclick="masterKho_closeAddNguyenLieu()">×</button>
+      </div>
+
+      <div class="mk-modal-body">
+        <div id="mkNguyenLieuForm" class="mk-form-grid"></div>
+      </div>
+
+      <div class="mk-modal-footer">
+        <button type="button" class="mk-btn mk-btn-light"
+                onclick="masterKho_closeAddNguyenLieu()">Hủy</button>
+        <button type="button" id="mkNguyenLieuAddSaveBtn"
+                class="mk-btn mk-btn-primary"
+                onclick="masterKho_saveNewNguyenLieu()">
+          💾 Lưu nguyên liệu
+        </button>
+      </div>
+    </div>
+  </div>
+
+</section>
+
+
+
+<!-- =========================================================
+     CSS
+     ========================================================= -->
+
+<style>
+
+#masterViewKho {
+
+  width: 100%;
+  min-width: 0;
+
+}
+
+
+.mk-page-head {
+
+  margin-bottom: 18px;
+
+}
+
+
+.mk-page-head h2 {
+
+  margin: 0;
+
+  color: #075d49;
+
+  font-size: 24px;
+  font-weight: 800;
+
+}
+
+
+.mk-page-head p {
+
+  margin: 5px 0 0;
+
+  color: #748780;
+
+  font-size: 13px;
+
+}
+
+
+/* CARD */
+
+.mk-card {
+
+  background: #fff;
+
+  border:
+    1px solid #d9e9e3;
+
+  border-radius: 20px;
+
+  overflow: hidden;
+
+  box-shadow:
+    0 10px 28px
+    rgba(0,94,72,.06);
+
+}
+
+
+.mk-card-second {
+
+  margin-top: 24px;
+
+}
+
+
+.mk-card-head {
+
+  padding: 17px 20px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  gap: 20px;
+
+  border-bottom:
+    1px solid #e2ece8;
+
+}
+
+
+.mk-card-head h3 {
+
+  margin: 0;
+
+  color: #075d49;
+
+  font-size: 18px;
+
+  font-weight: 800;
+
+}
+
+
+.mk-card-head p {
+
+  margin: 5px 0 0;
+
+  color: #71847e;
+
+  font-size: 12px;
+
+}
+
+
+.mk-card-actions {
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 8px;
+
+}
+
+
+.mk-count {
+
+  padding: 8px 12px;
+
+  border-radius: 10px;
+
+  background: #edf8f4;
+
+  color: #08634f;
+
+  font-size: 11px;
+
+  font-weight: 800;
+
+}
+
+
+/* BUTTON */
+
+.mk-btn {
+
+  min-height: 39px;
+
+  padding: 0 14px;
+
+  border: 0;
+
+  border-radius: 10px;
+
+  cursor: pointer;
+
+  white-space: nowrap;
+
+  font-size: 11px;
+
+  font-weight: 800;
+
+}
+
+
+.mk-btn-primary {
+
+  background:
+    linear-gradient(
+      135deg,
+      #00785d,
+      #00ad82
+    );
+
+  color: white;
+
+}
+
+
+.mk-btn-light {
+
+  background: #edf7f3;
+
+  color: #07604c;
+
+}
+
+
+.mk-row-btn {
+
+  min-height: 33px;
+
+  padding: 0 11px;
+
+  border: 0;
+
+  border-radius: 8px;
+
+  background: #e4f6ef;
+
+  color: #007058;
+
+  cursor: pointer;
+
+  font-size: 11px;
+
+  font-weight: 800;
+
+  white-space: nowrap;
+
+}
+
+
+.mk-row-btn:hover {
+
+  background: #d4f0e5;
+
+}
+
+
+.mk-row-btn:disabled {
+
+  opacity: .55;
+
+  cursor: wait;
+
+}
+
+
+/* SEARCH */
+
+.mk-toolbar {
+
+  padding: 13px 18px;
+
+  background: #fbfdfc;
+
+  border-bottom:
+    1px solid #e5eeea;
+
+}
+
+
+.mk-search {
+
+  width: 450px;
+
+  max-width: 100%;
+
+  position: relative;
+
+}
+
+
+.mk-search span {
+
+  position: absolute;
+
+  left: 13px;
+
+  top: 50%;
+
+  transform:
+    translateY(-50%);
+
+}
+
+
+.mk-search input {
+
+  width: 100%;
+
+  height: 42px;
+
+  box-sizing: border-box;
+
+  padding:
+    0 13px
+    0 39px;
+
+  border:
+    1px solid #d4e2dd;
+
+  border-radius: 10px;
+
+  outline: none;
+
+  font-size: 12px;
+
+}
+
+
+.mk-search input:focus {
+
+  border-color: #00866a;
+
+  box-shadow:
+    0 0 0 3px
+    rgba(0,134,106,.08);
+
+}
+
+
+/* TABLE */
+
+.mk-table-scroll {
+
+  width: 100%;
+
+  overflow-x: auto;
+
+  overflow-y: auto;
+
+  max-height: 570px;
+
+}
+
+
+.mk-table {
+
+  width: max-content;
+
+  min-width: 100%;
+
+  border-collapse: separate;
+
+  border-spacing: 0;
+
+  table-layout: auto;
+
+  font-size: 12px;
+
+}
+
+
+.mk-table thead {
+
+  position: sticky;
+
+  top: 0;
+
+  z-index: 20;
+
+}
+
+
+.mk-table th {
+
+  min-width: 120px;
+
+  max-width: 220px;
+
+  padding: 10px 8px;
+
+  background: #075c49;
+
+  color: white;
+
+  text-align: center;
+
+  vertical-align: middle;
+
+  font-size: 11px;
+
+  font-weight: 800;
+
+  line-height: 1.35;
+
+  border-right:
+    1px solid
+    rgba(255,255,255,.14);
+
+  border-bottom:
+    1px solid #064d3e;
+
+  white-space: normal;
+
+  overflow-wrap: anywhere;
+
+  word-break: break-word;
+
+}
+
+
+.mk-table td {
+
+  min-height: 49px;
+
+  height: auto;
+
+  padding: 5px;
+
+  background: white;
+
+  border-right:
+    1px solid #e1e9e6;
+
+  border-bottom:
+    1px solid #e1e9e6;
+
+  vertical-align: top;
+
+  white-space: normal;
+
+  overflow-wrap: anywhere;
+
+  word-break: break-word;
+
+}
+
+
+.mk-table tbody tr:hover td {
+
+  background: #f8fcfa;
+
+}
+
+
+.mk-stt {
+
+  min-width: 55px !important;
+
+  width: 55px;
+
+}
+
+
+.mk-name {
+
+  min-width: 300px !important;
+
+  width: 300px;
+
+}
+
+.mk-table td {
+
+  min-width: 120px;
+
+  max-width: 220px;
+
+}
+
+
+.mk-stt-cell {
+
+  text-align: center;
+
+  vertical-align: middle !important;
+
+  font-weight: 800;
+
+  color: #63736e;
+
+}
+
+
+/* INPUT */
+
+.mk-input {
+
+  width: 100%;
+
+  min-height: 38px;
+
+  box-sizing: border-box;
+
+  padding: 7px 8px;
+
+  border:
+    1px solid transparent;
+
+  border-radius: 7px;
+
+  outline: none;
+
+  background: transparent;
+
+  font-family: inherit;
+
+  font-size: 12px;
+
+  line-height: 1.4;
+
+  color: #344942;
+
+}
+
+
+textarea.mk-input {
+
+  min-height: 54px;
+
+  height: auto;
+
+  resize: none;
+
+  overflow: hidden;
+
+  white-space: pre-wrap;
+
+  overflow-wrap: anywhere;
+
+  word-break: break-word;
+
+  line-height: 1.4;
+
+}
+
+
+.mk-input:hover {
+
+  border-color: #d4e4de;
+
+  background: white;
+
+}
+
+
+.mk-input:focus {
+
+  border-color: #00a47c;
+
+  background: white;
+
+  box-shadow:
+    0 0 0 2px
+    rgba(0,164,124,.08);
+
+}
+
+
+/* KEY CELL */
+
+.mk-key-cell {
+
+  background: #f0f3f2 !important;
+
+  vertical-align: middle !important;
+
+  color: #455751;
+
+  font-weight: 700;
+
+}
+
+
+.mk-key-value {
+
+  padding: 7px 8px;
+
+}
+
+
+/* ACTION STICKY */
+
+.mk-action-head {
+
+  min-width: 125px !important;
+
+  width: 125px;
+
+  position: sticky;
+
+  right: 0;
+
+  z-index: 30;
+
+}
+
+
+.mk-action-cell {
+
+  min-width: 125px;
+
+  width: 125px;
+
+  text-align: center;
+
+  vertical-align: middle !important;
+
+  position: sticky;
+
+  right: 0;
+
+  z-index: 10;
+
+  background: #fff !important;
+
+  box-shadow:
+    -5px 0 10px
+    rgba(0,0,0,.035);
+
+}
+
+
+.mk-table tbody tr:hover
+.mk-action-cell {
+
+  background: #f8fcfa !important;
+
+}
+
+
+/* EMPTY */
+
+.mk-empty {
+
+  height: 85px !important;
+
+  text-align: center;
+
+  vertical-align: middle !important;
+
+  color: #84948f;
+
+}
+
+
+/* FOOTER */
+
+.mk-card-footer {
+
+  padding: 13px 18px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  gap: 20px;
+
+  background: #fbfdfc;
+
+  border-top:
+    1px solid #e0ebe7;
+
+  color: #71827c;
+
+  font-size: 11px;
+
+}
+
+
+@media
+(max-width: 1000px) {
+
+  .mk-card-head {
+
+    align-items: flex-start;
+
+    flex-direction: column;
+
+  }
+
+}
+
+
+/* BUTTON + POPUP THÊM NGUYÊN LIỆU */
+.mk-btn-add { background:#075d49; color:#fff; }
+.mk-btn-add:hover { background:#064d3e; }
+
+.mk-modal {
+  position:fixed; inset:0; z-index:9999; display:none;
+  align-items:center; justify-content:center; padding:24px;
+  background:rgba(14,37,31,.52); backdrop-filter:blur(2px);
+}
+.mk-modal.show { display:flex; }
+.mk-modal-dialog {
+  width:min(1050px,96vw); max-height:92vh;
+  display:flex; flex-direction:column; overflow:hidden;
+  background:#fff; border:1px solid #d7e6e0; border-radius:20px;
+  box-shadow:0 24px 70px rgba(0,0,0,.22);
+}
+.mk-modal-head {
+  display:flex; align-items:flex-start; justify-content:space-between;
+  gap:20px; padding:20px 22px; border-bottom:1px solid #e1ebe7;
+  background:#f8fcfa;
+}
+.mk-modal-head h3 { margin:0; color:#075d49; font-size:20px; font-weight:800; }
+.mk-modal-head p { margin:5px 0 0; color:#748780; font-size:12px; }
+.mk-modal-close {
+  width:38px; height:38px; border:0; border-radius:10px;
+  background:#e9f3ef; color:#075d49; cursor:pointer;
+  font-size:25px; line-height:1;
+}
+.mk-modal-body { overflow-y:auto; padding:22px; }
+.mk-form-grid {
+  display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px;
+}
+.mk-form-group.mk-form-wide { grid-column:span 2; }
+.mk-form-group label {
+  display:block; margin-bottom:7px; color:#35534a;
+  font-size:12px; font-weight:800;
+}
+.mk-required { color:#d23f3f; }
+.mk-form-control {
+  width:100%; min-height:43px; box-sizing:border-box; padding:9px 11px;
+  border:1px solid #cfdfd9; border-radius:10px; outline:none;
+  background:#fff; color:#304740; font-family:inherit;
+  font-size:13px; line-height:1.4;
+}
+textarea.mk-form-control { min-height:76px; resize:vertical; }
+.mk-form-control:focus {
+  border-color:#00866a; box-shadow:0 0 0 3px rgba(0,134,106,.09);
+}
+.mk-modal-footer {
+  display:flex; align-items:center; justify-content:flex-end; gap:10px;
+  padding:15px 22px; border-top:1px solid #e1ebe7; background:#fbfdfc;
+}
+body.mk-modal-open { overflow:hidden; }
+
+@media (max-width:800px) {
+  .mk-form-grid { grid-template-columns:1fr; }
+  .mk-form-group.mk-form-wide { grid-column:span 1; }
+  .mk-modal { padding:10px; }
+  .mk-modal-dialog { width:100%; max-height:96vh; }
+}
+
+</style>
+
+
+
+<script>
+
+// ============================================================
+// CONFIG FRONTEND
+// ============================================================
+
+const MASTER_KHO_TON_HEADERS = [
+
+  'Id',
+  'maNguyenLieu',
+  'tenNguyenLieu',
+  'khoiLuongNhap',
+  'donVi',
+  'quyCachDongGoi',
+  'LotNo',
+  'ngaySanXuat',
+  'hanSuDung',
+  'nhaCungCap',
+  'ngayNhap',
+  'trangThai',
+  'nguoiPheDuyetChatLuong',
+  'ngayPheDuyet',
+  'anhChatLuong',
+  'trangThaiNguyenLieu',
+  'loaiNguyenLieu',
+  'MaKeToan',
+  'heSoQuyDoiKho',
+  'doViTinhToan'
+
+];
+
+
+const MASTER_KHO_NL_HEADERS = [
+
+  'maNguyenLieu',
+  'tenNguyenLieu',
+  'nhaCungCap1',
+  'nhaCungCap2',
+  'nhaCungCap3',
+  'MaKeToan',
+  'loaiNguyenLieu',
+  'donViKho',
+  'quyCachDatHang',
+  'tonAnToan',
+  'soNgayVeKhoMacDinh',
+  'nhaCungCapChinh',
+  'trangThai',
+  'ghiChu',
+  'heSoQuyDoiKho',
+  'doViTinhToan'
+
+];
+
+
+// ============================================================
+// STATE
+// ============================================================
+
+const MASTER_KHO_STATE = {
+
+  tonKhoLoaded: false,
+
+  nguyenLieuLoaded: false,
+
+  tonKhoRows: [],
+
+  nguyenLieuRows: []
+
+};
+
+
+// ============================================================
+// ESCAPE
+// ============================================================
+
+function masterKho_escape(
+  value
+) {
+
+  return String(
+    value ?? ''
+  )
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+
+}
+
+
+// ============================================================
+// SERVER
+// ============================================================
+
+function masterKho_server(
+  functionName,
+  ...args
+) {
+
+  return new Promise(
+    (resolve, reject) => {
+
+      google.script.run
+
+        .withSuccessHandler(
+          resolve
+        )
+
+        .withFailureHandler(
+          reject
+        )
+
+        [functionName](
+          ...args
+        );
+
+    }
+  );
+
+}
+
+
+// ============================================================
+// INIT
+// Hàm này index.html sẽ gọi.
+// ============================================================
+
+async function masterKho_init(
+  force
+) {
+
+  await Promise.all([
+
+    masterKho_loadTonKho(
+      !!force
+    ),
+
+    masterKho_loadNguyenLieu(
+      !!force
+    )
+
+  ]);
+
+}
+
+
+// ============================================================
+// LOAD CARD 1
+// ============================================================
+
+async function masterKho_loadTonKho(
+  force
+) {
+
+  if (
+    MASTER_KHO_STATE.tonKhoLoaded &&
+    !force
+  ) {
+
+    return;
+
+  }
+
+
+  try {
+
+    const result =
+      await masterKho_server(
+        'masterKho_getTonKhoData'
+      );
+
+
+    MASTER_KHO_STATE.tonKhoRows =
+      Array.isArray(
+        result?.data
+      )
+        ? result.data
+        : [];
+
+
+    MASTER_KHO_STATE.tonKhoLoaded =
+      true;
+
+
+    masterKho_renderTonKho();
+
+
+  } catch (error) {
+
+    console.error(error);
+
+
+    alert(
+      'Không thể tải KhoNguyenLieu:\n' +
+      (
+        error?.message ||
+        error
+      )
+    );
+
+  }
+
+}
+
+
+// ============================================================
+// LOAD CARD 2
+// ============================================================
+
+async function masterKho_loadNguyenLieu(
+  force
+) {
+
+  if (
+    MASTER_KHO_STATE.nguyenLieuLoaded &&
+    !force
+  ) {
+
+    return;
+
+  }
+
+
+  try {
+
+    const result =
+      await masterKho_server(
+        'masterKho_getNguyenLieuData'
+      );
+
+
+    MASTER_KHO_STATE.nguyenLieuRows =
+      Array.isArray(
+        result?.data
+      )
+        ? result.data
+        : [];
+
+
+    MASTER_KHO_STATE.nguyenLieuLoaded =
+      true;
+
+
+    masterKho_renderNguyenLieu();
+
+
+  } catch (error) {
+
+    console.error(error);
+
+
+    alert(
+      'Không thể tải NguyenLieu:\n' +
+      (
+        error?.message ||
+        error
+      )
+    );
+
+  }
+
+}
+
+
+// ============================================================
+// RELOAD
+// ============================================================
+
+function masterKho_reloadTonKho() {
+
+  masterKho_loadTonKho(true);
+
+}
+
+
+function masterKho_reloadNguyenLieu() {
+
+  masterKho_loadNguyenLieu(true);
+
+}
+
+
+// ============================================================
+// FILTER TỒN KHO
+// Chỉ tìm theo tenNguyenLieu
+// ============================================================
+
+function masterKho_getFilteredTonKho() {
+
+  const keyword =
+    String(
+      document
+        .getElementById(
+          'mkTonKhoSearch'
+        )
+        ?.value || ''
+    )
+    .trim()
+    .toLowerCase();
+
+
+  return MASTER_KHO_STATE
+    .tonKhoRows
+    .map(
+      (row, index) => ({
+
+        row,
+
+        originalIndex:
+          index
+
+      })
+    )
+    .filter(
+      item => {
+
+        if (!keyword) {
+          return true;
+        }
+
+
+        return String(
+          item.row.tenNguyenLieu ||
+          ''
+        )
+          .toLowerCase()
+          .includes(
+            keyword
+          );
+
+      }
+    );
+
+}
+
+
+// ============================================================
+// FILTER NGUYÊN LIỆU
+// Chỉ tìm theo tenNguyenLieu
+// ============================================================
+
+function masterKho_getFilteredNguyenLieu() {
+
+  const keyword =
+    String(
+      document
+        .getElementById(
+          'mkNguyenLieuSearch'
+        )
+        ?.value || ''
+    )
+    .trim()
+    .toLowerCase();
+
+
+  return MASTER_KHO_STATE
+    .nguyenLieuRows
+    .map(
+      (row, index) => ({
+
+        row,
+
+        originalIndex:
+          index
+
+      })
+    )
+    .filter(
+      item => {
+
+        if (!keyword) {
+          return true;
+        }
+
+
+        return String(
+          item.row.tenNguyenLieu ||
+          ''
+        )
+          .toLowerCase()
+          .includes(
+            keyword
+          );
+
+      }
+    );
+
+}
+
+
+// ============================================================
+// RENDER CARD 1
+// ============================================================
+
+function masterKho_renderTonKho() {
+
+  const tbody =
+    document.getElementById(
+      'mkTonKhoBody'
+    );
+
+
+  if (!tbody) {
+    return;
+  }
+
+
+  const filtered =
+    masterKho_getFilteredTonKho();
+
+
+  const count =
+    document.getElementById(
+      'mkTonKhoCount'
+    );
+
+
+  if (count) {
+
+    count.textContent =
+      filtered.length ===
+      MASTER_KHO_STATE.tonKhoRows.length
+
+        ? filtered.length +
+          ' dòng'
+
+        : filtered.length +
+          ' / ' +
+          MASTER_KHO_STATE.tonKhoRows.length +
+          ' dòng';
+
+  }
+
+
+  if (!filtered.length) {
+
+    tbody.innerHTML = `
+
+      <tr>
+
+        <td
+          colspan="22"
+          class="mk-empty"
+        >
+          Không có dữ liệu phù hợp.
+        </td>
+
+      </tr>
+
+    `;
+
+    return;
+
+  }
+
+
+  tbody.innerHTML =
+    filtered.map(
+      (wrapper, displayIndex) => {
+
+        const row =
+          wrapper.row;
+
+
+        const index =
+          wrapper.originalIndex;
+
+
+        return `
+
+          <tr>
+
+            <td class="mk-stt-cell">
+              ${displayIndex + 1}
+            </td>
+
+
+            ${MASTER_KHO_TON_HEADERS
+              .map(
+                header =>
+                  masterKho_renderCell(
+                    'ton',
+                    row,
+                    index,
+                    header,
+                    'Id'
+                  )
+              )
+              .join('')
+            }
+
+
+            <td class="mk-action-cell">
+
+              <button
+                type="button"
+                id="mkTonSave_${index}"
+                class="mk-row-btn"
+                onclick="masterKho_saveTonKhoOne(${index})"
+              >
+                💾 Cập nhật
+              </button>
+
+            </td>
+
+          </tr>
+
+        `;
+
+      }
+    )
+    .join('');
+
+    masterKho_resizeAllTextareas();
+
+}
+
+
+// ============================================================
+// RENDER CARD 2
+// ============================================================
+
+function masterKho_renderNguyenLieu() {
+
+  const tbody =
+    document.getElementById(
+      'mkNguyenLieuBody'
+    );
+
+
+  if (!tbody) {
+    return;
+  }
+
+
+  const filtered =
+    masterKho_getFilteredNguyenLieu();
+
+
+  const count =
+    document.getElementById(
+      'mkNguyenLieuCount'
+    );
+
+
+  if (count) {
+
+    count.textContent =
+      filtered.length ===
+      MASTER_KHO_STATE.nguyenLieuRows.length
+
+        ? filtered.length +
+          ' nguyên liệu'
+
+        : filtered.length +
+          ' / ' +
+          MASTER_KHO_STATE.nguyenLieuRows.length +
+          ' nguyên liệu';
+
+  }
+
+
+  if (!filtered.length) {
+
+    tbody.innerHTML = `
+
+      <tr>
+
+        <td
+          colspan="18"
+          class="mk-empty"
+        >
+          Không có nguyên liệu phù hợp.
+        </td>
+
+      </tr>
+
+    `;
+
+    return;
+
+  }
+
+
+  tbody.innerHTML =
+    filtered.map(
+      (wrapper, displayIndex) => {
+
+        const row =
+          wrapper.row;
+
+
+        const index =
+          wrapper.originalIndex;
+
+
+        return `
+
+          <tr>
+
+            <td class="mk-stt-cell">
+              ${displayIndex + 1}
+            </td>
+
+
+            ${MASTER_KHO_NL_HEADERS
+              .map(
+                header =>
+                  masterKho_renderCell(
+                    'nl',
+                    row,
+                    index,
+                    header,
+                    'maNguyenLieu'
+                  )
+              )
+              .join('')
+            }
+
+
+            <td class="mk-action-cell">
+
+              <button
+                type="button"
+                id="mkNlSave_${index}"
+                class="mk-row-btn"
+                onclick="masterKho_saveNguyenLieuOne(${index})"
+              >
+                💾 Cập nhật
+              </button>
+
+            </td>
+
+          </tr>
+
+        `;
+
+      }
+    )
+    .join('');
+
+    masterKho_resizeAllTextareas();
+
+}
+
+
+// ============================================================
+// RENDER CELL CHUNG
+// ============================================================
+
+function masterKho_renderCell(
+  type,
+  row,
+  rowIndex,
+  header,
+  keyHeader
+) {
+
+  const value =
+    row[header] ?? '';
+
+
+  // ==========================================================
+  // CỘT KHÓA - KHÔNG CHO SỬA
+  // ==========================================================
+
+  if (
+    header === keyHeader
+  ) {
+
+    return `
+
+      <td class="mk-key-cell">
+
+        <div class="mk-key-value">
+
+          ${masterKho_escape(value)}
+
+        </div>
+
+      </td>
+
+    `;
+
+  }
+
+
+  // ==========================================================
+  // TẤT CẢ Ô CHO PHÉP SỬA
+  //
+  // Dùng textarea thay cho input để:
+  // - dữ liệu dài tự xuống dòng
+  // - không bị mất chữ
+  // - tự tăng chiều cao
+  // ==========================================================
+
+  return `
+
+    <td>
+
+      <textarea
+        class="mk-input mk-auto-textarea"
+        rows="1"
+        data-type="${type}"
+        data-row="${rowIndex}"
+        data-header="${header}"
+
+        oninput="
+          masterKho_changeCell(this);
+          masterKho_autoResize(this);
+        "
+
+      >${masterKho_escape(value)}</textarea>
+
+    </td>
+
+  `;
+
+}
+
+// ============================================================
+// AUTO RESIZE TEXTAREA
+// ============================================================
+
+function masterKho_autoResize(
+  element
+) {
+
+  if (!element) {
+    return;
+  }
+
+
+  element.style.height =
+    'auto';
+
+
+  const minHeight = 38;
+
+  const maxHeight = 110;
+
+
+  const newHeight =
+    Math.min(
+      Math.max(
+        element.scrollHeight,
+        minHeight
+      ),
+      maxHeight
+    );
+
+
+  element.style.height =
+    newHeight + 'px';
+
+
+  element.style.overflowY =
+    element.scrollHeight >
+    maxHeight
+
+      ? 'auto'
+
+      : 'hidden';
+
+}
+
+// ============================================================
+// AUTO RESIZE TẤT CẢ Ô ĐANG HIỂN THỊ
+// ============================================================
+
+function masterKho_resizeAllTextareas() {
+
+  requestAnimationFrame(
+    () => {
+
+      document
+        .querySelectorAll(
+          '#masterViewKho .mk-auto-textarea'
+        )
+        .forEach(
+          element => {
+
+            masterKho_autoResize(
+              element
+            );
+
+          }
+        );
+
+    }
+  );
+
+}
+
+
+// ============================================================
+// CHANGE CELL
+// ============================================================
+
+function masterKho_changeCell(
+  element
+) {
+
+  const type =
+    element.dataset.type;
+
+
+  const rowIndex =
+    Number(
+      element.dataset.row
+    );
+
+
+  const header =
+    element.dataset.header;
+
+
+  const rows =
+    type === 'ton'
+
+      ? MASTER_KHO_STATE
+          .tonKhoRows
+
+      : MASTER_KHO_STATE
+          .nguyenLieuRows;
+
+
+  if (!rows[rowIndex]) {
+    return;
+  }
+
+
+  rows[rowIndex][header] =
+    element.value;
+
+}
+
+
+// ============================================================
+// SAVE 1 TỒN KHO
+// ============================================================
+
+async function masterKho_saveTonKhoOne(
+  index
+) {
+
+  const row =
+    MASTER_KHO_STATE
+      .tonKhoRows[index];
+
+
+  if (!row) {
+    return;
+  }
+
+
+  const ok =
+    confirm(
+      'Cập nhật dòng tồn kho:\n\n' +
+      (
+        row.tenNguyenLieu ||
+        row.Id
+      ) +
+      '?'
+    );
+
+
+  if (!ok) {
+    return;
+  }
+
+
+  const button =
+    document.getElementById(
+      'mkTonSave_' +
+      index
+    );
+
+
+  if (button) {
+
+    button.disabled =
+      true;
+
+    button.textContent =
+      'Đang lưu...';
+
+  }
+
+
+  try {
+
+    const result =
+      await masterKho_server(
+        'masterKho_updateTonKhoOne',
+        row
+      );
+
+
+    alert(
+      result?.message ||
+      'Đã cập nhật.'
+    );
+
+
+  } catch (error) {
+
+    console.error(error);
+
+
+    alert(
+      'Có lỗi khi cập nhật:\n' +
+      (
+        error?.message ||
+        error
+      )
+    );
+
+
+  } finally {
+
+    if (button) {
+
+      button.disabled =
+        false;
+
+      button.textContent =
+        '💾 Cập nhật';
+
+    }
+
+  }
+
+}
+
+
+// ============================================================
+// SAVE 1 NGUYÊN LIỆU
+// ============================================================
+
+async function masterKho_saveNguyenLieuOne(
+  index
+) {
+
+  const row =
+    MASTER_KHO_STATE
+      .nguyenLieuRows[index];
+
+
+  if (!row) {
+    return;
+  }
+
+
+  const ok =
+    confirm(
+      'Cập nhật nguyên liệu:\n\n' +
+      row.maNguyenLieu +
+      ' - ' +
+      (
+        row.tenNguyenLieu ||
+        ''
+      ) +
+      '?'
+    );
+
+
+  if (!ok) {
+    return;
+  }
+
+
+  const button =
+    document.getElementById(
+      'mkNlSave_' +
+      index
+    );
+
+
+  if (button) {
+
+    button.disabled =
+      true;
+
+    button.textContent =
+      'Đang lưu...';
+
+  }
+
+
+  try {
+
+    const result =
+      await masterKho_server(
+        'masterKho_updateNguyenLieuOne',
+        row
+      );
+
+
+    alert(
+      result?.message ||
+      'Đã cập nhật.'
+    );
+
+
+  } catch (error) {
+
+    console.error(error);
+
+
+    alert(
+      'Có lỗi khi cập nhật:\n' +
+      (
+        error?.message ||
+        error
+      )
+    );
+
+
+  } finally {
+
+    if (button) {
+
+      button.disabled =
+        false;
+
+      button.textContent =
+        '💾 Cập nhật';
+
+    }
+
+  }
+
+}
+
+
+// ============================================================
+// SAVE ALL TỒN KHO
+// ============================================================
+
+async function masterKho_saveTonKhoAll() {
+
+  if (
+    !MASTER_KHO_STATE
+      .tonKhoRows.length
+  ) {
+
+    alert(
+      'Không có dữ liệu tồn kho.'
+    );
+
+    return;
+
+  }
+
+
+  const ok =
+    confirm(
+      'Cập nhật toàn bộ dữ liệu KhoNguyenLieu?'
+    );
+
+
+  if (!ok) {
+    return;
+  }
+
+
+  if (
+    typeof masterSetLoading ===
+    'function'
+  ) {
+
+    masterSetLoading(true);
+
+  }
+
+
+  try {
+
+    const result =
+      await masterKho_server(
+        'masterKho_updateTonKhoAll',
+        MASTER_KHO_STATE
+          .tonKhoRows
+      );
+
+
+    alert(
+      result?.message ||
+      'Đã cập nhật tồn kho.'
+    );
+
+
+  } catch (error) {
+
+    console.error(error);
+
+
+    alert(
+      'Có lỗi khi cập nhật tồn kho:\n' +
+      (
+        error?.message ||
+        error
+      )
+    );
+
+
+  } finally {
+
+    if (
+      typeof masterSetLoading ===
+      'function'
+    ) {
+
+      masterSetLoading(false);
+
+    }
+
+  }
+
+}
+
+
+
+// ============================================================
+// POPUP THÊM MỚI NGUYÊN LIỆU
+// ============================================================
+const MASTER_KHO_NL_FORM_LABELS = {
+  maNguyenLieu:'Mã nguyên liệu',
+  tenNguyenLieu:'Tên nguyên liệu',
+  nhaCungCap1:'Nhà cung cấp 1',
+  nhaCungCap2:'Nhà cung cấp 2',
+  nhaCungCap3:'Nhà cung cấp 3',
+  MaKeToan:'Mã kế toán',
+  loaiNguyenLieu:'Loại nguyên liệu',
+  donViKho:'Đơn vị kho',
+  quyCachDatHang:'Quy cách đặt hàng',
+  tonAnToan:'Tồn an toàn',
+  soNgayVeKhoMacDinh:'Số ngày về kho mặc định',
+  nhaCungCapChinh:'Nhà cung cấp chính',
+  trangThai:'Trạng thái',
+  ghiChu:'Ghi chú',
+  heSoQuyDoiKho:'Hệ số quy đổi kho',
+  doViTinhToan:'Đơn vị tính toán'
+};
+
+function masterKho_openAddNguyenLieu() {
+  const modal=document.getElementById('mkNguyenLieuModal');
+  const form=document.getElementById('mkNguyenLieuForm');
+  if (!modal || !form) return;
+
+  const longHeaders=[
+    'tenNguyenLieu','nhaCungCap1','nhaCungCap2','nhaCungCap3',
+    'quyCachDatHang','nhaCungCapChinh','ghiChu'
+  ];
+
+  form.innerHTML=MASTER_KHO_NL_HEADERS.map(header=>{
+    const label=MASTER_KHO_NL_FORM_LABELS[header] || header;
+    const required=header==='maNguyenLieu' || header==='tenNguyenLieu';
+    const isLong=longHeaders.includes(header);
+
+    return `
+      <div class="mk-form-group ${isLong?'mk-form-wide':''}">
+        <label for="mkNewNl_${header}">
+          ${masterKho_escape(label)}
+          ${required?'<span class="mk-required">*</span>':''}
+        </label>
+        ${isLong
+          ? `<textarea id="mkNewNl_${header}" class="mk-form-control"
+               data-new-header="${header}"></textarea>`
+          : `<input id="mkNewNl_${header}" type="text" class="mk-form-control"
+               data-new-header="${header}">`
+        }
+      </div>`;
+  }).join('');
+
+  modal.classList.add('show');
+  document.body.classList.add('mk-modal-open');
+  setTimeout(()=>document.getElementById('mkNewNl_maNguyenLieu')?.focus(),30);
+}
+
+function masterKho_closeAddNguyenLieu() {
+  document.getElementById('mkNguyenLieuModal')?.classList.remove('show');
+  document.body.classList.remove('mk-modal-open');
+}
+
+function masterKho_modalBackdropClick(event) {
+  if (event.target?.id==='mkNguyenLieuModal') masterKho_closeAddNguyenLieu();
+}
+
+function masterKho_getNewNguyenLieuFormData() {
+  const item={};
+  MASTER_KHO_NL_HEADERS.forEach(header=>{
+    const el=document.getElementById('mkNewNl_'+header);
+    item[header]=el ? el.value.trim() : '';
+  });
+  return item;
+}
+
+async function masterKho_saveNewNguyenLieu() {
+  const item=masterKho_getNewNguyenLieuFormData();
+
+  if (!item.maNguyenLieu) {
+    alert('Vui lòng nhập Mã nguyên liệu.');
+    document.getElementById('mkNewNl_maNguyenLieu')?.focus();
+    return;
+  }
+  if (!item.tenNguyenLieu) {
+    alert('Vui lòng nhập Tên nguyên liệu.');
+    document.getElementById('mkNewNl_tenNguyenLieu')?.focus();
+    return;
+  }
+
+  const duplicate=MASTER_KHO_STATE.nguyenLieuRows.some(row=>
+    String(row.maNguyenLieu||'').trim().toUpperCase()===
+    item.maNguyenLieu.trim().toUpperCase()
+  );
+  if (duplicate) {
+    alert('Mã nguyên liệu "'+item.maNguyenLieu+'" đã tồn tại.');
+    return;
+  }
+
+  if (!confirm('Thêm nguyên liệu mới:\\n\\n'+
+               item.maNguyenLieu+' - '+item.tenNguyenLieu+'?')) return;
+
+  const button=document.getElementById('mkNguyenLieuAddSaveBtn');
+  if (button) { button.disabled=true; button.textContent='Đang lưu...'; }
+
+  try {
+    const result=await masterKho_server('masterKho_addNguyenLieu',item);
+    alert(result?.message || 'Đã thêm nguyên liệu.');
+    masterKho_closeAddNguyenLieu();
+    await masterKho_loadNguyenLieu(true);
+  } catch(error) {
+    console.error(error);
+    alert('Có lỗi khi thêm nguyên liệu:\\n'+(error?.message||error));
+  } finally {
+    if (button) { button.disabled=false; button.textContent='💾 Lưu nguyên liệu'; }
+  }
+}
+
+document.addEventListener('keydown',event=>{
+  if (event.key==='Escape' &&
+      document.getElementById('mkNguyenLieuModal')?.classList.contains('show')) {
+    masterKho_closeAddNguyenLieu();
+  }
+});
+
+
+// ============================================================
+// SAVE ALL NGUYÊN LIỆU
+// ============================================================
+
+async function masterKho_saveNguyenLieuAll() {
+
+  if (
+    !MASTER_KHO_STATE
+      .nguyenLieuRows.length
+  ) {
+
+    alert(
+      'Không có dữ liệu nguyên liệu.'
+    );
+
+    return;
+
+  }
+
+
+  const ok =
+    confirm(
+      'Cập nhật toàn bộ dữ liệu NguyenLieu?'
+    );
+
+
+  if (!ok) {
+    return;
+  }
+
+
+  if (
+    typeof masterSetLoading ===
+    'function'
+  ) {
+
+    masterSetLoading(true);
+
+  }
+
+
+  try {
+
+    const result =
+      await masterKho_server(
+        'masterKho_updateNguyenLieuAll',
+        MASTER_KHO_STATE
+          .nguyenLieuRows
+      );
+
+
+    alert(
+      result?.message ||
+      'Đã cập nhật nguyên liệu.'
+    );
+
+
+  } catch (error) {
+
+    console.error(error);
+
+
+    alert(
+      'Có lỗi khi cập nhật nguyên liệu:\n' +
+      (
+        error?.message ||
+        error
+      )
+    );
+
+
+  } finally {
+
+    if (
+      typeof masterSetLoading ===
+      'function'
+    ) {
+
+      masterSetLoading(false);
+
+    }
+
+  }
+
+}
+
+</script>

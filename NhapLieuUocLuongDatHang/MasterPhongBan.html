@@ -1,0 +1,2470 @@
+<!-- =========================================================
+     DMG MASTER DATA
+     MODULE PHÒNG BÁN
+     ========================================================= -->
+
+
+<section
+  id="masterViewPhongBan"
+  class="master-module hidden"
+>
+
+
+  <!-- =======================================================
+       HEADER
+       ======================================================= -->
+
+  <div class="mpb-page-head">
+
+    <div>
+
+      <h2>
+        Nhập dữ liệu phòng bán
+      </h2>
+
+      <p>
+        Quản lý khách hàng và danh sách sản phẩm theo khách hàng.
+      </p>
+
+    </div>
+
+
+    <button
+      type="button"
+      class="mpb-btn mpb-btn-light"
+      onclick="masterPB_reloadAll()"
+    >
+      ↻ Tải lại
+    </button>
+
+  </div>
+
+
+
+  <!-- =======================================================
+       CARD 1 - KHÁCH HÀNG
+       ======================================================= -->
+
+  <div class="mpb-card">
+
+
+    <div class="mpb-card-head">
+
+      <div>
+
+        <h3>
+          Nhập khách hàng
+        </h3>
+
+        <p>
+          Thêm, sửa, xóa cột
+          <strong>khachHang</strong>
+          trong sheet DanhMuc.
+        </p>
+
+      </div>
+
+    </div>
+
+
+    <div class="mpb-card-body">
+
+
+      <!-- FORM -->
+
+      <div class="mpb-customer-form">
+
+
+        <div class="mpb-field">
+
+          <label>
+            Tên khách hàng
+          </label>
+
+          <input
+            id="mpbCustomerName"
+            type="text"
+            class="mpb-input"
+            placeholder="Nhập tên khách hàng..."
+            onkeydown="
+              if(event.key === 'Enter'){
+                masterPB_saveCustomer();
+              }
+            "
+          >
+
+        </div>
+
+
+        <div class="mpb-form-actions">
+
+          <button
+            id="mpbCustomerSaveButton"
+            type="button"
+            class="mpb-btn mpb-btn-primary"
+            onclick="masterPB_saveCustomer()"
+          >
+            + Thêm khách hàng
+          </button>
+
+
+          <button
+            id="mpbCustomerCancelButton"
+            type="button"
+            class="mpb-btn mpb-btn-light hidden"
+            onclick="masterPB_cancelCustomerEdit()"
+          >
+            Hủy sửa
+          </button>
+
+        </div>
+
+
+      </div>
+
+
+
+      <!-- TABLE -->
+
+      <div class="mpb-table-wrap">
+
+        <table class="mpb-table">
+
+          <thead>
+
+            <tr>
+
+              <th style="width:80px;">
+                STT
+              </th>
+
+              <th>
+                Khách hàng
+              </th>
+
+              <th style="width:190px;">
+                Thao tác
+              </th>
+
+            </tr>
+
+          </thead>
+
+
+          <tbody id="mpbCustomerTableBody">
+
+            <tr>
+
+              <td
+                colspan="3"
+                class="mpb-empty"
+              >
+                Đang tải dữ liệu...
+              </td>
+
+            </tr>
+
+          </tbody>
+
+        </table>
+
+      </div>
+
+
+    </div>
+
+  </div>
+
+
+
+  <!-- =======================================================
+       CARD 2 - THÊM SẢN PHẨM CHO KHÁCH HÀNG
+       ======================================================= -->
+
+  <div class="mpb-card">
+
+
+    <div class="mpb-card-head">
+
+      <div>
+
+        <h3>
+          Thêm sản phẩm cho khách hàng
+        </h3>
+
+        <p>
+          Chọn khách hàng và các sản phẩm
+          được phép sử dụng cho khách hàng đó.
+        </p>
+
+      </div>
+
+    </div>
+
+
+    <div class="mpb-card-body">
+
+
+      <!-- FORM -->
+
+      <div class="mpb-product-form">
+
+
+        <!-- KHÁCH HÀNG -->
+
+        <div class="mpb-field">
+
+          <label>
+            Khách hàng
+          </label>
+
+          <select
+            id="mpbRelationCustomer"
+            class="mpb-select"
+          >
+
+            <option value="">
+              Chọn khách hàng
+            </option>
+
+          </select>
+
+        </div>
+
+
+
+        <!-- NHÓM SẢN PHẨM -->
+
+        <div class="mpb-field">
+
+          <label>
+            Nhóm sản phẩm
+          </label>
+
+          <select
+            id="mpbProductGroup"
+            class="mpb-select"
+            onchange="masterPB_renderProductSelect()"
+          >
+
+            <option value="">
+              Chọn nhóm sản phẩm
+            </option>
+
+          </select>
+
+        </div>
+
+
+
+        <!-- TÊN SẢN PHẨM -->
+
+        <div class="mpb-field mpb-product-field">
+
+          <label>
+            Tên sản phẩm
+          </label>
+
+          <select
+            id="mpbProductSelect"
+            class="mpb-select"
+          >
+
+            <option value="">
+              Chọn tên sản phẩm
+            </option>
+
+          </select>
+
+        </div>
+
+
+
+        <!-- ADD -->
+
+        <div class="mpb-add-button-wrap">
+
+          <button
+            type="button"
+            class="mpb-btn mpb-btn-primary"
+            onclick="masterPB_addPendingProduct()"
+          >
+            + Thêm
+          </button>
+
+        </div>
+
+
+      </div>
+
+
+
+      <!-- PENDING TABLE -->
+
+      <div class="mpb-table-wrap">
+
+        <table class="mpb-table">
+
+          <thead>
+
+            <tr>
+
+              <th>
+                Khách hàng
+              </th>
+
+              <th>
+                Nhóm sản phẩm
+              </th>
+
+              <th>
+                Mã sản phẩm
+              </th>
+
+              <th>
+                Mã kế toán TP
+              </th>
+
+              <th>
+                Tên sản phẩm
+              </th>
+
+              <th style="width:110px;">
+                Thao tác
+              </th>
+
+            </tr>
+
+          </thead>
+
+
+          <tbody id="mpbPendingTableBody">
+
+            <tr>
+
+              <td
+                colspan="6"
+                class="mpb-empty"
+              >
+                Chưa có sản phẩm nào
+                trong danh sách chờ.
+              </td>
+
+            </tr>
+
+          </tbody>
+
+        </table>
+
+      </div>
+
+
+
+      <div class="mpb-save-list-row">
+
+        <button
+          type="button"
+          class="mpb-btn mpb-btn-primary"
+          onclick="masterPB_savePendingProducts()"
+        >
+          💾 Lưu danh sách
+        </button>
+
+      </div>
+
+
+    </div>
+
+  </div>
+
+
+
+  <!-- =======================================================
+       CARD 3 - DANH SÁCH
+       ======================================================= -->
+
+  <div class="mpb-card">
+
+
+    <div class="mpb-card-head mpb-list-head">
+
+
+      <div>
+
+        <h3>
+          Danh sách sản phẩm theo khách hàng
+        </h3>
+
+        <p id="mpbRelationCount">
+          0 sản phẩm
+        </p>
+
+      </div>
+
+
+
+      <div class="mpb-filter-box">
+
+        <select
+          id="mpbRelationFilter"
+          class="mpb-select"
+          onchange="masterPB_renderRelationTable()"
+        >
+
+          <option value="">
+            Tất cả khách hàng
+          </option>
+
+        </select>
+
+      </div>
+
+
+    </div>
+
+
+
+    <div class="mpb-card-body mpb-card-body-table">
+
+
+      <div class="mpb-table-wrap">
+
+        <table class="mpb-table">
+
+          <thead>
+
+            <tr>
+
+              <th>
+                Khách hàng
+              </th>
+
+              <th>
+                Nhóm sản phẩm
+              </th>
+
+              <th>
+                Mã sản phẩm
+              </th>
+
+              <th>
+                Mã kế toán TP
+              </th>
+
+              <th>
+                Tên sản phẩm
+              </th>
+
+              <th style="width:110px;">
+                Thao tác
+              </th>
+
+            </tr>
+
+          </thead>
+
+
+          <tbody id="mpbRelationTableBody">
+
+            <tr>
+
+              <td
+                colspan="6"
+                class="mpb-empty"
+              >
+                Đang tải dữ liệu...
+              </td>
+
+            </tr>
+
+          </tbody>
+
+        </table>
+
+      </div>
+
+
+    </div>
+
+  </div>
+
+
+</section>
+
+
+
+<!-- =========================================================
+     CSS
+     ========================================================= -->
+
+<style>
+
+
+  /* ========================================================
+     PAGE
+     ======================================================== */
+
+  #masterViewPhongBan {
+
+    background: transparent;
+
+    border: 0;
+
+    overflow: visible;
+
+  }
+
+
+  .mpb-page-head {
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap: 20px;
+
+    margin-bottom: 18px;
+
+  }
+
+
+  .mpb-page-head h2 {
+
+    margin: 0;
+
+    color: #075d49;
+
+    font-size: 24px;
+
+    font-weight: 800;
+
+  }
+
+
+  .mpb-page-head p {
+
+    margin:
+      5px 0 0;
+
+    color: #748780;
+
+    font-size: 13px;
+
+  }
+
+
+
+  /* ========================================================
+     CARD
+     ======================================================== */
+
+  .mpb-card {
+
+    margin-bottom: 22px;
+
+    background: white;
+
+    border:
+      1px solid #d9e9e3;
+
+    border-radius: 20px;
+
+    overflow: hidden;
+
+    box-shadow:
+      0 10px 28px
+      rgba(0, 94, 72, .06);
+
+  }
+
+
+  .mpb-card-head {
+
+    min-height: 77px;
+
+    padding:
+      17px 20px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap: 20px;
+
+    border-bottom:
+      1px solid #e2ece8;
+
+  }
+
+
+  .mpb-card-head h3 {
+
+    margin: 0;
+
+    color: #075d49;
+
+    font-size: 18px;
+
+    font-weight: 800;
+
+  }
+
+
+  .mpb-card-head p {
+
+    margin:
+      5px 0 0;
+
+    color: #71847e;
+
+    font-size: 12px;
+
+  }
+
+
+  .mpb-card-body {
+
+    padding: 20px;
+
+  }
+
+
+  .mpb-card-body-table {
+
+    padding: 0;
+
+  }
+
+
+
+  /* ========================================================
+     FIELD
+     ======================================================== */
+
+  .mpb-field {
+
+    min-width: 0;
+
+  }
+
+
+  .mpb-field label {
+
+    display: block;
+
+    margin-bottom: 7px;
+
+    color: #3d554f;
+
+    font-size: 12px;
+
+    font-weight: 800;
+
+  }
+
+
+  .mpb-input,
+  .mpb-select {
+
+    width: 100%;
+
+    height: 47px;
+
+    padding:
+      0 13px;
+
+    border:
+      1px solid #d3e2dd;
+
+    border-radius: 11px;
+
+    outline: none;
+
+    background: white;
+
+    color: #263c36;
+
+    font-size: 13px;
+
+  }
+
+
+  .mpb-input:focus,
+  .mpb-select:focus {
+
+    border-color: #00866a;
+
+    box-shadow:
+      0 0 0 3px
+      rgba(0, 134, 106, .08);
+
+  }
+
+
+
+  /* ========================================================
+     CUSTOMER FORM
+     ======================================================== */
+
+  .mpb-customer-form {
+
+    display: grid;
+
+    grid-template-columns:
+      minmax(300px, 1fr)
+      auto;
+
+    gap: 12px;
+
+    align-items: end;
+
+    margin-bottom: 18px;
+
+  }
+
+
+  .mpb-form-actions {
+
+    display: flex;
+
+    gap: 8px;
+
+  }
+
+
+
+  /* ========================================================
+     PRODUCT FORM
+     ======================================================== */
+
+  .mpb-product-form {
+
+    display: grid;
+
+    grid-template-columns:
+      1fr
+      1fr
+      1.7fr
+      auto;
+
+    gap: 12px;
+
+    align-items: end;
+
+    margin-bottom: 18px;
+
+  }
+
+
+  .mpb-add-button-wrap {
+
+    padding-bottom: 0;
+
+  }
+
+
+
+  /* ========================================================
+     BUTTONS
+     ======================================================== */
+
+  .mpb-btn {
+
+    min-height: 42px;
+
+    padding:
+      0 17px;
+
+    border: 0;
+
+    border-radius: 11px;
+
+    cursor: pointer;
+
+    white-space: nowrap;
+
+    font-size: 12px;
+
+    font-weight: 800;
+
+    transition: .16s;
+
+  }
+
+
+  .mpb-btn-primary {
+
+    background:
+      linear-gradient(
+        135deg,
+        #00785d,
+        #00ad82
+      );
+
+    color: white;
+
+    box-shadow:
+      0 7px 17px
+      rgba(0, 132, 99, .17);
+
+  }
+
+
+  .mpb-btn-primary:hover {
+
+    filter: brightness(1.04);
+
+  }
+
+
+  .mpb-btn-light {
+
+    background: #edf7f3;
+
+    color: #07604c;
+
+  }
+
+
+  .mpb-btn-edit {
+
+    min-height: 31px;
+
+    padding:
+      0 11px;
+
+    background: #e7f3ff;
+
+    color: #1769aa;
+
+    border-radius: 9px;
+
+  }
+
+
+  .mpb-btn-delete {
+
+    min-height: 31px;
+
+    padding:
+      0 11px;
+
+    background: #ffe5e5;
+
+    color: #c52a2a;
+
+    border-radius: 9px;
+
+  }
+
+
+
+  /* ========================================================
+     TABLE
+     ======================================================== */
+
+  .mpb-table-wrap {
+
+    width: 100%;
+
+    overflow-x: auto;
+
+    border:
+      1px solid #d7e7e1;
+
+    border-radius: 13px;
+
+  }
+
+
+  .mpb-table {
+
+    width: 100%;
+
+    border-collapse: collapse;
+
+    table-layout: fixed;
+
+    font-size: 12px;
+
+  }
+
+
+  .mpb-table thead th {
+
+    padding:
+      11px 10px;
+
+    background: #075c49;
+
+    color: white;
+
+    text-align: center;
+
+    font-weight: 800;
+
+    border-right:
+      1px solid
+      rgba(255,255,255,.12);
+
+  }
+
+
+  .mpb-table tbody td {
+
+    padding:
+      10px;
+
+    border-bottom:
+      1px solid #e4ece9;
+
+    color: #40534e;
+
+    vertical-align: middle;
+
+    word-break: break-word;
+
+  }
+
+
+  .mpb-table tbody tr:last-child td {
+
+    border-bottom: 0;
+
+  }
+
+
+  .mpb-table tbody tr:hover {
+
+    background: #f7fbf9;
+
+  }
+
+
+  .mpb-table td:last-child {
+
+    text-align: center;
+
+  }
+
+
+  .mpb-table-actions {
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    gap: 6px;
+
+  }
+
+
+  .mpb-empty {
+
+    height: 67px;
+
+    text-align: center !important;
+
+    color: #82938e !important;
+
+  }
+
+
+
+  /* ========================================================
+     SAVE ROW
+     ======================================================== */
+
+  .mpb-save-list-row {
+
+    display: flex;
+
+    justify-content: flex-end;
+
+    margin-top: 14px;
+
+  }
+
+
+
+  /* ========================================================
+     LIST HEADER
+     ======================================================== */
+
+  .mpb-list-head {
+
+    align-items: center;
+
+  }
+
+
+  .mpb-filter-box {
+
+    width: 255px;
+
+  }
+
+
+
+  /* ========================================================
+     RESPONSIVE
+     ======================================================== */
+
+  @media
+  (max-width: 1100px) {
+
+    .mpb-product-form {
+
+      grid-template-columns:
+        1fr
+        1fr;
+
+    }
+
+  }
+
+
+</style>
+
+
+
+<!-- =========================================================
+     JAVASCRIPT
+     ========================================================= -->
+
+<script>
+
+
+// ============================================================
+// STATE
+// ============================================================
+
+const MASTER_PB_STATE = {
+
+  loaded:
+    false,
+
+  loading:
+    false,
+
+  customers:
+    [],
+
+  products:
+    [],
+
+  relations:
+    [],
+
+  pending:
+    [],
+
+  editingCustomer:
+    null
+
+};
+
+
+
+// ============================================================
+// ESCAPE HTML
+// ============================================================
+
+function masterPB_escape(
+  value
+) {
+
+  return String(
+    value ?? ''
+  )
+
+  .replace(
+    /&/g,
+    '&amp;'
+  )
+
+  .replace(
+    /</g,
+    '&lt;'
+  )
+
+  .replace(
+    />/g,
+    '&gt;'
+  )
+
+  .replace(
+    /"/g,
+    '&quot;'
+  )
+
+  .replace(
+    /'/g,
+    '&#039;'
+  );
+
+}
+
+
+
+// ============================================================
+// SERVER
+// ============================================================
+
+function masterPB_server(
+  functionName,
+  ...args
+) {
+
+  return new Promise(
+    (resolve, reject) => {
+
+      google.script.run
+
+        .withSuccessHandler(
+          resolve
+        )
+
+        .withFailureHandler(
+          reject
+        )
+
+        [functionName](
+          ...args
+        );
+
+    }
+  );
+
+}
+
+
+
+// ============================================================
+// INIT
+// ============================================================
+
+async function masterPB_init(
+  force
+) {
+
+  if (
+    MASTER_PB_STATE.loading
+  ) {
+
+    return;
+
+  }
+
+  if (
+    MASTER_PB_STATE.loaded &&
+    !force
+  ) {
+
+    return;
+
+  }
+
+  MASTER_PB_STATE.loading =
+    true;
+
+  if (
+    typeof masterSetLoading ===
+    'function'
+  ) {
+
+    masterSetLoading(true);
+
+  }
+
+  try {
+
+    const result =
+      await masterPB_server(
+        'masterPB_getInitData'
+      );
+
+    MASTER_PB_STATE.customers =
+      Array.isArray(
+        result?.khachHang
+      )
+        ? result.khachHang
+        : [];
+
+    MASTER_PB_STATE.products =
+      Array.isArray(
+        result?.sanPham
+      )
+        ? result.sanPham
+        : [];
+
+    MASTER_PB_STATE.relations =
+      Array.isArray(
+        result?.khachHangSanPham
+      )
+        ? result.khachHangSanPham
+        : [];
+
+    MASTER_PB_STATE.loaded =
+      true;
+
+    masterPB_renderAll();
+
+  } catch (error) {
+
+    console.error(error);
+
+    alert(
+      'Không thể tải dữ liệu Phòng bán:\n' +
+      (
+        error?.message ||
+        error
+      )
+    );
+
+  } finally {
+
+    MASTER_PB_STATE.loading =
+      false;
+
+    if (
+      typeof masterSetLoading ===
+      'function'
+    ) {
+
+      masterSetLoading(false);
+
+    }
+
+  }
+
+}
+
+
+
+// ============================================================
+// RELOAD
+// ============================================================
+
+function masterPB_reloadAll() {
+
+  masterPB_init(true);
+
+}
+
+
+
+// ============================================================
+// RENDER ALL
+// ============================================================
+
+function masterPB_renderAll() {
+
+  masterPB_renderCustomerTable();
+
+  masterPB_renderCustomerSelects();
+
+  masterPB_renderProductGroups();
+
+  masterPB_renderProductSelect();
+
+  masterPB_renderPendingTable();
+
+  masterPB_renderRelationTable();
+
+}
+
+
+
+// ============================================================
+// CUSTOMER TABLE
+// ============================================================
+
+function masterPB_renderCustomerTable() {
+
+  const tbody =
+    document.getElementById(
+      'mpbCustomerTableBody'
+    );
+
+  if (!tbody) {
+    return;
+  }
+
+  const data =
+    MASTER_PB_STATE.customers;
+
+  if (!data.length) {
+
+    tbody.innerHTML = `
+
+      <tr>
+
+        <td
+          colspan="3"
+          class="mpb-empty"
+        >
+          Chưa có khách hàng.
+        </td>
+
+      </tr>
+
+    `;
+
+    return;
+
+  }
+
+  tbody.innerHTML =
+    data.map(
+      (name, index) => `
+
+        <tr>
+
+          <td
+            style="text-align:center;"
+          >
+            ${index + 1}
+          </td>
+
+          <td>
+            ${masterPB_escape(name)}
+          </td>
+
+          <td>
+
+            <div class="mpb-table-actions">
+
+              <button
+                type="button"
+                class="mpb-btn mpb-btn-edit"
+                onclick='masterPB_startCustomerEdit(${JSON.stringify(name)})'
+              >
+                Sửa
+              </button>
+
+              <button
+                type="button"
+                class="mpb-btn mpb-btn-delete"
+                onclick='masterPB_deleteCustomer(${JSON.stringify(name)})'
+              >
+                Xóa
+              </button>
+
+            </div>
+
+          </td>
+
+        </tr>
+
+      `
+    )
+    .join('');
+
+}
+
+
+
+// ============================================================
+// CUSTOMER SELECTS
+// ============================================================
+
+function masterPB_renderCustomerSelects() {
+
+  const customers =
+    MASTER_PB_STATE.customers;
+
+  const relationSelect =
+    document.getElementById(
+      'mpbRelationCustomer'
+    );
+
+  const filter =
+    document.getElementById(
+      'mpbRelationFilter'
+    );
+
+
+  if (relationSelect) {
+
+    const oldValue =
+      relationSelect.value;
+
+    relationSelect.innerHTML = `
+
+      <option value="">
+        Chọn khách hàng
+      </option>
+
+      ${
+        customers.map(
+          customer => `
+
+            <option
+              value="${masterPB_escape(customer)}"
+            >
+              ${masterPB_escape(customer)}
+            </option>
+
+          `
+        )
+        .join('')
+      }
+
+    `;
+
+    if (
+      customers.includes(
+        oldValue
+      )
+    ) {
+
+      relationSelect.value =
+        oldValue;
+
+    }
+
+  }
+
+
+  if (filter) {
+
+    const oldFilter =
+      filter.value;
+
+    filter.innerHTML = `
+
+      <option value="">
+        Tất cả khách hàng
+      </option>
+
+      ${
+        customers.map(
+          customer => `
+
+            <option
+              value="${masterPB_escape(customer)}"
+            >
+              ${masterPB_escape(customer)}
+            </option>
+
+          `
+        )
+        .join('')
+      }
+
+    `;
+
+    if (
+      customers.includes(
+        oldFilter
+      )
+    ) {
+
+      filter.value =
+        oldFilter;
+
+    }
+
+  }
+
+}
+
+
+
+// ============================================================
+// SAVE CUSTOMER
+// ============================================================
+
+async function masterPB_saveCustomer() {
+
+  const input =
+    document.getElementById(
+      'mpbCustomerName'
+    );
+
+  const value =
+    String(
+      input?.value || ''
+    ).trim();
+
+  if (!value) {
+
+    alert(
+      'Vui lòng nhập tên khách hàng.'
+    );
+
+    input?.focus();
+
+    return;
+
+  }
+
+  if (
+    typeof masterSetLoading ===
+    'function'
+  ) {
+
+    masterSetLoading(true);
+
+  }
+
+  try {
+
+    let result;
+
+    if (
+      MASTER_PB_STATE
+        .editingCustomer
+    ) {
+
+      result =
+        await masterPB_server(
+          'masterPB_updateKhachHang',
+          MASTER_PB_STATE
+            .editingCustomer,
+          value
+        );
+
+    } else {
+
+      result =
+        await masterPB_server(
+          'masterPB_addKhachHang',
+          value
+        );
+
+    }
+
+    if (!result?.ok) {
+
+      alert(
+        result?.message ||
+        'Không thể lưu khách hàng.'
+      );
+
+      return;
+
+    }
+
+    masterPB_cancelCustomerEdit();
+
+    await masterPB_init(true);
+
+  } catch (error) {
+
+    console.error(error);
+
+    alert(
+      error?.message ||
+      'Có lỗi khi lưu khách hàng.'
+    );
+
+  } finally {
+
+    if (
+      typeof masterSetLoading ===
+      'function'
+    ) {
+
+      masterSetLoading(false);
+
+    }
+
+  }
+
+}
+
+
+
+// ============================================================
+// START EDIT CUSTOMER
+// ============================================================
+
+function masterPB_startCustomerEdit(
+  name
+) {
+
+  MASTER_PB_STATE.editingCustomer =
+    name;
+
+  const input =
+    document.getElementById(
+      'mpbCustomerName'
+    );
+
+  const saveButton =
+    document.getElementById(
+      'mpbCustomerSaveButton'
+    );
+
+  const cancelButton =
+    document.getElementById(
+      'mpbCustomerCancelButton'
+    );
+
+  input.value =
+    name;
+
+  saveButton.textContent =
+    '💾 Lưu thay đổi';
+
+  cancelButton
+    .classList
+    .remove(
+      'hidden'
+    );
+
+  input.focus();
+
+  input.select();
+
+}
+
+
+
+// ============================================================
+// CANCEL CUSTOMER EDIT
+// ============================================================
+
+function masterPB_cancelCustomerEdit() {
+
+  MASTER_PB_STATE.editingCustomer =
+    null;
+
+  const input =
+    document.getElementById(
+      'mpbCustomerName'
+    );
+
+  const saveButton =
+    document.getElementById(
+      'mpbCustomerSaveButton'
+    );
+
+  const cancelButton =
+    document.getElementById(
+      'mpbCustomerCancelButton'
+    );
+
+  if (input) {
+
+    input.value =
+      '';
+
+  }
+
+  if (saveButton) {
+
+    saveButton.textContent =
+      '+ Thêm khách hàng';
+
+  }
+
+  cancelButton
+    ?.classList
+    .add(
+      'hidden'
+    );
+
+}
+
+
+
+// ============================================================
+// DELETE CUSTOMER
+// ============================================================
+
+async function masterPB_deleteCustomer(
+  name
+) {
+
+  const ok =
+    confirm(
+      'Bạn có chắc muốn xóa khách hàng:\n\n' +
+      name +
+      '?'
+    );
+
+  if (!ok) {
+    return;
+  }
+
+  if (
+    typeof masterSetLoading ===
+    'function'
+  ) {
+
+    masterSetLoading(true);
+
+  }
+
+  try {
+
+    const result =
+      await masterPB_server(
+        'masterPB_deleteKhachHang',
+        name
+      );
+
+    if (!result?.ok) {
+
+      alert(
+        result?.message ||
+        'Không thể xóa khách hàng.'
+      );
+
+      return;
+
+    }
+
+    await masterPB_init(true);
+
+  } catch (error) {
+
+    console.error(error);
+
+    alert(
+      error?.message ||
+      'Có lỗi khi xóa khách hàng.'
+    );
+
+  } finally {
+
+    if (
+      typeof masterSetLoading ===
+      'function'
+    ) {
+
+      masterSetLoading(false);
+
+    }
+
+  }
+
+}
+
+
+
+// ============================================================
+// PRODUCT GROUP
+// ============================================================
+
+function masterPB_renderProductGroups() {
+
+  const select =
+    document.getElementById(
+      'mpbProductGroup'
+    );
+
+  if (!select) {
+    return;
+  }
+
+  const oldValue =
+    select.value;
+
+  const groups =
+    [
+      ...new Set(
+        MASTER_PB_STATE
+          .products
+          .map(
+            item =>
+              String(
+                item.nhomSanPham ||
+                ''
+              ).trim()
+          )
+          .filter(Boolean)
+      )
+    ]
+    .sort(
+      (a, b) =>
+        a.localeCompare(
+          b,
+          'vi'
+        )
+    );
+
+  select.innerHTML = `
+
+    <option value="">
+      Chọn nhóm sản phẩm
+    </option>
+
+    ${
+      groups.map(
+        group => `
+
+          <option
+            value="${masterPB_escape(group)}"
+          >
+            ${masterPB_escape(group)}
+          </option>
+
+        `
+      )
+      .join('')
+    }
+
+  `;
+
+  if (
+    groups.includes(
+      oldValue
+    )
+  ) {
+
+    select.value =
+      oldValue;
+
+  }
+
+}
+
+
+
+// ============================================================
+// PRODUCT SELECT
+// ============================================================
+
+function masterPB_renderProductSelect() {
+
+  const groupSelect =
+    document.getElementById(
+      'mpbProductGroup'
+    );
+
+  const productSelect =
+    document.getElementById(
+      'mpbProductSelect'
+    );
+
+  if (
+    !groupSelect ||
+    !productSelect
+  ) {
+
+    return;
+
+  }
+
+  const group =
+    groupSelect.value;
+
+  const products =
+    MASTER_PB_STATE.products
+      .filter(
+        item => {
+
+          if (!group) {
+            return true;
+          }
+
+          return (
+            item.nhomSanPham ===
+            group
+          );
+
+        }
+      );
+
+  productSelect.innerHTML = `
+
+    <option value="">
+      Chọn tên sản phẩm
+    </option>
+
+    ${
+      products.map(
+        (item) => {
+
+          const key =
+            masterPB_makeProductKey(
+              item
+            );
+
+          return `
+
+            <option
+              value="${masterPB_escape(key)}"
+            >
+              ${masterPB_escape(item.tenSanPham)}
+            </option>
+
+          `;
+
+        }
+      )
+      .join('')
+    }
+
+  `;
+
+}
+
+
+
+// ============================================================
+// PRODUCT KEY
+// ============================================================
+
+function masterPB_makeProductKey(
+  item
+) {
+
+  return [
+
+    item.nhomSanPham || '',
+    item.maSanPham || '',
+    item.MaKeToanTP || '',
+    item.tenSanPham || ''
+
+  ].join('|||');
+
+}
+
+
+
+// ============================================================
+// FIND PRODUCT
+// ============================================================
+
+function masterPB_findProductByKey(
+  key
+) {
+
+  return MASTER_PB_STATE.products
+    .find(
+      item =>
+        masterPB_makeProductKey(
+          item
+        ) === key
+    );
+
+}
+
+
+
+// ============================================================
+// ADD PENDING PRODUCT
+// ============================================================
+
+function masterPB_addPendingProduct() {
+
+  const customer =
+    document.getElementById(
+      'mpbRelationCustomer'
+    )?.value || '';
+
+  const productKey =
+    document.getElementById(
+      'mpbProductSelect'
+    )?.value || '';
+
+  if (!customer) {
+
+    alert(
+      'Vui lòng chọn khách hàng.'
+    );
+
+    return;
+
+  }
+
+  if (!productKey) {
+
+    alert(
+      'Vui lòng chọn sản phẩm.'
+    );
+
+    return;
+
+  }
+
+  const product =
+    masterPB_findProductByKey(
+      productKey
+    );
+
+  if (!product) {
+
+    alert(
+      'Không tìm thấy thông tin sản phẩm.'
+    );
+
+    return;
+
+  }
+
+  const duplicatePending =
+    MASTER_PB_STATE.pending.some(
+      item =>
+
+        item.khachHang ===
+          customer
+
+        &&
+
+        item.maSanPham ===
+          product.maSanPham
+
+        &&
+
+        item.MaKeToanTP ===
+          product.MaKeToanTP
+
+    );
+
+  const duplicateSaved =
+    MASTER_PB_STATE.relations.some(
+      item =>
+
+        item.khachHang ===
+          customer
+
+        &&
+
+        item.maSanPham ===
+          product.maSanPham
+
+        &&
+
+        item.MaKeToanTP ===
+          product.MaKeToanTP
+
+    );
+
+  if (
+    duplicatePending ||
+    duplicateSaved
+  ) {
+
+    alert(
+      'Sản phẩm này đã có trong danh sách của khách hàng.'
+    );
+
+    return;
+
+  }
+
+  MASTER_PB_STATE.pending.push({
+
+    khachHang:
+      customer,
+
+    nhomSanPham:
+      product.nhomSanPham,
+
+    maSanPham:
+      product.maSanPham,
+
+    MaKeToanTP:
+      product.MaKeToanTP,
+
+    tenSanPham:
+      product.tenSanPham
+
+  });
+
+  masterPB_renderPendingTable();
+
+}
+
+
+
+// ============================================================
+// PENDING TABLE
+// ============================================================
+
+function masterPB_renderPendingTable() {
+
+  const tbody =
+    document.getElementById(
+      'mpbPendingTableBody'
+    );
+
+  if (!tbody) {
+    return;
+  }
+
+  const data =
+    MASTER_PB_STATE.pending;
+
+  if (!data.length) {
+
+    tbody.innerHTML = `
+
+      <tr>
+
+        <td
+          colspan="6"
+          class="mpb-empty"
+        >
+          Chưa có sản phẩm nào
+          trong danh sách chờ.
+        </td>
+
+      </tr>
+
+    `;
+
+    return;
+
+  }
+
+  tbody.innerHTML =
+    data.map(
+      (item, index) => `
+
+        <tr>
+
+          <td>
+            ${masterPB_escape(item.khachHang)}
+          </td>
+
+          <td>
+            ${masterPB_escape(item.nhomSanPham)}
+          </td>
+
+          <td>
+            ${masterPB_escape(item.maSanPham)}
+          </td>
+
+          <td>
+            ${masterPB_escape(item.MaKeToanTP)}
+          </td>
+
+          <td>
+            ${masterPB_escape(item.tenSanPham)}
+          </td>
+
+          <td>
+
+            <button
+              type="button"
+              class="mpb-btn mpb-btn-delete"
+              onclick="masterPB_removePendingProduct(${index})"
+            >
+              Xóa
+            </button>
+
+          </td>
+
+        </tr>
+
+      `
+    )
+    .join('');
+
+}
+
+
+
+// ============================================================
+// REMOVE PENDING
+// ============================================================
+
+function masterPB_removePendingProduct(
+  index
+) {
+
+  MASTER_PB_STATE.pending.splice(
+    index,
+    1
+  );
+
+  masterPB_renderPendingTable();
+
+}
+
+
+
+// ============================================================
+// SAVE PENDING
+// ============================================================
+
+async function masterPB_savePendingProducts() {
+
+  if (
+    !MASTER_PB_STATE.pending.length
+  ) {
+
+    alert(
+      'Chưa có sản phẩm nào trong danh sách chờ.'
+    );
+
+    return;
+
+  }
+
+  if (
+    typeof masterSetLoading ===
+    'function'
+  ) {
+
+    masterSetLoading(true);
+
+  }
+
+  try {
+
+    const result =
+      await masterPB_server(
+        'masterPB_saveKhachHangSanPham',
+        MASTER_PB_STATE.pending
+      );
+
+    if (!result?.ok) {
+
+      alert(
+        result?.message ||
+        'Không thể lưu danh sách.'
+      );
+
+      return;
+
+    }
+
+    MASTER_PB_STATE.pending =
+      [];
+
+    await masterPB_init(true);
+
+    alert(
+      result.message ||
+      'Đã lưu danh sách.'
+    );
+
+  } catch (error) {
+
+    console.error(error);
+
+    alert(
+      error?.message ||
+      'Có lỗi khi lưu danh sách.'
+    );
+
+  } finally {
+
+    if (
+      typeof masterSetLoading ===
+      'function'
+    ) {
+
+      masterSetLoading(false);
+
+    }
+
+  }
+
+}
+
+
+
+// ============================================================
+// RELATION TABLE
+// ============================================================
+
+function masterPB_renderRelationTable() {
+
+  const tbody =
+    document.getElementById(
+      'mpbRelationTableBody'
+    );
+
+  const count =
+    document.getElementById(
+      'mpbRelationCount'
+    );
+
+  const filter =
+    document.getElementById(
+      'mpbRelationFilter'
+    )?.value || '';
+
+  if (!tbody) {
+    return;
+  }
+
+  let data =
+    MASTER_PB_STATE.relations;
+
+  if (filter) {
+
+    data =
+      data.filter(
+        item =>
+          item.khachHang ===
+          filter
+      );
+
+  }
+
+  if (count) {
+
+    count.textContent =
+      data.length +
+      ' sản phẩm';
+
+  }
+
+  if (!data.length) {
+
+    tbody.innerHTML = `
+
+      <tr>
+
+        <td
+          colspan="6"
+          class="mpb-empty"
+        >
+          Không có dữ liệu.
+        </td>
+
+      </tr>
+
+    `;
+
+    return;
+
+  }
+
+  tbody.innerHTML =
+    data.map(
+      item => `
+
+        <tr>
+
+          <td>
+            ${masterPB_escape(item.khachHang)}
+          </td>
+
+          <td>
+            ${masterPB_escape(item.nhomSanPham)}
+          </td>
+
+          <td>
+            ${masterPB_escape(item.maSanPham)}
+          </td>
+
+          <td>
+            ${masterPB_escape(item.MaKeToanTP)}
+          </td>
+
+          <td>
+            ${masterPB_escape(item.tenSanPham)}
+          </td>
+
+          <td>
+
+            <button
+              type="button"
+              class="mpb-btn mpb-btn-delete"
+              onclick='masterPB_deleteRelation(
+                ${JSON.stringify(item.khachHang)},
+                ${JSON.stringify(item.maSanPham)},
+                ${JSON.stringify(item.MaKeToanTP)}
+              )'
+            >
+              Xóa
+            </button>
+
+          </td>
+
+        </tr>
+
+      `
+    )
+    .join('');
+
+}
+
+
+
+// ============================================================
+// DELETE RELATION
+// ============================================================
+
+async function masterPB_deleteRelation(
+  customer,
+  productCode,
+  accountingCode
+) {
+
+  const ok =
+    confirm(
+      'Bạn có chắc muốn xóa sản phẩm này khỏi khách hàng "' +
+      customer +
+      '"?'
+    );
+
+  if (!ok) {
+    return;
+  }
+
+  if (
+    typeof masterSetLoading ===
+    'function'
+  ) {
+
+    masterSetLoading(true);
+
+  }
+
+  try {
+
+    const result =
+      await masterPB_server(
+        'masterPB_deleteKhachHangSanPham',
+        customer,
+        productCode,
+        accountingCode
+      );
+
+    if (!result?.ok) {
+
+      alert(
+        result?.message ||
+        'Không thể xóa dữ liệu.'
+      );
+
+      return;
+
+    }
+
+    await masterPB_init(true);
+
+  } catch (error) {
+
+    console.error(error);
+
+    alert(
+      error?.message ||
+      'Có lỗi khi xóa dữ liệu.'
+    );
+
+  } finally {
+
+    if (
+      typeof masterSetLoading ===
+      'function'
+    ) {
+
+      masterSetLoading(false);
+
+    }
+
+  }
+
+}
+
+
+</script>

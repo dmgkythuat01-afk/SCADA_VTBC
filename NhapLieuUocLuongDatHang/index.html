@@ -1,0 +1,2450 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+  <base target="_top">
+
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1"
+  >
+
+
+  <style>
+
+    /* ======================================================
+       RESET
+       ====================================================== */
+
+    * {
+      box-sizing: border-box;
+    }
+
+
+    html,
+    body {
+
+      margin: 0;
+      padding: 0;
+
+      width: 100%;
+      min-height: 100%;
+
+      font-family:
+        Inter,
+        Arial,
+        sans-serif;
+
+      background: #f2f8f5;
+
+      color: #173a32;
+
+    }
+
+
+    body {
+      min-height: 100vh;
+    }
+
+
+    .hidden {
+      display: none !important;
+    }
+
+
+    button,
+    input {
+      font: inherit;
+    }
+
+
+
+    /* ======================================================
+       LOGIN
+       ====================================================== */
+
+    #masterLoginView {
+
+      min-height: 100vh;
+
+      display: flex;
+
+      align-items: center;
+      justify-content: center;
+
+      padding: 30px;
+
+      background:
+        linear-gradient(
+          135deg,
+          #edf8f4,
+          #f8fbfa
+        );
+
+    }
+
+
+    .master-login-wrapper {
+
+      width: 100%;
+
+      max-width: 980px;
+
+      min-height: 560px;
+
+      display: grid;
+
+      grid-template-columns:
+        1fr 440px;
+
+      background: white;
+
+      border-radius: 26px;
+
+      overflow: hidden;
+
+      box-shadow:
+        0 24px 70px
+        rgba(0, 80, 60, .14);
+
+    }
+
+
+
+    /* ======================================================
+       LOGIN LEFT
+       ====================================================== */
+
+    .master-login-brand {
+
+      padding: 55px;
+
+      display: flex;
+
+      flex-direction: column;
+
+      justify-content: center;
+
+      color: white;
+
+      background:
+        linear-gradient(
+          145deg,
+          #005d49,
+          #00886a
+        );
+
+    }
+
+
+    .login-logo {
+
+      width: 74px;
+      height: 74px;
+
+      display: flex;
+
+      align-items: center;
+      justify-content: center;
+
+      margin-bottom: 25px;
+
+      background: white;
+
+      color: #00664f;
+
+      border-radius: 20px;
+
+      font-size: 24px;
+
+      font-weight: 900;
+
+      box-shadow:
+        0 10px 30px
+        rgba(0,0,0,.12);
+
+    }
+
+
+    .master-login-brand h1 {
+
+      margin:
+        0 0 12px;
+
+      font-size: 31px;
+
+      line-height: 1.2;
+
+    }
+
+
+    .master-login-brand p {
+
+      margin: 0;
+
+      max-width: 400px;
+
+      font-size: 14px;
+
+      line-height: 1.7;
+
+      opacity: .86;
+
+    }
+
+
+    .login-brand-line {
+
+      width: 60px;
+      height: 4px;
+
+      margin:
+        24px 0;
+
+      background:
+        rgba(255,255,255,.7);
+
+      border-radius: 20px;
+
+    }
+
+
+    .login-company {
+
+      font-size: 13px;
+
+      font-weight: 700;
+
+      opacity: .88;
+
+    }
+
+
+
+    /* ======================================================
+       LOGIN RIGHT
+       ====================================================== */
+
+    .master-login-form-wrap {
+
+      padding: 52px;
+
+      display: flex;
+
+      flex-direction: column;
+
+      justify-content: center;
+
+    }
+
+
+    .master-login-form-wrap h2 {
+
+      margin:
+        0 0 6px;
+
+      color: #075d49;
+
+      font-size: 25px;
+
+    }
+
+
+    .login-subtitle {
+
+      margin-bottom: 30px;
+
+      color: #81928d;
+
+      font-size: 13px;
+
+    }
+
+
+    .login-field {
+
+      margin-bottom: 18px;
+
+    }
+
+
+    .login-field label {
+
+      display: block;
+
+      margin-bottom: 7px;
+
+      color: #435c55;
+
+      font-size: 12px;
+
+      font-weight: 800;
+
+    }
+
+
+    .login-field input {
+
+      width: 100%;
+
+      height: 48px;
+
+      padding:
+        0 14px;
+
+      border:
+        1px solid #d5e3df;
+
+      border-radius: 11px;
+
+      outline: none;
+
+      background: #fbfdfc;
+
+      color: #173a32;
+
+      transition: .18s;
+
+    }
+
+
+    .login-field input:focus {
+
+      border-color: #008768;
+
+      background: white;
+
+      box-shadow:
+        0 0 0 3px
+        rgba(0, 135, 104, .09);
+
+    }
+
+
+    .login-password-wrap {
+
+      position: relative;
+
+    }
+
+
+    .login-password-wrap input {
+
+      padding-right: 48px;
+
+    }
+
+
+    .login-show-password {
+
+      position: absolute;
+
+      right: 7px;
+      top: 7px;
+
+      width: 34px;
+      height: 34px;
+
+      border: 0;
+
+      border-radius: 8px;
+
+      background: transparent;
+
+      cursor: pointer;
+
+    }
+
+
+    .login-show-password:hover {
+
+      background: #edf6f3;
+
+    }
+
+
+    .master-login-button {
+
+      width: 100%;
+
+      height: 49px;
+
+      margin-top: 7px;
+
+      border: 0;
+
+      border-radius: 11px;
+
+      background:
+        linear-gradient(
+          135deg,
+          #00765b,
+          #00a27a
+        );
+
+      color: white;
+
+      cursor: pointer;
+
+      font-weight: 800;
+
+      box-shadow:
+        0 8px 20px
+        rgba(0, 135, 104, .20);
+
+    }
+
+
+    .master-login-button:hover {
+
+      filter: brightness(1.04);
+
+    }
+
+
+    .master-login-button:disabled {
+
+      opacity: .65;
+
+      cursor: wait;
+
+    }
+
+
+    #masterLoginError {
+
+      min-height: 20px;
+
+      margin-top: 15px;
+
+      color: #c52b2b;
+
+      font-size: 12px;
+
+      font-weight: 700;
+
+    }
+
+
+
+    /* ======================================================
+       MAIN APP
+       ====================================================== */
+
+    #masterAppView {
+
+      min-height: 100vh;
+
+    }
+
+
+    .master-app {
+
+      min-height: 100vh;
+
+      display: grid;
+
+      grid-template-columns:
+        255px
+        minmax(0, 1fr);
+
+    }
+
+
+
+    /* ======================================================
+       LEFT SIDEBAR
+       ====================================================== */
+
+    .master-sidebar {
+
+      position: fixed;
+
+      left: 0;
+      top: 0;
+      bottom: 0;
+
+      width: 255px;
+
+      display: flex;
+
+      flex-direction: column;
+
+      background:
+        linear-gradient(
+          180deg,
+          #075f4c,
+          #064c3d
+        );
+
+      color: white;
+
+      z-index: 100;
+
+    }
+
+
+    .master-sidebar-brand {
+
+      height: 82px;
+
+      display: flex;
+
+      align-items: center;
+
+      gap: 12px;
+
+      padding:
+        0 19px;
+
+      border-bottom:
+        1px solid
+        rgba(255,255,255,.10);
+
+    }
+
+
+    .sidebar-logo {
+
+      width: 43px;
+      height: 43px;
+
+      flex-shrink: 0;
+
+      display: flex;
+
+      align-items: center;
+      justify-content: center;
+
+      background: white;
+
+      color: #00634d;
+
+      border-radius: 12px;
+
+      font-weight: 900;
+
+    }
+
+
+    .sidebar-brand-title {
+
+      font-size: 16px;
+
+      font-weight: 800;
+
+    }
+
+
+    .sidebar-brand-sub {
+
+      margin-top: 3px;
+
+      font-size: 10px;
+
+      opacity: .72;
+
+    }
+
+
+
+    /* ======================================================
+       MENU
+       ====================================================== */
+
+    .master-menu-label {
+
+      padding:
+        22px 18px
+        8px;
+
+      font-size: 10px;
+
+      font-weight: 800;
+
+      letter-spacing: .8px;
+
+      text-transform: uppercase;
+
+      opacity: .58;
+
+    }
+
+
+    #masterLeftMenu {
+
+      padding:
+        0 10px;
+
+      display: flex;
+
+      flex-direction: column;
+
+      gap: 5px;
+
+    }
+
+
+    .master-menu-item {
+
+      width: 100%;
+
+      min-height: 51px;
+
+      padding:
+        8px 11px;
+
+      border: 0;
+
+      border-radius: 11px;
+
+      background: transparent;
+
+      color:
+        rgba(255,255,255,.82);
+
+      cursor: pointer;
+
+      display: flex;
+
+      align-items: center;
+
+      gap: 10px;
+
+      text-align: left;
+
+      transition: .16s;
+
+    }
+
+
+    .master-menu-item:hover {
+
+      background:
+        rgba(255,255,255,.09);
+
+      color: white;
+
+    }
+
+
+    .master-menu-item.active {
+
+      background: white;
+
+      color: #07604c;
+
+      box-shadow:
+        0 7px 18px
+        rgba(0,0,0,.13);
+
+    }
+
+
+    .master-menu-icon {
+
+      width: 31px;
+      height: 31px;
+
+      flex-shrink: 0;
+
+      display: flex;
+
+      align-items: center;
+      justify-content: center;
+
+      border-radius: 8px;
+
+      background:
+        rgba(255,255,255,.09);
+
+      font-size: 16px;
+
+    }
+
+
+    .master-menu-item.active
+    .master-menu-icon {
+
+      background: #e8f5f1;
+
+    }
+
+
+    .master-menu-text {
+
+      font-size: 12px;
+
+      font-weight: 700;
+
+      line-height: 1.3;
+
+    }
+
+
+
+    /* ======================================================
+       SIDEBAR USER
+       ====================================================== */
+
+    .master-sidebar-user {
+
+      margin-top: auto;
+
+      padding: 15px;
+
+      border-top:
+        1px solid
+        rgba(255,255,255,.10);
+
+    }
+
+
+    .sidebar-user-card {
+
+      padding: 12px;
+
+      border-radius: 12px;
+
+      background:
+        rgba(255,255,255,.08);
+
+    }
+
+
+    .sidebar-user-name {
+
+      font-size: 13px;
+
+      font-weight: 800;
+
+    }
+
+
+    .sidebar-user-role {
+
+      margin-top: 4px;
+
+      font-size: 11px;
+
+      opacity: .72;
+
+    }
+
+
+    .sidebar-logout {
+
+      width: 100%;
+
+      margin-top: 10px;
+
+      padding:
+        9px 10px;
+
+      border:
+        1px solid
+        rgba(255,255,255,.15);
+
+      border-radius: 8px;
+
+      background:
+        rgba(255,255,255,.06);
+
+      color: white;
+
+      cursor: pointer;
+
+      font-size: 11px;
+
+      font-weight: 700;
+
+    }
+
+
+    .sidebar-logout:hover {
+
+      background:
+        rgba(255,255,255,.12);
+
+    }
+
+
+
+    /* ======================================================
+       RIGHT CONTENT
+       ====================================================== */
+
+    .master-content {
+
+      grid-column: 2;
+
+      min-width: 0;
+
+      min-height: 100vh;
+
+    }
+
+
+
+    /* ======================================================
+       TOP BAR
+       ====================================================== */
+
+    .master-topbar {
+
+      height: 82px;
+
+      padding:
+        0 25px;
+
+      background: white;
+
+      border-bottom:
+        1px solid #dfeae6;
+
+      display: flex;
+
+      align-items: center;
+
+      justify-content:
+        space-between;
+
+      position: sticky;
+
+      top: 0;
+
+      z-index: 50;
+
+    }
+
+
+    .master-page-title {
+
+      color: #075d49;
+
+      font-size: 19px;
+
+      font-weight: 800;
+
+    }
+
+
+    .master-page-subtitle {
+
+      margin-top: 4px;
+
+      color: #81928d;
+
+      font-size: 11px;
+
+    }
+
+
+    .master-top-user {
+
+      display: flex;
+
+      align-items: center;
+
+      gap: 12px;
+
+    }
+
+
+    .top-user-text {
+
+      text-align: right;
+
+    }
+
+
+    .top-welcome {
+
+      color: #6f837d;
+
+      font-size: 11px;
+
+    }
+
+
+    #masterTopUserName {
+
+      margin-top: 2px;
+
+      color: #173a32;
+
+      font-size: 13px;
+
+      font-weight: 800;
+
+    }
+
+
+    #masterTopRole {
+
+      padding:
+        7px 11px;
+
+      border-radius: 20px;
+
+      background: #e8f6f1;
+
+      color: #00765b;
+
+      font-size: 11px;
+
+      font-weight: 800;
+
+    }
+
+
+
+    /* ======================================================
+       PAGE BODY
+       ====================================================== */
+
+    .master-page-body {
+
+      padding: 22px;
+
+    }
+
+
+    .master-welcome {
+
+      min-height:
+        calc(100vh - 126px);
+
+      display: flex;
+
+      align-items: center;
+
+      justify-content: center;
+
+      text-align: center;
+
+      background: white;
+
+      border:
+        1px solid #dfeae6;
+
+      border-radius: 18px;
+
+    }
+
+
+    .master-welcome-icon {
+
+      width: 72px;
+      height: 72px;
+
+      margin:
+        0 auto 18px;
+
+      display: flex;
+
+      align-items: center;
+      justify-content: center;
+
+      border-radius: 20px;
+
+      background: #eaf7f2;
+
+      font-size: 32px;
+
+    }
+
+
+    .master-welcome h1 {
+
+      margin:
+        0 0 9px;
+
+      color: #075d49;
+
+      font-size: 24px;
+
+    }
+
+
+    .master-welcome p {
+
+      margin: 0;
+
+      color: #748780;
+
+      line-height: 1.6;
+
+      font-size: 13px;
+
+    }
+
+
+
+    /* ======================================================
+       MODULE COMMON
+       ====================================================== */
+
+    .master-module {
+
+      background: white;
+
+      border:
+        1px solid #dfeae6;
+
+      border-radius: 18px;
+
+      overflow: hidden;
+
+    }
+
+
+    .master-module-header {
+
+      min-height: 75px;
+
+      padding:
+        17px 20px;
+
+      display: flex;
+
+      align-items: center;
+
+      justify-content:
+        space-between;
+
+      border-bottom:
+        1px solid #e4eeeb;
+
+    }
+
+
+    .master-module-header h2 {
+
+      margin: 0;
+
+      color: #075d49;
+
+      font-size: 19px;
+
+    }
+
+
+    .master-module-header p {
+
+      margin:
+        5px 0 0;
+
+      color: #7b8e88;
+
+      font-size: 12px;
+
+    }
+
+
+    .master-content-card {
+
+      padding: 20px;
+
+    }
+
+
+    .master-placeholder {
+
+      min-height: 350px;
+
+      display: flex;
+
+      align-items: center;
+      justify-content: center;
+
+      border:
+        2px dashed #d9e8e3;
+
+      border-radius: 13px;
+
+      color: #83958f;
+
+      text-align: center;
+
+    }
+
+
+
+    /* ======================================================
+       LOADING
+       ====================================================== */
+
+    #masterLoading {
+
+      position: fixed;
+
+      inset: 0;
+
+      z-index: 99999;
+
+      display: flex;
+
+      align-items: center;
+      justify-content: center;
+
+      background:
+        rgba(243,248,246,.82);
+
+      backdrop-filter:
+        blur(3px);
+
+    }
+
+
+    .master-loading-box {
+
+      padding:
+        19px 27px;
+
+      background: white;
+
+      border-radius: 13px;
+
+      color: #075d49;
+
+      font-size: 13px;
+
+      font-weight: 800;
+
+      box-shadow:
+        0 12px 35px
+        rgba(0,0,0,.12);
+
+    }
+
+
+
+    /* ======================================================
+       RESPONSIVE
+       ====================================================== */
+
+    @media
+    (max-width: 850px) {
+
+      .master-login-wrapper {
+
+        grid-template-columns: 1fr;
+
+      }
+
+
+      .master-login-brand {
+
+        display: none;
+
+      }
+
+
+      .master-app {
+
+        grid-template-columns:
+          210px
+          minmax(0,1fr);
+
+      }
+
+
+      .master-sidebar {
+
+        width: 210px;
+
+      }
+
+    }
+
+  </style>
+
+</head>
+
+
+
+<body>
+
+
+<!-- ========================================================
+     LOADING
+     ======================================================== -->
+
+<div
+  id="masterLoading"
+  class="hidden"
+>
+
+  <div class="master-loading-box">
+    Đang xử lý...
+  </div>
+
+</div>
+
+
+
+<!-- ========================================================
+     LOGIN VIEW
+     ======================================================== -->
+
+<section id="masterLoginView">
+
+
+  <div class="master-login-wrapper">
+
+
+    <!-- LEFT -->
+
+    <div class="master-login-brand">
+
+
+      <div class="login-logo">
+        DMG
+      </div>
+
+
+      <h1>
+        Dữ liệu gốc
+      </h1>
+
+
+      <p>
+        Hệ thống nhập và quản lý dữ liệu Master
+        phục vụ kế hoạch, kho, kế toán,
+        bán hàng và mua hàng.
+      </p>
+
+
+      <div class="login-brand-line"></div>
+
+
+      <div class="login-company">
+
+        CÔNG TY TNHH
+        ĐỨC MINH ĐỒNG NAI
+
+      </div>
+
+
+    </div>
+
+
+
+    <!-- RIGHT -->
+
+    <div class="master-login-form-wrap">
+
+
+      <h2>
+        Đăng nhập
+      </h2>
+
+
+      <div class="login-subtitle">
+
+        Đăng nhập bằng tài khoản
+        được cấp để tiếp tục.
+
+      </div>
+
+
+
+      <div class="login-field">
+
+        <label>
+          Tên đăng nhập
+        </label>
+
+        <input
+          id="masterUsername"
+          type="text"
+          autocomplete="username"
+          placeholder="Nhập tên đăng nhập"
+        >
+
+      </div>
+
+
+
+      <div class="login-field">
+
+        <label>
+          Mật khẩu
+        </label>
+
+
+        <div class="login-password-wrap">
+
+          <input
+            id="masterPassword"
+            type="password"
+            autocomplete="current-password"
+            placeholder="Nhập mật khẩu"
+            onkeydown="
+              if(event.key === 'Enter'){
+                masterSubmitLogin();
+              }
+            "
+          >
+
+
+          <button
+            type="button"
+            class="login-show-password"
+            onclick="masterTogglePassword()"
+            title="Hiện / ẩn mật khẩu"
+          >
+            👁
+          </button>
+
+        </div>
+
+      </div>
+
+
+
+      <button
+        id="masterLoginButton"
+        class="master-login-button"
+        onclick="masterSubmitLogin()"
+      >
+        Đăng nhập
+      </button>
+
+
+      <div id="masterLoginError"></div>
+
+
+    </div>
+
+
+  </div>
+
+
+</section>
+
+
+
+<!-- ========================================================
+     APP VIEW
+     ======================================================== -->
+
+<section
+  id="masterAppView"
+  class="hidden"
+>
+
+
+  <div class="master-app">
+
+
+    <!-- ====================================================
+         LEFT SIDEBAR
+         ==================================================== -->
+
+    <aside class="master-sidebar">
+
+
+      <div class="master-sidebar-brand">
+
+
+        <div class="sidebar-logo">
+          DMG
+        </div>
+
+
+        <div>
+
+          <div class="sidebar-brand-title">
+            Dữ liệu gốc
+          </div>
+
+          <div class="sidebar-brand-sub">
+            DMG MASTER DATA
+          </div>
+
+        </div>
+
+
+      </div>
+
+
+
+      <div class="master-menu-label">
+        Chức năng
+      </div>
+
+
+      <nav id="masterLeftMenu">
+      </nav>
+
+
+
+      <!-- USER -->
+
+      <div class="master-sidebar-user">
+
+
+        <div class="sidebar-user-card">
+
+
+          <div
+            id="masterSidebarUserName"
+            class="sidebar-user-name"
+          >
+          </div>
+
+
+          <div
+            id="masterSidebarRole"
+            class="sidebar-user-role"
+          >
+          </div>
+
+
+          <button
+            class="sidebar-logout"
+            onclick="masterLogout()"
+          >
+            Đăng xuất
+          </button>
+
+
+        </div>
+
+
+      </div>
+
+
+    </aside>
+
+
+
+    <!-- ====================================================
+         CONTENT
+         ==================================================== -->
+
+    <div class="master-content">
+
+
+      <!-- TOP -->
+
+      <header class="master-topbar">
+
+
+        <div>
+
+
+          <div
+            id="masterPageTitle"
+            class="master-page-title"
+          >
+            Dữ liệu gốc
+          </div>
+
+
+          <div
+            id="masterPageSubtitle"
+            class="master-page-subtitle"
+          >
+            Quản lý dữ liệu Master
+          </div>
+
+
+        </div>
+
+
+
+        <div class="master-top-user">
+
+
+          <div class="top-user-text">
+
+            <div class="top-welcome">
+              Xin chào
+            </div>
+
+            <div id="masterTopUserName">
+            </div>
+
+          </div>
+
+
+          <div id="masterTopRole">
+          </div>
+
+
+        </div>
+
+
+      </header>
+
+
+
+      <!-- BODY -->
+
+      <main class="master-page-body">
+
+
+        <!-- HOME -->
+
+        <div
+          id="masterWelcome"
+          class="master-welcome"
+        >
+
+
+          <div>
+
+
+            <div class="master-welcome-icon">
+              🗂️
+            </div>
+
+
+            <h1>
+              Hệ thống dữ liệu gốc
+            </h1>
+
+
+            <p>
+
+              Xin chào
+              <strong id="masterWelcomeName">
+              </strong>.
+
+              <br>
+
+              Chọn chức năng ở menu bên trái
+              để bắt đầu nhập dữ liệu.
+
+            </p>
+
+
+          </div>
+
+
+        </div>
+
+
+
+        <!-- MODULES -->
+
+        <?!= include('MasterKeToan'); ?>
+
+        <?!= include('MasterPCN'); ?>
+        <?!= include('MasterPCNBomInline'); ?>
+
+        <?!= include('MasterKho'); ?>
+
+        <?!= include('MasterPhongBan'); ?>
+
+        <?!= include('MasterPhongMua'); ?>
+
+
+      </main>
+
+
+    </div>
+
+
+  </div>
+
+
+</section>
+
+
+
+<!-- ========================================================
+     COMMON MODULE JS
+     ======================================================== -->
+
+<?!= include('MasterCommon'); ?>
+
+
+
+<script>
+
+
+// ============================================================
+// USER HIỆN TẠI
+// ============================================================
+
+let MASTER_CURRENT_USER =
+  null;
+
+
+
+// ============================================================
+// CẤU HÌNH MENU
+// ============================================================
+
+const MASTER_MENUS = [
+
+
+  {
+
+    id:
+      'keToan',
+
+    title:
+      'Nhập dữ liệu kế toán',
+
+    icon:
+      '🧾',
+
+    viewId:
+      'masterViewKeToan',
+
+    roles: [
+      'Admin',
+      'KeToan'
+    ]
+
+  },
+
+
+  {
+
+    id:
+      'pcn',
+
+    title:
+      'Nhập dữ liệu PCN',
+
+    icon:
+      '📋',
+
+    viewId:
+      'masterViewPCN',
+
+    roles: [
+      'Admin',
+      'PCN'
+    ]
+
+  },
+
+
+  {
+
+    id:
+      'kho',
+
+    title:
+      'Nhập dữ liệu Kho',
+
+    icon:
+      '📦',
+
+    viewId:
+      'masterViewKho',
+
+    roles: [
+      'Admin',
+      'Kho',
+      'PhongMua'
+    ]
+
+  },
+
+
+  {
+
+    id:
+      'phongBan',
+
+    title:
+      'Nhập dữ liệu phòng bán',
+
+    icon:
+      '📈',
+
+    viewId:
+      'masterViewPhongBan',
+
+    roles: [
+      'Admin',
+      'PhongBanHang'
+    ]
+
+  },
+
+
+  {
+
+    id:
+      'phongMua',
+
+    title:
+      'Nhập dữ liệu phòng mua',
+
+    icon:
+      '🛒',
+
+    viewId:
+      'masterViewPhongMua',
+
+    roles: [
+      'Admin',
+      'PhongMua'
+    ]
+
+  }
+
+
+];
+
+
+
+// ============================================================
+// SERVER
+// ============================================================
+
+function masterServer(
+  functionName,
+  ...args
+) {
+
+
+  return new Promise(
+    (resolve, reject) => {
+
+
+      google.script.run
+
+
+        .withSuccessHandler(
+          resolve
+        )
+
+
+        .withFailureHandler(
+          reject
+        )
+
+
+        [functionName](
+          ...args
+        );
+
+
+    }
+  );
+
+}
+
+
+
+// ============================================================
+// LOADING
+// ============================================================
+
+function masterSetLoading(
+  show
+) {
+
+
+  document
+    .getElementById(
+      'masterLoading'
+    )
+    ?.classList
+    .toggle(
+      'hidden',
+      !show
+    );
+
+}
+
+
+
+// ============================================================
+// LOGIN
+// ============================================================
+
+async function masterSubmitLogin() {
+
+
+  const username =
+    document
+      .getElementById(
+        'masterUsername'
+      )
+      .value
+      .trim();
+
+
+  const password =
+    document
+      .getElementById(
+        'masterPassword'
+      )
+      .value;
+
+
+  const errorBox =
+    document
+      .getElementById(
+        'masterLoginError'
+      );
+
+
+  const button =
+    document
+      .getElementById(
+        'masterLoginButton'
+      );
+
+
+  errorBox.textContent =
+    '';
+
+
+  if (!username) {
+
+    errorBox.textContent =
+      'Vui lòng nhập tên đăng nhập.';
+
+    return;
+
+  }
+
+
+  if (!password) {
+
+    errorBox.textContent =
+      'Vui lòng nhập mật khẩu.';
+
+    return;
+
+  }
+
+
+  button.disabled =
+    true;
+
+
+  button.textContent =
+    'Đang đăng nhập...';
+
+
+  masterSetLoading(
+    true
+  );
+
+
+  try {
+
+
+    const result =
+      await masterServer(
+        'masterLogin',
+        username,
+        password
+      );
+
+
+    if (
+      !result ||
+      !result.ok
+    ) {
+
+
+      errorBox.textContent =
+        result?.message ||
+        'Không thể đăng nhập.';
+
+
+      return;
+
+    }
+
+
+    MASTER_CURRENT_USER =
+      result.user;
+
+
+    masterOpenApplication();
+
+
+  } catch (error) {
+
+
+    console.error(
+      error
+    );
+
+
+    errorBox.textContent =
+      error?.message ||
+      'Có lỗi khi đăng nhập.';
+
+
+  } finally {
+
+
+    button.disabled =
+      false;
+
+
+    button.textContent =
+      'Đăng nhập';
+
+
+    masterSetLoading(
+      false
+    );
+
+
+  }
+
+}
+
+
+
+// ============================================================
+// SHOW / HIDE PASSWORD
+// ============================================================
+
+function masterTogglePassword() {
+
+
+  const input =
+    document
+      .getElementById(
+        'masterPassword'
+      );
+
+
+  input.type =
+    input.type === 'password'
+      ? 'text'
+      : 'password';
+
+}
+
+
+
+// ============================================================
+// SAU KHI LOGIN
+// ============================================================
+
+function masterOpenApplication() {
+
+
+  if (!MASTER_CURRENT_USER) {
+    return;
+  }
+
+
+  document
+    .getElementById(
+      'masterLoginView'
+    )
+    .classList
+    .add(
+      'hidden'
+    );
+
+
+  document
+    .getElementById(
+      'masterAppView'
+    )
+    .classList
+    .remove(
+      'hidden'
+    );
+
+
+  masterRenderUser();
+
+
+  masterRenderMenu();
+
+
+  masterShowHome();
+
+}
+
+
+
+// ============================================================
+// USER INFO
+// ============================================================
+
+function masterRenderUser() {
+
+
+  const user =
+    MASTER_CURRENT_USER;
+
+
+  const name =
+    user.hoVaTen ||
+    user.tenDangNhap;
+
+
+  document
+    .getElementById(
+      'masterTopUserName'
+    )
+    .textContent =
+      name;
+
+
+  document
+    .getElementById(
+      'masterTopRole'
+    )
+    .textContent =
+      user.role;
+
+
+  document
+    .getElementById(
+      'masterSidebarUserName'
+    )
+    .textContent =
+      name;
+
+
+  document
+    .getElementById(
+      'masterSidebarRole'
+    )
+    .textContent =
+      'Quyền: ' +
+      user.role;
+
+
+  document
+    .getElementById(
+      'masterWelcomeName'
+    )
+    .textContent =
+      name;
+
+}
+
+
+
+// ============================================================
+// CHECK ROLE
+// ============================================================
+
+function masterHasRole(
+  menu
+) {
+
+
+  if (!MASTER_CURRENT_USER) {
+    return false;
+  }
+
+
+  const role =
+    String(
+      MASTER_CURRENT_USER.role ||
+      ''
+    ).trim();
+
+
+  return menu.roles.some(
+    item =>
+      item.toLowerCase() ===
+      role.toLowerCase()
+  );
+
+}
+
+
+
+// ============================================================
+// RENDER MENU
+// ============================================================
+
+function masterRenderMenu() {
+
+
+  const container =
+    document
+      .getElementById(
+        'masterLeftMenu'
+      );
+
+
+  container.innerHTML =
+    '';
+
+
+  MASTER_MENUS
+
+    .filter(
+      masterHasRole
+    )
+
+    .forEach(
+      menu => {
+
+
+        const button =
+          document.createElement(
+            'button'
+          );
+
+
+        button.type =
+          'button';
+
+
+        button.className =
+          'master-menu-item';
+
+
+        button.dataset.menuId =
+          menu.id;
+
+
+        button.innerHTML = `
+
+          <span class="master-menu-icon">
+
+            ${menu.icon}
+
+          </span>
+
+
+          <span class="master-menu-text">
+
+            ${menu.title}
+
+          </span>
+
+        `;
+
+
+        button.onclick =
+          function() {
+
+            masterOpenMenu(
+              menu.id
+            );
+
+          };
+
+
+        container.appendChild(
+          button
+        );
+
+
+      }
+    );
+
+}
+
+
+
+// ============================================================
+// ẨN TẤT CẢ MODULE
+// ============================================================
+
+function masterHideAllViews() {
+
+
+  document
+    .getElementById(
+      'masterWelcome'
+    )
+    ?.classList
+    .add(
+      'hidden'
+    );
+
+
+  MASTER_MENUS.forEach(
+    menu => {
+
+
+      document
+        .getElementById(
+          menu.viewId
+        )
+        ?.classList
+        .add(
+          'hidden'
+        );
+
+
+    }
+  );
+
+}
+
+
+
+// ============================================================
+// HOME
+// ============================================================
+
+function masterShowHome() {
+
+
+  masterHideAllViews();
+
+
+  document
+    .getElementById(
+      'masterWelcome'
+    )
+    ?.classList
+    .remove(
+      'hidden'
+    );
+
+
+  document
+    .querySelectorAll(
+      '.master-menu-item'
+    )
+    .forEach(
+      item =>
+        item.classList.remove(
+          'active'
+        )
+    );
+
+
+  document
+    .getElementById(
+      'masterPageTitle'
+    )
+    .textContent =
+      'Dữ liệu gốc';
+
+
+  document
+    .getElementById(
+      'masterPageSubtitle'
+    )
+    .textContent =
+      'Quản lý dữ liệu Master';
+
+}
+
+
+
+// ============================================================
+// MỞ MENU
+// ============================================================
+
+function masterOpenMenu(
+  menuId
+) {
+
+
+  const menu =
+    MASTER_MENUS.find(
+      item =>
+        item.id === menuId
+    );
+
+
+  if (!menu) {
+    return;
+  }
+
+
+  if (!masterHasRole(menu)) {
+
+
+    alert(
+      'Bạn không có quyền truy cập chức năng này.'
+    );
+
+
+    return;
+
+  }
+
+
+  masterHideAllViews();
+
+
+  const view =
+    document
+      .getElementById(
+        menu.viewId
+      );
+
+
+  if (view) {
+
+
+    view.classList.remove(
+      'hidden'
+    );
+
+
+  } else {
+
+
+    console.warn(
+      'Không tìm thấy view:',
+      menu.viewId
+    );
+
+
+  }
+
+
+  document
+    .querySelectorAll(
+      '.master-menu-item'
+    )
+    .forEach(
+      item => {
+
+
+        item.classList.toggle(
+          'active',
+          item.dataset.menuId ===
+            menuId
+        );
+
+
+      }
+    );
+
+
+  document
+    .getElementById(
+      'masterPageTitle'
+    )
+    .textContent =
+      menu.title;
+
+
+  document
+    .getElementById(
+      'masterPageSubtitle'
+    )
+    .textContent =
+      'DMG Master Data';
+
+  // ==========================================================
+  // KHỞI TẠO DỮ LIỆU RIÊNG THEO MODULE
+  // ==========================================================
+
+  if (
+    menuId === 'phongBan' &&
+    typeof masterPB_init === 'function'
+  ) {
+
+    masterPB_init(false);
+
+  }
+
+  if (
+    menuId === 'phongMua' &&
+    typeof masterPM_init === 'function'
+  ) {
+
+    masterPM_init(false);
+
+  }
+
+}
+
+
+
+// ============================================================
+// LOGOUT
+// ============================================================
+
+function masterLogout() {
+
+
+  MASTER_CURRENT_USER =
+    null;
+
+
+  document
+    .getElementById(
+      'masterAppView'
+    )
+    .classList
+    .add(
+      'hidden'
+    );
+
+
+  document
+    .getElementById(
+      'masterLoginView'
+    )
+    .classList
+    .remove(
+      'hidden'
+    );
+
+
+  document
+    .getElementById(
+      'masterPassword'
+    )
+    .value =
+      '';
+
+
+  document
+    .getElementById(
+      'masterLoginError'
+    )
+    .textContent =
+      '';
+
+
+  document
+    .getElementById(
+      'masterUsername'
+    )
+    .focus();
+
+}
+
+
+
+// ============================================================
+// READY
+// ============================================================
+
+document.addEventListener(
+  'DOMContentLoaded',
+  function() {
+
+
+    document
+      .getElementById(
+        'masterUsername'
+      )
+      ?.focus();
+
+
+  }
+);
+
+
+</script>
+
+
+</body>
+
+</html>

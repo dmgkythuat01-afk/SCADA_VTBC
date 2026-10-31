@@ -1,0 +1,82 @@
+<style>
+  #masterViewPCN .pcn-bom-select{min-width:130px;padding:8px;border:1px solid #cbded5;border-radius:8px;background:#fff;color:#173e32}
+  #masterViewPCN .pcn-bom-select:disabled{opacity:.6}
+  #masterViewPCN .pcn-bom-status{display:block;max-width:300px;white-space:normal;margin-top:6px;color:#065f46;font-size:12px}
+  #masterViewPCN .pcn-bom-error{color:#b91c1c}
+</style>
+<script>
+const MASTER_PCN_BOM_INLINE = {
+  fields:['MaKeToan1','MaKeToan2','MaKeToan3','SuDung0','SuDung1','SuDung2','SuDung3'],
+  identity:['maDinhLuong','maSanPham','maNguyenLieu','tenNguyenLieu'],
+  drafts:new Map(), saving:new Set(), status:new Map()
+};
+function masterPCNBom_identity(row){
+  return Object.fromEntries(MASTER_PCN_BOM_INLINE.identity.map(field=>[field,String(row[field]??'').trim()]));
+}
+function masterPCNBom_snapshot(row){
+  return Object.fromEntries(MASTER_PCN_BOM_INLINE.fields.map(field=>[field,String(row[field]??'')]));
+}
+function masterPCNBom_draft(row){
+  const draft=MASTER_PCN_BOM_INLINE.drafts.get(Number(row.__rowNumber));
+  return draft && JSON.stringify(draft.identity)===JSON.stringify(masterPCNBom_identity(row)) ? draft : null;
+}
+function masterPCNBom_cell(row,field){
+  if(MASTER_PCN.tab!=='bom'||!MASTER_PCN_BOM_INLINE.fields.includes(field)) return masterPCN_esc(row[field]);
+  const draft=masterPCNBom_draft(row);
+  const value=String((draft?draft.values:row)[field]??'');
+  const text=v=>String(v??'').trim();
+  const isCode=field.startsWith('MaKeToan');
+  const codes=[...new Set((MASTER_PCN.data.nguyenLieu||[]).filter(item=>
+    text(row.maNguyenLieu)&&text(row.tenNguyenLieu)&&
+    text(item.maNguyenLieu)===text(row.maNguyenLieu)&&text(item.tenNguyenLieu)===text(row.tenNguyenLieu))
+    .map(item=>text(item.MaKeToan)).filter(Boolean))];
+  const options=isCode?codes.map(code=>({value:code,label:code})):[{value:'TRUE',label:'Có'},{value:'FALSE',label:'Không'}];
+  const selected=isCode?value.trim():value.trim().toUpperCase();
+  if(selected&&!options.some(option=>option.value===selected)) options.unshift({value:selected,label:selected+' (hiện tại; ngoài danh mục)'});
+  const rowNumber=Number(row.__rowNumber);
+  return `<select class="pcn-bom-select" aria-label="${masterPCN_esc(field)} dòng ${rowNumber}" ${MASTER_PCN_BOM_INLINE.saving.has(rowNumber)?'disabled':''}
+    onchange="masterPCNBom_change(${rowNumber},'${field}',this.value)">
+    <option value="">${isCode?'— Chọn mã —':'— Chưa chọn —'}</option>
+    ${options.map(option=>`<option value="${masterPCN_esc(option.value)}" ${option.value===selected?'selected':''}>${masterPCN_esc(option.label)}</option>`).join('')}
+  </select>`;
+}
+function masterPCNBom_actions(row){
+  if(MASTER_PCN.tab!=='bom')return '';
+  const rowNumber=Number(row.__rowNumber),status=MASTER_PCN_BOM_INLINE.status.get(rowNumber);
+  return `<button class="pcn-btn pcn-primary" ${MASTER_PCN_BOM_INLINE.saving.has(rowNumber)?'disabled':''} onclick="masterPCNBom_save(${rowNumber})">${MASTER_PCN_BOM_INLINE.saving.has(rowNumber)?'Đang lưu…':'Lưu'}</button>
+    <span class="pcn-bom-status ${status?.error?'pcn-bom-error':''}" id="pcnBomStatus${rowNumber}" role="status">${masterPCN_esc(status?.message||'')}</span>`;
+}
+function masterPCNBom_change(rowNumber,field,value){
+  if(!MASTER_PCN_BOM_INLINE.fields.includes(field)||MASTER_PCN_BOM_INLINE.saving.has(rowNumber))return;
+  const row=MASTER_PCN.data.dinhLuong.rows.find(item=>Number(item.__rowNumber)===rowNumber);
+  if(!row)return;
+  const draft=masterPCNBom_draft(row)||{identity:masterPCNBom_identity(row),expected:masterPCNBom_snapshot(row),values:masterPCNBom_snapshot(row)};
+  draft.values[field]=value;
+  MASTER_PCN_BOM_INLINE.drafts.set(rowNumber,draft);
+  MASTER_PCN_BOM_INLINE.status.set(rowNumber,{message:'Chưa lưu'});
+  const status=document.getElementById('pcnBomStatus'+rowNumber);
+  if(status){status.textContent='Chưa lưu';status.className='pcn-bom-status';}
+}
+async function masterPCNBom_save(rowNumber){
+  if(MASTER_PCN_BOM_INLINE.saving.has(rowNumber))return;
+  const row=MASTER_PCN.data.dinhLuong.rows.find(item=>Number(item.__rowNumber)===rowNumber);
+  if(!row)return;
+  const draft=masterPCNBom_draft(row)||{identity:masterPCNBom_identity(row),expected:masterPCNBom_snapshot(row),values:masterPCNBom_snapshot(row)};
+  MASTER_PCN_BOM_INLINE.saving.add(rowNumber);
+  MASTER_PCN_BOM_INLINE.status.set(rowNumber,{message:'Đang lưu…'});
+  masterPCN_render();
+  try{
+    const result=await masterPCN_server('masterPCN_saveBOMAccounting',{rowNumber,...draft});
+    if(!result?.ok||!result.row)throw new Error('Không lưu được lựa chọn BOM.');
+    const current=MASTER_PCN.data.dinhLuong.rows.find(item=>Number(item.__rowNumber)===rowNumber);
+    if(current&&JSON.stringify(masterPCNBom_identity(current))===JSON.stringify(draft.identity))Object.assign(current,result.row);
+    MASTER_PCN_BOM_INLINE.drafts.delete(rowNumber);
+    MASTER_PCN_BOM_INLINE.status.set(rowNumber,{message:'Đã lưu'});
+  }catch(error){
+    MASTER_PCN_BOM_INLINE.status.set(rowNumber,{message:error.message||String(error),error:true});
+  }finally{
+    MASTER_PCN_BOM_INLINE.saving.delete(rowNumber);
+    masterPCN_render();
+  }
+}
+</script>
