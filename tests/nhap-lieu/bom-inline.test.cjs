@@ -12,10 +12,11 @@ test('accounting choices match both material code and name, preserve zeros and r
 });
 test('inline validation accepts blank codes and booleans but rejects codes from another material',()=>{
  const ctx=load('MasterPCNBomInlineGs.js');
- const values={MaKeToan1:'001',MaKeToan2:'',MaKeToan3:'002',SuDung0:'TRUE',SuDung1:'FALSE',SuDung2:'',SuDung3:'TRUE'};
+ const values={MaKeToan:'001',MaKeToan1:'001',MaKeToan2:'',MaKeToan3:'002',SuDung0:'TRUE',SuDung1:'FALSE',SuDung2:'',SuDung3:'TRUE'};
  const result=ctx.masterPCNBom_validate_(values,['001','002']);
  a.equal(result.SuDung0,true);a.equal(result.SuDung1,false);a.equal(result.SuDung2,'');a.equal(result.MaKeToan1,'001');
  a.throws(()=>ctx.masterPCNBom_validate_({...values,MaKeToan1:'WRONG'},['001']),/MaKeToan1/);
+ a.throws(()=>ctx.masterPCNBom_validate_({...values,MaKeToan:'WRONG'},['001','002']),/MaKeToan/);
  a.throws(()=>ctx.masterPCNBom_validate_({...values,SuDung1:'invalid'},['001','002']),/SuDung1/);
 });
 function backendSetup(){
@@ -25,13 +26,13 @@ function backendSetup(){
  const sheet={getLastRow:()=>data.length,getLastColumn:()=>headers.length,getRange(row,col,count=1,width=1){return {getDisplayValues:()=>data.slice(row-1,row-1+count).map(r=>r.slice(col-1,col-1+width).map(String)),setNumberFormat(){return this;},setValue(value){data[row-1][col-1]=value;writes.push({row,col,value});return this;}};}};
  const ctx=load('MasterPCNBomInlineGs.js',{MASTER_PCN_CONFIG:{DINH_LUONG:'DinhLuong',NGUYEN_LIEU:'NguyenLieuVatTu'},masterPCN_getSheet_:()=>sheet,masterPCN_read_:()=>({rows:[{maNguyenLieu:'NL',tenNguyenLieu:'Name',MaKeToan:'001'},{maNguyenLieu:'NL',tenNguyenLieu:'Name',MaKeToan:'002'}]}),LockService:{getScriptLock:()=>({waitLock(){},releaseLock(){released=true;}})},SpreadsheetApp:{flush(){}}});
  const identity={maDinhLuong:'BOM_SHARED',maSanPham:'SP',maNguyenLieu:'NL',tenNguyenLieu:'Name'};
- const expected={MaKeToan1:'001',MaKeToan2:'',MaKeToan3:'',SuDung0:'TRUE',SuDung1:'FALSE',SuDung2:'',SuDung3:''};
- return {ctx,data,writes,get released(){return released;},request:{rowNumber:2,identity,expected,values:{...expected,MaKeToan1:'002',SuDung1:'TRUE'},ghiChu:'DO NOT WRITE'}};
+ const expected={MaKeToan:'000',MaKeToan1:'001',MaKeToan2:'',MaKeToan3:'',SuDung0:'TRUE',SuDung1:'FALSE',SuDung2:'',SuDung3:''};
+ return {ctx,data,writes,get released(){return released;},request:{rowNumber:2,identity,expected,values:{...expected,MaKeToan:'001',MaKeToan1:'002',SuDung1:'TRUE'},ghiChu:'DO NOT WRITE'}};
 }
-test('row save writes only seven fields on the chosen physical BOM row, not all shared BOM IDs',()=>{
+test('row save writes all four code choices and four flags on the chosen physical BOM row',()=>{
  const s=backendSetup();const result=s.ctx.masterPCN_saveBOMAccounting(s.request);
- a.equal(s.writes.length,7);a.ok(s.writes.every(w=>w.row===2&&w.col>=7));
- a.equal(s.data[1][4],'000');a.equal(s.data[1][5],12);a.equal(s.data[1][6],'002');a.equal(s.data[1][10],true);
+ a.equal(s.writes.length,8);a.ok(s.writes.every(w=>w.row===2&&(w.col===5||w.col>=7)));
+ a.equal(s.data[1][4],'001');a.equal(s.data[1][5],12);a.equal(s.data[1][6],'002');a.equal(s.data[1][10],true);
  a.equal(s.data[2][6],'');a.equal(result.row.__rowNumber,2);a.equal(result.row.SuDung1,'TRUE');a.equal(s.released,true);
 });
 test('stale identity, concurrent edits and invalid accounting codes are rejected before any write',()=>{
@@ -54,11 +55,21 @@ function frontendSetup(){
  vm.runInContext('MASTER_PCN.tab="bom";MASTER_PCN.data={dinhLuong:{headers:fixture.headers,rows:[fixture.row,fixture.other]},nguyenLieu:fixture.catalog}',ctx);
  return {ctx,node};
 }
-test('BOM table shows seven inline dropdowns per row, exact-pair codes and a save action',()=>{
+test('BOM table shows eight inline dropdowns per row, exact-pair codes and a save action',()=>{
  const s=frontendSetup();vm.runInContext('masterPCN_render()',s.ctx);
  const html=s.node('pcnTable').innerHTML;const first=html.split('<tbody>')[1].split('</tr>')[0];
- a.equal((first.match(/<select /g)||[]).length,7);a.match(first,/>002<\/option>/);a.doesNotMatch(first,/>999<\/option>/);
+ a.equal((first.match(/<select /g)||[]).length,8);a.match(first,/>002<\/option>/);a.doesNotMatch(first,/>999<\/option>/);
  a.match(first,/masterPCNBom_save\(2\)/);a.match(first,/Có/);a.match(first,/Không/);
+});
+test('product search lists full unique names, supports typing and exact selection',()=>{
+ const s=frontendSetup();
+ vm.runInContext('fixture.row.tenSanPham="Nước giặt hương hoa";fixture.other.tenSanPham="Nước giặt hương hoa cao cấp";MASTER_PCN.data.sanPham=[]',s.ctx);
+ a.deepEqual(Array.from(vm.runInContext('masterPCNBom_products()',s.ctx)),['Nước giặt hương hoa','Nước giặt hương hoa cao cấp']);
+ s.node('pcnProductInput').value='cao cấp';vm.runInContext('masterPCNBom_productInput();masterPCN_render()',s.ctx);
+ a.doesNotMatch(s.node('pcnTable').innerHTML,/masterPCNBom_save\(2\)/);a.match(s.node('pcnTable').innerHTML,/masterPCNBom_save\(3\)/);
+ vm.runInContext('masterPCNBom_productToggle(true);masterPCNBom_pickProduct(1)',s.ctx);
+ a.equal(s.node('pcnProductInput').value,'Nước giặt hương hoa');
+ a.match(s.node('pcnTable').innerHTML,/masterPCNBom_save\(2\)/);a.doesNotMatch(s.node('pcnTable').innerHTML,/masterPCNBom_save\(3\)/);
 });
 test('inline drafts survive search rerenders and saving one row preserves another draft',async()=>{
  const s=frontendSetup();vm.runInContext('masterPCNBom_change(2,"MaKeToan1","002");masterPCNBom_change(3,"SuDung1","TRUE");masterPCN_render()',s.ctx);

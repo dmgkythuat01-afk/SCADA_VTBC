@@ -53,6 +53,14 @@
       </div>
       <div class="pcn-actions">
         <input id="pcnSearch" class="pcn-search" placeholder="Tìm kiếm..." oninput="masterPCN_render()">
+        <div id="pcnProductSearch" class="pcn-product-search" hidden>
+          <input id="pcnProductInput" class="pcn-product-input" type="text" role="combobox" autocomplete="off"
+            aria-label="Tìm hoặc chọn tên sản phẩm" aria-expanded="false" aria-controls="pcnProductOptions" aria-autocomplete="list"
+            placeholder="Tất cả sản phẩm — nhập để tìm hoặc mở danh sách để chọn"
+            oninput="masterPCNBom_productInput()" onfocus="masterPCNBom_productToggle()" onkeydown="masterPCNBom_productKey(event)">
+          <button type="button" class="pcn-product-toggle" aria-label="Mở danh sách sản phẩm" onclick="masterPCNBom_productToggle(true)">▾</button>
+          <div id="pcnProductOptions" class="pcn-product-options" role="listbox" hidden></div>
+        </div>
         <button class="pcn-btn pcn-ghost" onclick="masterPCN_init(true)">↻ Tải lại</button>
         <button class="pcn-btn pcn-primary" onclick="masterPCN_openAdd()">+ Thêm mới</button>
       </div>
@@ -137,7 +145,8 @@ function masterPCN_render(){
 
   const q=(document.getElementById('pcnSearch').value||'').trim().toLowerCase();
   const headers=masterPCN_headers();
-  const rows=masterPCN_rows().filter(r=>!q || headers.some(h=>String(r[h]||'').toLowerCase().includes(q)));
+  masterPCNBom_syncSearch();
+  const rows=masterPCN_rows().filter(r=>MASTER_PCN.tab==='bom'?masterPCNBom_matchProduct(r):!q || headers.some(h=>String(r[h]||'').toLowerCase().includes(q)));
   document.getElementById('pcnSummary').textContent=rows.length+' dòng dữ liệu';
 
   if(!rows.length){

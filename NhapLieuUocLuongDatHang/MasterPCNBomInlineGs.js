@@ -1,5 +1,5 @@
 // Chỉ sửa các lựa chọn mã kế toán / sử dụng trên một dòng BOM có sẵn.
-const MASTER_PCN_BOM_FIELDS = ['MaKeToan1','MaKeToan2','MaKeToan3','SuDung0','SuDung1','SuDung2','SuDung3'];
+const MASTER_PCN_BOM_FIELDS = ['MaKeToan','MaKeToan1','MaKeToan2','MaKeToan3','SuDung0','SuDung1','SuDung2','SuDung3'];
 const MASTER_PCN_BOM_IDENTITY = ['maDinhLuong','maSanPham','maNguyenLieu','tenNguyenLieu'];
 
 function masterPCNBom_codes_(material, rows) {

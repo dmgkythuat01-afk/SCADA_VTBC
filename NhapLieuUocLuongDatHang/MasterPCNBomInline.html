@@ -3,13 +3,86 @@
   #masterViewPCN .pcn-bom-select:disabled{opacity:.6}
   #masterViewPCN .pcn-bom-status{display:block;max-width:300px;white-space:normal;margin-top:6px;color:#065f46;font-size:12px}
   #masterViewPCN .pcn-bom-error{color:#b91c1c}
+  #masterViewPCN .pcn-panel{overflow:visible}
+  #masterViewPCN .pcn-table-wrap{border-radius:0 0 22px 22px}
+  #masterViewPCN .pcn-actions{flex:1;justify-content:flex-end;align-items:center}
+  #masterViewPCN .pcn-product-search{position:relative;flex:1;max-width:900px;min-width:340px}
+  #masterViewPCN .pcn-product-search[hidden]{display:none}
+  #masterViewPCN .pcn-product-input{width:100%;box-sizing:border-box;padding:12px 46px 12px 14px;border:1px solid #cbded5;border-radius:12px;font-size:14px;color:#173e32}
+  #masterViewPCN .pcn-product-toggle{position:absolute;right:3px;top:3px;bottom:3px;width:38px;border:0;border-radius:9px;background:#ecfdf5;color:#065f46;cursor:pointer}
+  #masterViewPCN .pcn-product-options{position:absolute;top:calc(100% + 5px);left:0;right:0;max-height:360px;overflow-y:auto;background:#fff;border:1px solid #cbded5;border-radius:12px;box-shadow:0 12px 30px #064e3b22;z-index:20;padding:5px}
+  #masterViewPCN .pcn-product-option{display:block;box-sizing:border-box;width:100%;padding:11px 12px;border:0;border-radius:7px;background:#fff;text-align:left;white-space:normal;overflow-wrap:anywhere;line-height:1.5;font-size:14px;color:#173e32;cursor:pointer}
+  #masterViewPCN .pcn-product-option:hover,#masterViewPCN .pcn-product-option.active{background:#ecfdf5}
+  @media(max-width:900px){#masterViewPCN .pcn-head{flex-wrap:wrap}#masterViewPCN .pcn-actions{width:100%;flex-wrap:wrap}#masterViewPCN .pcn-product-search{flex-basis:100%;min-width:0;max-width:none}}
 </style>
 <script>
 const MASTER_PCN_BOM_INLINE = {
-  fields:['MaKeToan1','MaKeToan2','MaKeToan3','SuDung0','SuDung1','SuDung2','SuDung3'],
+  fields:['MaKeToan','MaKeToan1','MaKeToan2','MaKeToan3','SuDung0','SuDung1','SuDung2','SuDung3'],
   identity:['maDinhLuong','maSanPham','maNguyenLieu','tenNguyenLieu'],
   drafts:new Map(), saving:new Set(), status:new Map()
 };
+const MASTER_PCN_PRODUCT_SEARCH={selected:null,open:false,all:false,active:-1,choices:[]};
+function masterPCNBom_productName(row){
+  return String(row.tenSanPham||(MASTER_PCN.data.sanPham||[]).find(item=>String(item.maSanPham)===String(row.maSanPham))?.tenSanPham||row.maSanPham||'').trim();
+}
+function masterPCNBom_products(){
+  return [...new Set((MASTER_PCN.data.dinhLuong.rows||[]).map(masterPCNBom_productName).filter(Boolean))];
+}
+function masterPCNBom_matchProduct(row){
+  const name=masterPCNBom_productName(row);
+  const selected=MASTER_PCN_PRODUCT_SEARCH.selected;
+  if(selected!==null)return name===selected;
+  const query=String(document.getElementById('pcnProductInput')?.value||'').trim().toLocaleLowerCase('vi');
+  return !query||name.toLocaleLowerCase('vi').includes(query);
+}
+function masterPCNBom_syncSearch(){
+  const bom=MASTER_PCN.tab==='bom';
+  const old=document.getElementById('pcnSearch'),search=document.getElementById('pcnProductSearch');
+  if(old)old.hidden=bom;
+  if(search)search.hidden=!bom;
+  if(bom&&MASTER_PCN_PRODUCT_SEARCH.open)masterPCNBom_productOptions();
+}
+function masterPCNBom_productOptions(){
+  const state=MASTER_PCN_PRODUCT_SEARCH,input=document.getElementById('pcnProductInput'),list=document.getElementById('pcnProductOptions');
+  if(!list)return;
+  const query=state.all?'':String(input?.value||'').trim().toLocaleLowerCase('vi');
+  state.choices=['',...masterPCNBom_products().filter(name=>!query||name.toLocaleLowerCase('vi').includes(query))];
+  list.hidden=!state.open;
+  input?.setAttribute?.('aria-expanded',String(state.open));
+  if(state.active>=state.choices.length)state.active=-1;
+  list.innerHTML=state.choices.map((name,index)=>`<button type="button" role="option" aria-selected="${state.selected===name}" id="pcnProductOption${index}"
+    class="pcn-product-option ${state.active===index?'active':''}" tabindex="-1" onmousedown="event.preventDefault()" onclick="masterPCNBom_pickProduct(${index})">${masterPCN_esc(name||'Tất cả sản phẩm')}</button>`).join('');
+  if(state.active>=0){input?.setAttribute?.('aria-activedescendant','pcnProductOption'+state.active);document.getElementById('pcnProductOption'+state.active)?.scrollIntoView?.({block:'nearest'});}
+  else input?.removeAttribute?.('aria-activedescendant');
+}
+function masterPCNBom_productToggle(all=false){
+  const state=MASTER_PCN_PRODUCT_SEARCH;
+  state.open=all?!state.open:true;state.all=all;state.active=-1;
+  masterPCNBom_productOptions();
+}
+function masterPCNBom_productInput(){
+  Object.assign(MASTER_PCN_PRODUCT_SEARCH,{selected:null,open:true,all:false,active:-1});
+  masterPCN_render();
+}
+function masterPCNBom_pickProduct(index){
+  const name=MASTER_PCN_PRODUCT_SEARCH.choices[index];
+  if(name===undefined)return;
+  document.getElementById('pcnProductInput').value=name;
+  Object.assign(MASTER_PCN_PRODUCT_SEARCH,{selected:name||null,open:false,active:-1});
+  masterPCNBom_productOptions();masterPCN_render();
+}
+function masterPCNBom_productKey(event){
+  const state=MASTER_PCN_PRODUCT_SEARCH;
+  if(event.key==='Escape'){state.open=false;masterPCNBom_productOptions();return;}
+  if(event.key==='ArrowDown'||event.key==='ArrowUp'){
+    event.preventDefault();state.open=true;masterPCNBom_productOptions();
+    state.active=Math.max(0,Math.min(state.choices.length-1,state.active+(event.key==='ArrowDown'?1:-1)));
+    masterPCNBom_productOptions();
+  }else if(event.key==='Enter'&&state.open&&state.active>=0){event.preventDefault();masterPCNBom_pickProduct(state.active);}
+}
+document.addEventListener?.('click',event=>{
+  if(!event.target.closest?.('#pcnProductSearch')){MASTER_PCN_PRODUCT_SEARCH.open=false;const list=document.getElementById('pcnProductOptions');if(list)list.hidden=true;document.getElementById('pcnProductInput')?.setAttribute?.('aria-expanded','false');}
+});
 function masterPCNBom_identity(row){
   return Object.fromEntries(MASTER_PCN_BOM_INLINE.identity.map(field=>[field,String(row[field]??'').trim()]));
 }
