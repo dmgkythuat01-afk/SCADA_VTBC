@@ -296,8 +296,6 @@
             </th>
 
             <th>nhaSanXuat1</th>
-            <th>nhaSanXuat2</th>
-            <th>nhaSanXuat3</th>
             <th>MaKeToan</th>
             <th>loaiNguyenLieu</th>
             <th>donViKho</th>
@@ -325,7 +323,7 @@
           <tr>
 
             <td
-              colspan="19"
+              colspan="17"
               class="mk-empty"
             >
               Đang tải dữ liệu...
@@ -1154,8 +1152,6 @@ const MASTER_KHO_NL_HEADERS = [
   'maNguyenLieu',
   'tenNguyenLieu',
   'nhaCungCap1',
-  'nhaCungCap2',
-  'nhaCungCap3',
   'MaKeToan',
   'loaiNguyenLieu',
   'donViKho',
@@ -1688,7 +1684,7 @@ function masterKho_renderNguyenLieu() {
       <tr>
 
         <td
-          colspan="19"
+          colspan="17"
           class="mk-empty"
         >
           Không có nguyên liệu phù hợp.
@@ -2250,8 +2246,6 @@ const MASTER_KHO_NL_FORM_LABELS = {
   maNguyenLieu:'Mã nguyên liệu',
   tenNguyenLieu:'Tên nguyên liệu',
   nhaCungCap1:'Nhà sản xuất 1',
-  nhaCungCap2:'Nhà sản xuất 2',
-  nhaCungCap3:'Nhà sản xuất 3',
   MaKeToan:'Mã kế toán',
   loaiNguyenLieu:'Loại nguyên liệu',
   donViKho:'Đơn vị kho',
@@ -2272,7 +2266,7 @@ function masterKho_openAddNguyenLieu() {
   if (!modal || !form) return;
 
   const longHeaders=[
-    'tenNguyenLieu','nhaCungCap1','nhaCungCap2','nhaCungCap3',
+    'tenNguyenLieu','nhaCungCap1',
     'quyCachDatHang','nhaCungCapChinh','ghiChu','nhaCungCapCap'
   ];
 

@@ -58,8 +58,6 @@ const MASTER_KHO_CONFIG = {
     'maNguyenLieu',
     'tenNguyenLieu',
     'nhaCungCap1',
-    'nhaCungCap2',
-    'nhaCungCap3',
     'MaKeToan',
     'loaiNguyenLieu',
     'donViKho',

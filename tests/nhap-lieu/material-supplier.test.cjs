@@ -2,7 +2,7 @@ const test=require('node:test'),a=require('node:assert/strict'),fs=require('node
 const root=path.join(__dirname,'../../NhapLieuUocLuongDatHang');
 test('warehouse material API reads, updates and inserts nhaCungCapCap in NguyenLieu',()=>{
  const headers=['maNguyenLieu','tenNguyenLieu','nhaCungCap1','nhaCungCap2','nhaCungCap3','MaKeToan','loaiNguyenLieu','donViKho','quyCachDatHang','tonAnToan','soNgayVeKhoMacDinh','nhaCungCapChinh','trangThai','ghiChu','heSoQuyDoiKho','doViTinhToan','nhaCungCapCap','Other'];
- const data=[headers,headers.map(h=>({maNguyenLieu:'NL1',tenNguyenLieu:'Material',nhaCungCapCap:'Supplier old',Other:'KEEP'}[h]||''))];
+ const data=[headers,headers.map(h=>({maNguyenLieu:'NL1',tenNguyenLieu:'Material',nhaCungCap2:'KEEP MAKER 2',nhaCungCap3:'KEEP MAKER 3',nhaCungCapCap:'Supplier old',Other:'KEEP'}[h]||''))];
  const sheet={getLastRow:()=>data.length,getLastColumn:()=>headers.length,getRange(row,col,count=1,width=1){const read=()=>data.slice(row-1,row-1+count).map(r=>r.slice(col-1,col-1+width));return {getValues:read,getDisplayValues:read,setValues(values){values.forEach((r,i)=>{if(!data[row-1+i])data[row-1+i]=Array(headers.length).fill('');r.forEach((value,j)=>{data[row-1+i][col-1+j]=value;});});}};}};
  const ctx=vm.createContext({console,SpreadsheetApp:{flush(){}},LockService:{getScriptLock:()=>({waitLock(){},releaseLock(){}})}});
  vm.runInContext(fs.readFileSync(path.join(root,'MasterKhoGs.js'),'utf8'),ctx);
@@ -11,6 +11,9 @@ test('warehouse material API reads, updates and inserts nhaCungCapCap in NguyenL
  a.equal(rows[0].nhaCungCapCap,'Supplier old');
  ctx.masterKho_updateNguyenLieuOne({...rows[0],nhaCungCapCap:'Supplier new'});
  a.equal(data[1][16],'Supplier new');a.equal(data[1][17],'KEEP');
+ a.equal(data[1][3],'KEEP MAKER 2');a.equal(data[1][4],'KEEP MAKER 3');
+ ctx.masterKho_updateNguyenLieuAll([{...rows[0],nhaCungCapCap:'Supplier all'}]);
+ a.equal(data[1][3],'KEEP MAKER 2');a.equal(data[1][4],'KEEP MAKER 3');
  ctx.masterKho_addNguyenLieu({maNguyenLieu:'NL2',tenNguyenLieu:'Second',nhaCungCapCap:'Supplier second'});
  a.equal(data[2][16],'Supplier second');
 });
@@ -23,5 +26,7 @@ test('material table and new-material form include editable supplier field',()=>
  a.match(node('mkNguyenLieuBody').innerHTML,/data-header="nhaCungCapCap"/);
  a.match(node('mkNguyenLieuBody').innerHTML,/Supplier &amp; maker/);
  a.match(node('mkNguyenLieuForm').innerHTML,/mkNewNl_nhaCungCapCap/);
+ a.doesNotMatch(node('mkNguyenLieuBody').innerHTML,/data-header="nhaCungCap[23]"/);
+ a.doesNotMatch(node('mkNguyenLieuForm').innerHTML,/mkNewNl_nhaCungCap[23]/);
  node('mkNewNl_nhaCungCapCap').value='New supplier';a.equal(ctx.masterKho_getNewNguyenLieuFormData().nhaCungCapCap,'New supplier');
 });
