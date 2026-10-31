@@ -5,6 +5,13 @@
   #masterViewPCN .pcn-bom-error{color:#b91c1c}
   #masterViewPCN .pcn-panel{overflow:visible}
   #masterViewPCN .pcn-table-wrap{border-radius:0 0 22px 22px}
+  #masterViewPCN table.pcn-bom-table{table-layout:fixed;min-width:0}
+  #masterViewPCN .pcn-bom-table th,#masterViewPCN .pcn-bom-table td{box-sizing:border-box;white-space:normal;overflow-wrap:anywhere}
+  #masterViewPCN .pcn-bom-table .pcn-bom-select{width:100%;min-width:0}
+  #masterViewPCN .pcn-bom-table .pcn-bom-frozen{position:sticky;z-index:4;background:#fff}
+  #masterViewPCN .pcn-bom-table th.pcn-bom-frozen{z-index:6;background:#064e3b;color:#fff}
+  #masterViewPCN .pcn-bom-table tbody tr:hover .pcn-bom-frozen{background:#f0fdf4}
+  #masterViewPCN .pcn-bom-table .pcn-bom-frozen-last{box-shadow:3px 0 0 #cbded5}
   #masterViewPCN .pcn-actions{flex:1;justify-content:flex-end;align-items:center}
   #masterViewPCN .pcn-product-search{position:relative;flex:1;max-width:900px;min-width:340px}
   #masterViewPCN .pcn-product-search[hidden]{display:none}
@@ -22,6 +29,21 @@ const MASTER_PCN_BOM_INLINE = {
   drafts:new Map(), saving:new Set(), status:new Map()
 };
 const MASTER_PCN_PRODUCT_SEARCH={selected:null,open:false,all:false,active:-1,choices:[]};
+function masterPCNBom_layout(headers,bom){
+  if(!bom)return {headers,attrs:()=>'',width:''};
+  const frozen=[['__stt',52],['maDinhLuong',130],['maSanPham',115],['tenSanPham',230],['maNguyenLieu',125],['MaKeToan',150],['tenNguyenLieu',220]];
+  const pinned=frozen.filter(([field])=>field==='__stt'||headers.includes(field));
+  const ordered=pinned.filter(([field])=>field!=='__stt').map(([field])=>field);
+  const remaining=headers.filter(field=>!ordered.includes(field));
+  const attributes={};let offset=0;
+  pinned.forEach(([field,width],index)=>{
+    attributes[field]=`class="pcn-bom-frozen${index===pinned.length-1?' pcn-bom-frozen-last':''}" style="left:${offset}px;width:${width}px"`;
+    offset+=width;
+  });
+  remaining.forEach(field=>{attributes[field]='style="width:150px"';});
+  attributes.__actions='style="width:220px;white-space:nowrap"';
+  return {headers:[...ordered,...remaining],width:(offset+remaining.length*150+220)+'px',attrs:field=>attributes[field]||''};
+}
 function masterPCNBom_productName(row){
   return String(row.tenSanPham||(MASTER_PCN.data.sanPham||[]).find(item=>String(item.maSanPham)===String(row.maSanPham))?.tenSanPham||row.maSanPham||'').trim();
 }

@@ -144,7 +144,10 @@ function masterPCN_render(){
   document.getElementById('pcnTitle').textContent=title;
 
   const q=(document.getElementById('pcnSearch').value||'').trim().toLowerCase();
-  const headers=masterPCN_headers();
+  const layout=masterPCNBom_layout(masterPCN_headers(),MASTER_PCN.tab==='bom');
+  const headers=layout.headers;
+  table.className=MASTER_PCN.tab==='bom'?'pcn-bom-table':'';
+  if(table.style)table.style.width=layout.width;
   masterPCNBom_syncSearch();
   const rows=masterPCN_rows().filter(r=>MASTER_PCN.tab==='bom'?masterPCNBom_matchProduct(r):!q || headers.some(h=>String(r[h]||'').toLowerCase().includes(q)));
   document.getElementById('pcnSummary').textContent=rows.length+' dòng dữ liệu';
@@ -156,16 +159,16 @@ function masterPCN_render(){
 
   table.innerHTML=`
     <thead><tr>
-      <th>STT</th>
-      ${headers.map(h=>`<th>${masterPCN_esc(masterPCN_label(h))}</th>`).join('')}
-      <th>Thao tác</th>
+      <th ${layout.attrs('__stt')}>STT</th>
+      ${headers.map(h=>`<th ${layout.attrs(h)}>${masterPCN_esc(masterPCN_label(h))}</th>`).join('')}
+      <th ${layout.attrs('__actions')}>Thao tác</th>
     </tr></thead>
     <tbody>
       ${rows.map((r,i)=>`
         <tr>
-          <td>${i+1}</td>
-          ${headers.map(h=>`<td>${masterPCNBom_cell(r,h)}</td>`).join('')}
-          <td style="white-space:nowrap">
+          <td ${layout.attrs('__stt')}>${i+1}</td>
+          ${headers.map(h=>`<td ${layout.attrs(h)}>${masterPCNBom_cell(r,h)}</td>`).join('')}
+          <td ${MASTER_PCN.tab==='bom'?layout.attrs('__actions'):'style="white-space:nowrap"'}>
             <button class="pcn-btn pcn-ghost" onclick="masterPCN_edit(${r.__rowNumber})">Sửa</button>
             <button class="pcn-btn pcn-danger" onclick="masterPCN_delete(${r.__rowNumber})">Xóa</button>
             ${masterPCNBom_actions(r)}
