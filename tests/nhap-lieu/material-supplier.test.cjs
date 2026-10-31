@@ -1,0 +1,27 @@
+const test=require('node:test'),a=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm'),path=require('node:path');
+const root=path.join(__dirname,'../../NhapLieuUocLuongDatHang');
+test('warehouse material API reads, updates and inserts nhaCungCapCap in NguyenLieu',()=>{
+ const headers=['maNguyenLieu','tenNguyenLieu','nhaCungCap1','nhaCungCap2','nhaCungCap3','MaKeToan','loaiNguyenLieu','donViKho','quyCachDatHang','tonAnToan','soNgayVeKhoMacDinh','nhaCungCapChinh','trangThai','ghiChu','heSoQuyDoiKho','doViTinhToan','nhaCungCapCap','Other'];
+ const data=[headers,headers.map(h=>({maNguyenLieu:'NL1',tenNguyenLieu:'Material',nhaCungCapCap:'Supplier old',Other:'KEEP'}[h]||''))];
+ const sheet={getLastRow:()=>data.length,getLastColumn:()=>headers.length,getRange(row,col,count=1,width=1){const read=()=>data.slice(row-1,row-1+count).map(r=>r.slice(col-1,col-1+width));return {getValues:read,getDisplayValues:read,setValues(values){values.forEach((r,i)=>{if(!data[row-1+i])data[row-1+i]=Array(headers.length).fill('');r.forEach((value,j)=>{data[row-1+i][col-1+j]=value;});});}};}};
+ const ctx=vm.createContext({console,SpreadsheetApp:{flush(){}},LockService:{getScriptLock:()=>({waitLock(){},releaseLock(){}})}});
+ vm.runInContext(fs.readFileSync(path.join(root,'MasterKhoGs.js'),'utf8'),ctx);
+ ctx.masterKho_getSheet_=name=>{a.equal(name,'NguyenLieu');return sheet;};
+ const rows=ctx.masterKho_getNguyenLieuData().data;
+ a.equal(rows[0].nhaCungCapCap,'Supplier old');
+ ctx.masterKho_updateNguyenLieuOne({...rows[0],nhaCungCapCap:'Supplier new'});
+ a.equal(data[1][16],'Supplier new');a.equal(data[1][17],'KEEP');
+ ctx.masterKho_addNguyenLieu({maNguyenLieu:'NL2',tenNguyenLieu:'Second',nhaCungCapCap:'Supplier second'});
+ a.equal(data[2][16],'Supplier second');
+});
+test('material table and new-material form include editable supplier field',()=>{
+ const nodes=new Map();const node=id=>{if(!nodes.has(id))nodes.set(id,{value:'',innerHTML:'',classList:{add(){},remove(){}}});return nodes.get(id);};
+ const ctx=vm.createContext({console,document:{getElementById:node,addEventListener(){},querySelectorAll:()=>[],body:{classList:{add(){}}}},setTimeout(){},requestAnimationFrame(){}});
+ const html=fs.readFileSync(path.join(root,'MasterKho.html'),'utf8');
+ vm.runInContext(html.match(/<script>([\s\S]*?)<\/script>/)[1],ctx);
+ vm.runInContext('MASTER_KHO_STATE.nguyenLieuRows=[{maNguyenLieu:"NL1",tenNguyenLieu:"Material",nhaCungCapCap:"Supplier & maker"}];masterKho_renderNguyenLieu();masterKho_openAddNguyenLieu()',ctx);
+ a.match(node('mkNguyenLieuBody').innerHTML,/data-header="nhaCungCapCap"/);
+ a.match(node('mkNguyenLieuBody').innerHTML,/Supplier &amp; maker/);
+ a.match(node('mkNguyenLieuForm').innerHTML,/mkNewNl_nhaCungCapCap/);
+ node('mkNewNl_nhaCungCapCap').value='New supplier';a.equal(ctx.masterKho_getNewNguyenLieuFormData().nhaCungCapCap,'New supplier');
+});

@@ -309,6 +309,7 @@
             <th>ghiChu</th>
             <th>heSoQuyDoiKho</th>
             <th>doViTinhToan</th>
+            <th>nhaCungCapCap</th>
 
             <th class="mk-action-head">
               Thao tác
@@ -324,7 +325,7 @@
           <tr>
 
             <td
-              colspan="18"
+              colspan="19"
               class="mk-empty"
             >
               Đang tải dữ liệu...
@@ -1165,7 +1166,8 @@ const MASTER_KHO_NL_HEADERS = [
   'trangThai',
   'ghiChu',
   'heSoQuyDoiKho',
-  'doViTinhToan'
+  'doViTinhToan',
+  'nhaCungCapCap'
 
 ];
 
@@ -1686,7 +1688,7 @@ function masterKho_renderNguyenLieu() {
       <tr>
 
         <td
-          colspan="18"
+          colspan="19"
           class="mk-empty"
         >
           Không có nguyên liệu phù hợp.
@@ -2260,7 +2262,8 @@ const MASTER_KHO_NL_FORM_LABELS = {
   trangThai:'Trạng thái',
   ghiChu:'Ghi chú',
   heSoQuyDoiKho:'Hệ số quy đổi kho',
-  doViTinhToan:'Đơn vị tính toán'
+  doViTinhToan:'Đơn vị tính toán',
+  nhaCungCapCap:'Nhà cung cấp (nhaCungCapCap)'
 };
 
 function masterKho_openAddNguyenLieu() {
@@ -2270,7 +2273,7 @@ function masterKho_openAddNguyenLieu() {
 
   const longHeaders=[
     'tenNguyenLieu','nhaCungCap1','nhaCungCap2','nhaCungCap3',
-    'quyCachDatHang','nhaCungCapChinh','ghiChu'
+    'quyCachDatHang','nhaCungCapChinh','ghiChu','nhaCungCapCap'
   ];
 
   form.innerHTML=MASTER_KHO_NL_HEADERS.map(header=>{

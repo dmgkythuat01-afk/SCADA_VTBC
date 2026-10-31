@@ -70,7 +70,8 @@ const MASTER_KHO_CONFIG = {
     'trangThai',
     'ghiChu',
     'heSoQuyDoiKho',
-    'doViTinhToan'
+    'doViTinhToan',
+    'nhaCungCapCap'
 
   ]
 
