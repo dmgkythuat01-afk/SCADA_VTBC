@@ -6478,97 +6478,33 @@ function hoanKhoKhiHuyKeHoach_(
     };
   }
 
-  let tongDongHoan =
-    0;
+  let tongDongHoan = 0;
+  const idxSnapshotIds = phieuHeaders.indexOf("IdKho");
+  const idxSnapshotQuantities = phieuHeaders.indexOf("khoiLuongKho");
+  const idxSnapshotUnits = phieuHeaders.indexOf("donViKho");
+  const instructions = [];
 
-  phieuRows.forEach(
-    function(row) {
-      const idKhoDaTruText =
-        normalizeText_(
-          row[
-            idxIdKhoDaTru
-          ]
-        );
-
-      /*
-       * Một phiếu đôi khi FIFO có thể ghi
-       * nhiều Id đã trừ phân cách bằng dấu phẩy.
-       *
-       * Với logic hiện tại của bạn,
-       * nếu có nhiều Id thì không thể biết chính xác
-       * từng Id đã bị trừ bao nhiêu chỉ từ dòng phiếu.
-       */
-      if (
-        !idKhoDaTruText ||
-        idKhoDaTruText.indexOf(",") !== -1
-      ) {
-        throw new Error(
-          "Kế hoạch " +
-          keHoachId +
-          " có dòng PhieuXuatNguyenLieu " +
-          "không xác định được đúng 1 IdKhoDaTru: " +
-          idKhoDaTruText
-        );
-      }
-
-      const unit =
-        normalizeText_(
-          row[
-            idxDonViCanXuatPhieu
-          ]
-        );
-
-      /*
-       * QUAN TRỌNG:
-       * Hoàn đúng lượng đã bị trừ khi phê duyệt.
-       */
-      let qty = 0;
-
-      if (
-        idxKhoiLuongXuatThucTe !== -1
-      ) {
-        qty =
-          Number(
-            row[
-              idxKhoiLuongXuatThucTe
-            ]
-          ) || 0;
-      }
-
-      /*
-       * Dữ liệu cũ chưa có thực xuất
-       * thì fallback về KL cần xuất.
-       */
-      if (
-        qty <= 0
-      ) {
-        qty =
-          Number(
-            row[
-              idxKhoiLuongCanXuat
-            ]
-          ) || 0;
-      }
-
-      if (
-        qty <= 0 ||
-        !unit
-      ) {
-        return;
-      }
-
-      congLaiKhoTheoId_(
-        khoSheet,
-        khoValues,
-        khoIdx,
-        idKhoDaTruText,
-        qty,
-        unit
-      );
-
-      tongDongHoan++;
-    }
-  );
+  // Kiểm tra TẤT CẢ dòng và lô trước khi ghi kho, tránh cộng dở rồi lỗi dòng sau.
+  phieuRows.forEach(function(row) {
+    let qty = idxKhoiLuongXuatThucTe < 0 ? 0 : Number(row[idxKhoiLuongXuatThucTe]) || 0;
+    if (qty <= 0) qty = Number(row[idxKhoiLuongCanXuat]) || 0;
+    if (qty <= 0) return;
+    const unit = normalizeText_(row[idxDonViCanXuatPhieu]);
+    const parts = phanBoHoanKhoNhieuLo_(
+      row[idxIdKhoDaTru], qty, unit,
+      row[idxSnapshotIds], row[idxSnapshotQuantities], row[idxSnapshotUnits]
+    );
+    parts.forEach(function(part) {
+      const targets = khoValues.slice(1).filter(stock => normalizeText_(stock[khoIdx.Id]) === part.id);
+      if (targets.length !== 1) throw new Error("Không xác định được đúng một dòng KhoNguyenLieu cho Id: " + part.id);
+      convertUnitForCancelPlan_(part.quantity, part.unit, normalizeText_(targets[0][khoIdx.donVi]));
+      instructions.push(part);
+    });
+    if (parts.length) tongDongHoan++;
+  });
+  instructions.forEach(function(part) {
+    congLaiKhoTheoId_(khoSheet, khoValues, khoIdx, part.id, part.quantity, part.unit);
+  });
 
   return {
     daHoanKho:

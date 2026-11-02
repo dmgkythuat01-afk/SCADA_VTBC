@@ -1,0 +1,44 @@
+const test=require('node:test'),a=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm'),path=require('node:path');
+function setup(rows){
+ const stock=[['Id','khoiLuongNhap','donVi','trangThai'],['KNL1',0,'kg','Đã xuất hết'],['KNL2',1000,'kg','Đã phê duyệt']];
+ const headers=['KeHoachId','trangThaiPheDuyet','IdKhoDaTru','khoiLuongCanXuat','donViCanXuat','khoiLuongXuatThucTe','IdKho','khoiLuongKho','donViKho'];
+ const vouchers=[headers,...rows];let writes=0;
+ const sheet=data=>({getLastRow:()=>data.length,getDataRange:()=>({getValues:()=>data.map(row=>row.slice())}),getRange(row,col){return {setValue(value){data[row-1][col-1]=value;writes++;}};}});
+ const ctx=vm.createContext({console});
+ vm.runInContext(fs.readFileSync(path.join(__dirname,'../../PhongCNTaoKHSX/Code.js'),'utf8'),ctx);
+ const helper=path.join(__dirname,'../../PhongCNTaoKHSX/HoanKhoNhieuLo.js');if(fs.existsSync(helper))vm.runInContext(fs.readFileSync(helper,'utf8'),ctx);
+ ctx.getSpreadsheet_=()=>({getSheetByName:name=>name==='KhoNguyenLieu'?sheet(stock):name==='PhieuXuatNguyenLieu'?sheet(vouchers):null});
+ return {ctx,stock,get writes(){return writes;},run:()=>ctx.hoanKhoKhiHuyKeHoach_('KH1')};
+}
+const multi=['KH1','Đã phê duyệt','KNL1, KNL2',142.5,'kg',142.5,'KNL1, KNL2','94.25, 13113.350719','kg, kg'];
+test('returns user example FIFO amounts 94.25 and 48.25 to their exact original stock IDs',()=>{
+ const s=setup([multi]);const result=s.run();
+ a.equal(s.stock[1][1],94.25);a.equal(s.stock[2][1],1048.25);a.equal(s.stock[1][3],'Đã phê duyệt');a.equal(result.tongDongHoan,1);
+});
+test('multi-lot return converts before-stock snapshots in different units and adds repeated stock IDs across voucher rows',()=>{
+ const s=setup([['KH1','Đã phê duyệt','KNL1, KNL2',3,'kg',3,'KNL1, KNL2','500, 10','g, kg'],['KH1','Đã phê duyệt','KNL1',1,'kg',1,'','','']]);
+ s.run();a.equal(s.stock[1][1],1.5);a.equal(s.stock[2][1],1002.5);
+});
+test('invalid later voucher snapshot is rejected before any stock is changed',()=>{
+ for(const invalid of [
+ ['KH1','Đã phê duyệt','KNL1, KNL2',142.5,'kg',142.5,'KNL1','94.25','kg'],
+ ['KH1','Đã phê duyệt','KNL1, KNL2',142.5,'kg',142.5,'KNL1, KNL2','1, 2','kg, kg'],
+ ['KH1','Đã phê duyệt','KNL1, MISSING',142.5,'kg',142.5,'KNL1, MISSING','94.25, 500','kg, kg']
+ ]){
+  const s=setup([['KH1','Đã phê duyệt','KNL1',1,'kg',1,'','',''],invalid]);
+  a.throws(()=>s.run());a.equal(s.writes,0);a.equal(s.stock[1][1],0);
+ }
+});
+test('full cancellation restores both lots once and marks every ingredient row cancelled',()=>{
+ const s=setup([multi]);
+ const headers=['Id','tenBaiLieu','soLuong','NgaySanXuat','nguoiTao','ngayTao','khoiLuongMotMe','trangThai','daHoanKhoKhiHuy','tenNguyenLieu','MaKeToan'];
+ const data=[headers,['KH1','Recipe',2,'2026-11-03','pcn','2026-11-01',300,'Hoạt động','','LAS','001'],['KH1','Recipe',2,'2026-11-03','pcn','2026-11-01',300,'Hoạt động','','Other','002']];
+ s.ctx.requireAdmin_=()=>{};s.ctx.ensureKeHoachHeader_=()=>{};s.ctx.getProductionPlans_=()=>[];
+ s.ctx.LockService={getScriptLock:()=>({waitLock(){},releaseLock(){}})};
+ s.ctx.getSheet_=()=>({getLastRow:()=>data.length,getDataRange:()=>({getValues:()=>data.map(row=>row.slice())}),getRange(row,col){return {setValues(values){values[0].forEach((value,index)=>{data[row-1][col-1+index]=value;});},setValue(value){data[row-1][col-1]=value;}};}});
+ s.ctx.updateProductionPlanStatus('token',{id:'KH1',trangThai:'Hủy kế hoạch'});
+ a.equal(s.stock[1][1],94.25);a.equal(s.stock[2][1],1048.25);
+ data.slice(1).forEach(row=>{a.equal(row[7],'Hủy kế hoạch');a.equal(row[8],'Đã hoàn kho');});
+ s.ctx.updateProductionPlanStatus('token',{id:'KH1',trangThai:'Hủy kế hoạch'});
+ a.equal(s.stock[1][1],94.25);a.equal(s.stock[2][1],1048.25);
+});
