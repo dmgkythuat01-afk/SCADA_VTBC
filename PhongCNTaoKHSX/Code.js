@@ -1666,261 +1666,48 @@ function updateProductionPlanStatus(
      * 4. TÌM KẾ HOẠCH
      * ================================
      */
-    let rowNumber =
-      -1;
+    // Một KHSX có nhiều dòng nguyên liệu: phải xét và cập nhật toàn bộ.
+    const planRows = [];
+    for (let i = 1; i < values.length; i++) {
+      if (normalizeText_(values[i][idx.Id]) !== id) continue;
+      planRows.push({
+        rowNumber: i + 1,
+        status: normalizeText_(values[i][idx.trangThai]) || "Hoạt động",
+        returnStatus: idx.daHoanKhoKhiHuy < 0 ? "" : normalizeText_(values[i][idx.daHoanKhoKhiHuy])
+      });
+    }
+    if (!planRows.length) throw new Error("Không tìm thấy kế hoạch sản xuất: " + id);
+    if (idx.daHoanKhoKhiHuy < 0) throw new Error("Sheet KeHoachSanXuat thiếu cột daHoanKhoKhiHuy.");
 
-    let currentStatus =
-      "";
+    const hasCancelledRow = planRows.some(row => row.status === "Hủy kế hoạch");
+    const returnStatuses = [...new Set(planRows.map(row => row.returnStatus).filter(Boolean))];
+    if (returnStatuses.length > 1) {
+      throw new Error("Kế hoạch " + id + " có cờ hoàn kho không đồng nhất. Vui lòng kiểm tra trước khi cập nhật.");
+    }
+    let daHoanKhoKhiHuy = returnStatuses[0] || "";
+    if (trangThai === "Hoạt động" && (hasCancelledRow || daHoanKhoKhiHuy)) {
+      throw new Error("Kế hoạch " + id + " đã bị hủy trước đó.\nKhông thể chuyển lại về Hoạt động.\nNếu cần sản xuất lại, hãy tạo kế hoạch mới.");
+    }
 
-    let daHoanKhoKhiHuy =
-      "";
-
-    for (
-      let i = 1;
-      i < values.length;
-      i++
-    ) {
-      const rowId =
-        normalizeText_(
-          values[i][
-            idx.Id
-          ]
-        );
-
-      if (
-        rowId !== id
-      ) {
-        continue;
+    let hoanKhoResult = null;
+    if (trangThai === "Hủy kế hoạch") {
+      // Hủy dở do phiên bản cũ: chỉ đồng bộ trạng thái/cờ, không hoàn kho lại.
+      // Chỉ hủy lần đầu mới gọi hoàn kho một lần cho toàn bộ mã KHSX.
+      if (!hasCancelledRow && !daHoanKhoKhiHuy) {
+        hoanKhoResult = hoanKhoKhiHuyKeHoach_(id);
+        daHoanKhoKhiHuy = hoanKhoResult.daHoanKho ? "Đã hoàn kho" : "Không cần hoàn kho";
       }
-
-      /*
-       * Dòng thực tế trên Google Sheet.
-       */
-      rowNumber =
-        i + 1;
-
-      /*
-       * Trạng thái hiện tại.
-       */
-      currentStatus =
-        idx.trangThai !== -1
-          ? (
-              normalizeText_(
-                values[i][
-                  idx.trangThai
-                ]
-              ) ||
-              "Hoạt động"
-            )
-          : "Hoạt động";
-
-      /*
-       * Đọc cờ chống hoàn kho lần 2.
-       */
-      daHoanKhoKhiHuy =
-        idx.daHoanKhoKhiHuy !== -1
-          ? normalizeText_(
-              values[i][
-                idx.daHoanKhoKhiHuy
-              ]
-            )
-          : "";
-
-      break;
-    }
-
-    if (
-      rowNumber === -1
-    ) {
-      throw new Error(
-        "Không tìm thấy kế hoạch sản xuất: " +
-        id
-      );
-    }
-
-    /*
-     * ================================
-     * 5. NẾU TRẠNG THÁI KHÔNG ĐỔI
-     * ================================
-     */
-    if (
-      currentStatus ===
-      trangThai
-    ) {
-      return {
-        success:
-          true,
-
-        message:
-          "Kế hoạch " +
-          id +
-          " đã ở trạng thái " +
-          trangThai +
-          ".",
-
-        keHoachSanXuat:
-          getProductionPlans_()
-      };
-    }
-
-    /*
-     * ================================
-     * 6. KHÔNG CHO KÍCH HOẠT LẠI
-     * KẾ HOẠCH ĐÃ HỦY
-     * ================================
-     *
-     * Vì nếu kế hoạch đã hoàn nguyên liệu
-     * về kho mà lại chuyển về Hoạt động,
-     * dữ liệu kho sẽ không còn đúng với
-     * nghiệp vụ của kế hoạch.
-     *
-     * Nếu cần sản xuất lại thì tạo KH mới.
-     */
-    /*
-    * Một kế hoạch đã ở trạng thái Hủy kế hoạch
-    * thì tuyệt đối không cho kích hoạt lại.
-    *
-    * Quy tắc:
-    * Hủy rồi = kết thúc kế hoạch.
-    * Muốn sản xuất lại thì tạo kế hoạch mới.
-    */
-    if (
-      trangThai === "Hoạt động" &&
-      currentStatus === "Hủy kế hoạch"
-    ) {
-      throw new Error(
-        "Kế hoạch " +
-        id +
-        " đã bị hủy trước đó." +
-        "\nKhông thể chuyển lại về Hoạt động." +
-        "\nNếu cần sản xuất lại, hãy tạo kế hoạch mới."
-      );
-    }
-
-    /*
-     * ================================
-     * 7. CHỐNG HOÀN KHO LẦN 2
-     * ================================
-     */
-    if (
-      trangThai ===
-        "Hủy kế hoạch" &&
-      daHoanKhoKhiHuy ===
-        "Đã hoàn kho"
-    ) {
-      throw new Error(
-        "Kế hoạch " +
-        id +
-        " đã hoàn nguyên liệu về kho trước đó." +
-        "\nKhông được hoàn kho lần thứ hai."
-      );
-    }
-
-    /*
-     * Nếu lần hủy trước xác định rằng
-     * kế hoạch chưa xuất kho,
-     * cũng không cần xử lý hủy lại.
-     */
-    if (
-      trangThai ===
-        "Hủy kế hoạch" &&
-      daHoanKhoKhiHuy ===
-        "Không cần hoàn kho"
-    ) {
-      throw new Error(
-        "Kế hoạch " +
-        id +
-        " đã được hủy trước đó và không có nguyên liệu cần hoàn kho."
-      );
-    }
-
-    /*
-     * ================================
-     * 8. HOÀN KHO
-     * ================================
-     */
-    let hoanKhoResult =
-      null;
-
-    if (
-      currentStatus !==
-        "Hủy kế hoạch" &&
-      trangThai ===
-        "Hủy kế hoạch"
-    ) {
-      /*
-       * Hàm này sẽ tự xử lý:
-       *
-       * Ưu tiên 1:
-       * ChiTietCanBatch
-       * → khoiLuongThucTe
-       * → IdTuKhoDenBatch
-       *
-       * Nếu không có:
-       *
-       * Ưu tiên 2:
-       * PhieuXuatNguyenLieu
-       * → Đã phê duyệt
-       * → IdKhoDaTru
-       * → lượng đã xuất
-       *
-       * Nếu cả hai không có:
-       * → chưa xuất kho
-       * → không cộng gì.
-       */
-      hoanKhoResult =
-        hoanKhoKhiHuyKeHoach_(
-          id
-        );
-    }
-
-    /*
-    * ================================
-    * 9 + 10. GHI TRẠNG THÁI HỦY
-    * VÀ CỜ HOÀN KHO CÙNG LÚC
-    * ================================
-    */
-    if (
-      trangThai === "Hủy kế hoạch" &&
-      hoanKhoResult
-    ) {
-      const hoanKhoStatus =
-        hoanKhoResult.daHoanKho
-          ? "Đã hoàn kho"
-          : "Không cần hoàn kho";
-
-      daHoanKhoKhiHuy =
-        hoanKhoStatus;
-
-      /*
-      * trangThai và daHoanKhoKhiHuy
-      * đang là hai cột liền nhau.
-      */
-      sheet
-        .getRange(
-          rowNumber,
-          idx.trangThai + 1,
-          1,
-          2
-        )
-        .setValues([
-          [
-            "Hủy kế hoạch",
-            hoanKhoStatus
-          ]
-        ]);
+      planRows.forEach(row => {
+        if (idx.daHoanKhoKhiHuy === idx.trangThai + 1) {
+          sheet.getRange(row.rowNumber, idx.trangThai + 1, 1, 2)
+            .setValues([[trangThai, daHoanKhoKhiHuy]]);
+        } else {
+          sheet.getRange(row.rowNumber, idx.daHoanKhoKhiHuy + 1).setValue(daHoanKhoKhiHuy);
+          sheet.getRange(row.rowNumber, idx.trangThai + 1).setValue(trangThai);
+        }
+      });
     } else {
-      /*
-      * Các trường hợp đổi trạng thái thông thường.
-      */
-      sheet
-        .getRange(
-          rowNumber,
-          idx.trangThai + 1
-        )
-        .setValue(
-          trangThai
-        );
+      planRows.forEach(row => sheet.getRange(row.rowNumber, idx.trangThai + 1).setValue(trangThai));
     }
 
     /*
