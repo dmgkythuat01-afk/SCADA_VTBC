@@ -6,15 +6,19 @@ function setup(rows,returned=false){
  const ctx=vm.createContext({console,LockService:{getScriptLock:()=>({waitLock(){},releaseLock(){unlocked=true;}})}});
  vm.runInContext(fs.readFileSync(path.join(__dirname,'../../PhongCNTaoKHSX/Code.js'),'utf8'),ctx);
  vm.runInContext(fs.readFileSync(path.join(__dirname,'../../PhongCNTaoKHSX/SuaKeHoachHuy.js'),'utf8'),ctx);
+ const syncFile=path.join(__dirname,'../../PhongCNTaoKHSX/DongBoPhieuHuy.js');if(fs.existsSync(syncFile))vm.runInContext(fs.readFileSync(syncFile,'utf8'),ctx);
  ctx.requireAdmin_=()=>{};ctx.ensureKeHoachHeader_=()=>{};ctx.getSheet_=()=>sheet;ctx.getProductionPlans_=()=>[];
+ const exports=[['KeHoachId','trangThaiPheDuyet','IdKhoDaTru'],['KH1','Đã phê duyệt','KNL1'],['OTHER','Đã phê duyệt','KNL2'],['KH1','Chờ thủ kho phê duyệt','']];
+ ctx.getSpreadsheet_=()=>({getSheetByName:()=>({getDataRange:()=>({getValues:()=>exports.map(row=>row.slice())}),getRange(row,col){return {setValue(value){exports[row-1][col-1]=value;}};}})});
  ctx.hoanKhoKhiHuyKeHoach_=id=>{a.equal(id,'KH1');refunds++;return {daHoanKho:returned,nguon:returned?'PhieuXuatNguyenLieu':'ChuaXuatKho',tongDongHoan:3};};
- return {ctx,data,get refunds(){return refunds;},get unlocked(){return unlocked;},cancel:()=>ctx.updateProductionPlanStatus('token',{id:'KH1',trangThai:'Hủy kế hoạch'})};
+ return {ctx,data,exports,get refunds(){return refunds;},get unlocked(){return unlocked;},cancel:()=>ctx.updateProductionPlanStatus('token',{id:'KH1',trangThai:'Hủy kế hoạch'})};
 }
 test('cancelling a plan updates every matching ingredient row including noncontiguous rows and refunds once',()=>{
  const s=setup([['KH1','Recipe','Hoạt động','','A'],['OTHER','Other','Hoạt động','','B'],['KH1','Recipe','Hoạt động','','C'],['KH1','Recipe','Hoạt động','','D']],true);
  s.cancel();for(const index of [1,3,4]){a.equal(s.data[index][2],'Hủy kế hoạch');a.equal(s.data[index][3],'Đã hoàn kho');}
  a.equal(s.data[2][2],'Hoạt động');a.equal(s.data[2][3],'');a.equal(s.refunds,1);a.equal(s.unlocked,true);
  s.cancel();a.equal(s.refunds,1);
+ a.equal(s.exports[1][1],'Hủy kế hoạch');a.equal(s.exports[3][1],'Hủy kế hoạch');a.equal(s.exports[2][1],'Đã phê duyệt');a.equal(s.exports[1][2],'KNL1');
 });
 test('partially cancelled legacy plan is repaired without returning stock twice',()=>{
  for(const flag of ['Không cần hoàn kho','Đã hoàn kho']){
@@ -37,11 +41,13 @@ test('manual legacy repair normalizes cancelled plans without touching stock or 
  const result=s.ctx.suaKeHoachHuyThieuDong_();
  a.equal(s.data[3][2],'Hủy kế hoạch');a.equal(s.data[3][3],'Không cần hoàn kho');a.equal(s.data[2][2],'Hoạt động');
  a.equal(result.updatedRows,1);a.equal(s.refunds,0);a.equal(s.ctx.suaKeHoachHuyThieuDong_().updatedRows,0);
+ a.equal(s.exports[1][1],'Hủy kế hoạch');a.equal(s.exports[3][1],'Hủy kế hoạch');
 });
 test('failed stock return leaves every plan row active and releases the lock',()=>{
  const s=setup([['KH1','Recipe','Hoạt động','','A'],['KH1','Recipe','Hoạt động','','B']]);
  s.ctx.hoanKhoKhiHuyKeHoach_=()=>{throw new Error('Stock return failed');};
  a.throws(()=>s.cancel(),/Stock return failed/);s.data.slice(1).forEach(row=>{a.equal(row[2],'Hoạt động');a.equal(row[3],'');});a.equal(s.unlocked,true);
+ a.equal(s.exports[1][1],'Đã phê duyệt');a.equal(s.exports[3][1],'Chờ thủ kho phê duyệt');
 });
 test('conflicting return markers are skipped by repair without any stock movement',()=>{
  const s=setup([['KH1','Recipe','Hủy kế hoạch','Đã hoàn kho','A'],['KH1','Recipe','Hoạt động','Không cần hoàn kho','B']]);

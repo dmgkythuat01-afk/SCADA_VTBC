@@ -16,7 +16,7 @@ function suaKeHoachHuyThieuDong_() {
       if (!groups.has(id)) groups.set(id, []);
       groups.get(id).push({rowNumber: index + 2, status: normalizeText_(row[idx.trangThai]), flag: normalizeText_(row[idx.daHoanKhoKhiHuy])});
     });
-    const result = {updatedPlans: 0, updatedRows: 0, skippedPlans: []};
+    const result = {updatedPlans: 0, updatedRows: 0, updatedExportRows: 0, skippedPlans: []};
     groups.forEach((rows, id) => {
       if (!rows.some(row => row.status === 'Hủy kế hoạch')) return;
       const flags = [...new Set(rows.map(row => row.flag).filter(Boolean))];
@@ -25,6 +25,7 @@ function suaKeHoachHuyThieuDong_() {
         result.skippedPlans.push(id); return;
       }
       let changed = false;
+      const phieuHuy = chuanBiDongBoPhieuHuy_(id);
       rows.forEach(row => {
         if (row.status === 'Hủy kế hoạch' && row.flag === flags[0]) return;
         if (idx.daHoanKhoKhiHuy === idx.trangThai + 1) {
@@ -36,6 +37,7 @@ function suaKeHoachHuyThieuDong_() {
         changed = true; result.updatedRows++;
       });
       if (changed) result.updatedPlans++;
+      result.updatedExportRows += ghiTrangThaiPhieuHuy_(phieuHuy);
     });
     console.log(JSON.stringify(result));
     return result;

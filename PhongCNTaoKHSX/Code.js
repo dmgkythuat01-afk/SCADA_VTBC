@@ -1691,6 +1691,7 @@ function updateProductionPlanStatus(
 
     let hoanKhoResult = null;
     if (trangThai === "Hủy kế hoạch") {
+      const phieuHuy = chuanBiDongBoPhieuHuy_(id);
       // Hủy dở do phiên bản cũ: chỉ đồng bộ trạng thái/cờ, không hoàn kho lại.
       // Chỉ hủy lần đầu mới gọi hoàn kho một lần cho toàn bộ mã KHSX.
       if (!hasCancelledRow && !daHoanKhoKhiHuy) {
@@ -1706,6 +1707,7 @@ function updateProductionPlanStatus(
           sheet.getRange(row.rowNumber, idx.trangThai + 1).setValue(trangThai);
         }
       });
+      ghiTrangThaiPhieuHuy_(phieuHuy);
     } else {
       planRows.forEach(row => sheet.getRange(row.rowNumber, idx.trangThai + 1).setValue(trangThai));
     }

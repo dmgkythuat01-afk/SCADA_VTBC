@@ -7,6 +7,7 @@ function setup(rows){
  const ctx=vm.createContext({console});
  vm.runInContext(fs.readFileSync(path.join(__dirname,'../../PhongCNTaoKHSX/Code.js'),'utf8'),ctx);
  const helper=path.join(__dirname,'../../PhongCNTaoKHSX/HoanKhoNhieuLo.js');if(fs.existsSync(helper))vm.runInContext(fs.readFileSync(helper,'utf8'),ctx);
+ vm.runInContext(fs.readFileSync(path.join(__dirname,'../../PhongCNTaoKHSX/DongBoPhieuHuy.js'),'utf8'),ctx);
  ctx.getSpreadsheet_=()=>({getSheetByName:name=>name==='KhoNguyenLieu'?sheet(stock):name==='PhieuXuatNguyenLieu'?sheet(vouchers):null});
  return {ctx,stock,get writes(){return writes;},run:()=>ctx.hoanKhoKhiHuyKeHoach_('KH1')};
 }
