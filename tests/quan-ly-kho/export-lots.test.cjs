@@ -1,5 +1,5 @@
 const test=require('node:test'),a=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm'),path=require('node:path');
-function setup(){const ctx=vm.createContext({console});for(const file of ['Code.js','ExportLotSelection.js'])vm.runInContext(fs.readFileSync(path.join(__dirname,'../../QuanLyKho',file),'utf8'),ctx);return ctx;}
+function setup(){const ctx=vm.createContext({console});for(const file of ['Code.js','ExportLotSelectionGs.js'])vm.runInContext(fs.readFileSync(path.join(__dirname,'../../QuanLyKho',file),'utf8'),ctx);return ctx;}
 const lots=[{Id:'EARLY',rowNumber:2,khoiLuongNhap:5,qtyKg:5,donVi:'kg',LotNo:'L1',hanSuDung:'2026-12-01'},{Id:'LATE',rowNumber:3,khoiLuongNhap:20,qtyKg:20,donVi:'kg',LotNo:'L2',hanSuDung:'2027-01-01'}];
 const line=(allocations,qty=8)=>({rowNumber:2,PhieuXuatId:'PX',KeHoachId:'KH',maNguyenLieu:'NL',tenNguyenLieu:'Name',MaKeToan:'001',donViCanXuat:'kg',khoiLuongCanXuat:qty,khoiLuongXuatThucTe:qty,allocations});
 test('preview defaults to FEFO across multiple lines without reserving the same stock twice',()=>{
