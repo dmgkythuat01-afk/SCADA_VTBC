@@ -1,0 +1,63 @@
+<style>
+  .master-table-pager{display:flex;align-items:center;justify-content:flex-end;gap:10px;flex-wrap:wrap;padding:12px 16px;background:#f0faf5;border-top:1px solid #d9efe6;color:#065f46;font-size:13px}
+  .master-table-pager[hidden]{display:none}
+  .master-table-pager button,.master-table-pager select{padding:7px 10px;border:1px solid #cbded5;border-radius:8px;background:#fff;color:#065f46}
+  .master-table-pager button{cursor:pointer;font-weight:700}
+  .master-table-pager button:disabled{opacity:.4;cursor:default}
+</style>
+<script>
+// Dữ liệu vẫn nằm trong state của từng module; chỉ dựng DOM cho trang đang xem.
+const MASTER_TABLE_PAGES=new WeakMap();
+function masterPageKey(item){
+  if(item===null||typeof item!=='object')return item;
+  if(item.originalIndex!==undefined)return ['index',item.originalIndex];
+  if(item.__rowNumber!==undefined)return ['row',item.__rowNumber];
+  if(item._row!==undefined)return ['row',item._row];
+  return [item.Id,item.id,item.khachHang,item.maSanPham,item.MaKeToanTP,item.maNguyenLieu,item.tenNguyenLieu];
+}
+function masterPageEmpty(container){
+  const state=MASTER_TABLE_PAGES.get(container);
+  if(state){state.page=0;state.signature='';if(state.nav)state.nav.hidden=true;}
+}
+function masterPagedMap(container,rows,rerender,renderRow){
+  let state=MASTER_TABLE_PAGES.get(container);
+  if(!state){state={page:0,size:100,signature:'',nav:null};MASTER_TABLE_PAGES.set(container,state);}
+  const signature=JSON.stringify(rows.map(masterPageKey));
+  if(signature!==state.signature){state.page=0;state.signature=signature;}
+  const pages=Math.max(1,Math.ceil(rows.length/state.size));
+  state.total=rows.length;
+  state.page=Math.max(0,Math.min(state.page,pages-1));
+  const start=state.page*state.size,end=Math.min(rows.length,start+state.size);
+  if(!state.nav&&document.createElement&&container.closest){
+    const table=container.closest('table'),wrap=table?.parentElement;
+    if(wrap){
+      const nav=document.createElement('div');nav.className='master-table-pager';nav.setAttribute('aria-label','Phân trang bảng dữ liệu');
+      nav.innerHTML='<span data-page-range role="status"></span><label>Số dòng <select aria-label="Số dòng mỗi trang"><option>50</option><option selected>100</option><option>200</option></select></label><button type="button" data-page="prev">‹ Trước</button><span data-page-number></span><button type="button" data-page="next">Sau ›</button>';
+      nav.querySelector('select').addEventListener('change',event=>{state.size=Number(event.target.value);state.page=0;rerender();});
+      nav.querySelector('[data-page="prev"]').addEventListener('click',()=>{state.page=Math.max(0,state.page-1);rerender();});
+      nav.querySelector('[data-page="next"]').addEventListener('click',()=>{state.page=Math.min(Math.ceil(state.total/state.size)-1,state.page+1);rerender();});
+      wrap.after(nav);state.nav=nav;
+    }
+  }
+  if(state.nav){
+    state.nav.hidden=rows.length===0;
+    state.nav.querySelector('[data-page-range]').textContent='Hiển thị '+(rows.length?start+1:0)+'–'+end+' / '+rows.length+' dòng';
+    state.nav.querySelector('[data-page-number]').textContent='Trang '+(state.page+1)+' / '+pages;
+    state.nav.querySelector('[data-page="prev"]').disabled=state.page===0;
+    state.nav.querySelector('[data-page="next"]').disabled=state.page>=pages-1;
+  }
+  return rows.slice(start,end).map((row,index)=>renderRow(row,start+index,rows));
+}
+let MASTER_WAREHOUSE_FIT_FRAME=null;
+function masterFitWarehouseTextareas(){
+  if(MASTER_WAREHOUSE_FIT_FRAME!==null&&typeof cancelAnimationFrame==='function')cancelAnimationFrame(MASTER_WAREHOUSE_FIT_FRAME);
+  MASTER_WAREHOUSE_FIT_FRAME=requestAnimationFrame(()=>{
+    MASTER_WAREHOUSE_FIT_FRAME=null;
+    const elements=Array.from(document.querySelectorAll('#masterViewKho .mk-auto-textarea')).filter(element=>element.offsetParent!==null);
+    // Ghi -> đọc -> ghi theo lô, tránh ép trình duyệt tính layout cho từng ô.
+    elements.forEach(element=>{element.style.height='auto';});
+    const heights=elements.map(element=>element.scrollHeight);
+    elements.forEach((element,index)=>{element.style.height=Math.min(110,Math.max(38,heights[index]))+'px';element.style.overflowY=heights[index]>110?'auto':'hidden';});
+  });
+}
+</script>

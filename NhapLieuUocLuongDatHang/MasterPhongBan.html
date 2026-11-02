@@ -1301,6 +1301,7 @@ function masterPB_renderCustomerTable() {
     MASTER_PB_STATE.customers;
 
   if (!data.length) {
+    masterPageEmpty(tbody);
 
     tbody.innerHTML = `
 
@@ -1322,7 +1323,7 @@ function masterPB_renderCustomerTable() {
   }
 
   tbody.innerHTML =
-    data.map(
+    masterPagedMap(tbody,data,masterPB_renderCustomerTable,
       (name, index) => `
 
         <tr>
@@ -2099,6 +2100,7 @@ function masterPB_renderPendingTable() {
     MASTER_PB_STATE.pending;
 
   if (!data.length) {
+    masterPageEmpty(tbody);
 
     tbody.innerHTML = `
 
@@ -2121,7 +2123,7 @@ function masterPB_renderPendingTable() {
   }
 
   tbody.innerHTML =
-    data.map(
+    masterPagedMap(tbody,data,masterPB_renderPendingTable,
       (item, index) => `
 
         <tr>
@@ -2317,6 +2319,7 @@ function masterPB_renderRelationTable() {
   }
 
   if (!data.length) {
+    masterPageEmpty(tbody);
 
     tbody.innerHTML = `
 
@@ -2338,7 +2341,7 @@ function masterPB_renderRelationTable() {
   }
 
   tbody.innerHTML =
-    data.map(
+    masterPagedMap(tbody,data,masterPB_renderRelationTable,
       item => `
 
         <tr>

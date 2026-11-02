@@ -1515,6 +1515,7 @@ function masterPM_renderTable() {
 
 
   if (!filtered.length) {
+    masterPageEmpty(tbody);
 
     tbody.innerHTML = `
 
@@ -1537,7 +1538,7 @@ function masterPM_renderTable() {
 
 
   tbody.innerHTML =
-    filtered.map(
+    masterPagedMap(tbody,filtered,masterPM_renderTable,
       (wrapper, displayIndex) => {
 
         const row =

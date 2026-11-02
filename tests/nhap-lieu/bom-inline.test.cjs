@@ -49,6 +49,7 @@ test('stale identity, concurrent edits and invalid accounting codes are rejected
 function frontendSetup(){
  const nodes=new Map();const node=id=>{if(!nodes.has(id))nodes.set(id,{value:'',textContent:'',innerHTML:''});return nodes.get(id);};
  const ctx=load('MasterPCN.html',{document:{getElementById:node},alert(){}});
+ vm.runInContext(fs.readFileSync(path.join(__dirname,'../../NhapLieuUocLuongDatHang/MasterTablePaging.html'),'utf8').match(/<script>([\s\S]*?)<\/script>/)[1],ctx);
  vm.runInContext(fs.readFileSync(path.join(__dirname,'../../NhapLieuUocLuongDatHang/MasterPCNBomInline.html'),'utf8').match(/<script>([\s\S]*?)<\/script>/)[1],ctx);
  const row={__rowNumber:2,maDinhLuong:'BOM_SHARED',maSanPham:'SP',maNguyenLieu:'NL',tenNguyenLieu:'Name',MaKeToan:'000',dinhLuong1SKU:'12',MaKeToan1:'001',MaKeToan2:'',MaKeToan3:'',SuDung0:'TRUE',SuDung1:'FALSE',SuDung2:'',SuDung3:''};
  ctx.fixture={row,other:{...row,__rowNumber:3,maNguyenLieu:'OTHER'},headers:Object.keys(row).filter(k=>k!=='__rowNumber'),catalog:[{maNguyenLieu:'NL',tenNguyenLieu:'Name',MaKeToan:'001'},{maNguyenLieu:'NL',tenNguyenLieu:'Name',MaKeToan:'002'},{maNguyenLieu:'OTHER',tenNguyenLieu:'Name',MaKeToan:'999'}]};

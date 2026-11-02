@@ -26,8 +26,22 @@
 const MASTER_PCN_BOM_INLINE = {
   fields:['MaKeToan','MaKeToan1','MaKeToan2','MaKeToan3','SuDung0','SuDung1','SuDung2','SuDung3'],
   identity:['maDinhLuong','maSanPham','maNguyenLieu','tenNguyenLieu'],
-  drafts:new Map(), saving:new Set(), status:new Map()
+  drafts:new Map(), saving:new Set(), status:new Map(), catalog:null, codes:new Map()
 };
+function masterPCNBom_catalogCodes(row){
+  const state=MASTER_PCN_BOM_INLINE,catalog=MASTER_PCN.data.nguyenLieu||[];
+  const key=item=>JSON.stringify([String(item.maNguyenLieu??'').trim(),String(item.tenNguyenLieu??'').trim()]);
+  if(state.catalog!==catalog){
+    state.catalog=catalog;state.codes=new Map();
+    catalog.forEach(item=>{
+      const code=String(item.MaKeToan??'').trim();if(!code)return;
+      const identity=key(item);if(!state.codes.has(identity))state.codes.set(identity,new Set());
+      state.codes.get(identity).add(code);
+    });
+  }
+  if(!String(row.maNguyenLieu??'').trim()||!String(row.tenNguyenLieu??'').trim())return [];
+  return Array.from(state.codes.get(key(row))||[]);
+}
 const MASTER_PCN_PRODUCT_SEARCH={selected:null,open:false,all:false,active:-1,choices:[]};
 function masterPCNBom_layout(headers,bom){
   if(!bom)return {headers,attrs:()=>'',width:''};
@@ -121,10 +135,7 @@ function masterPCNBom_cell(row,field){
   const value=String((draft?draft.values:row)[field]??'');
   const text=v=>String(v??'').trim();
   const isCode=field.startsWith('MaKeToan');
-  const codes=[...new Set((MASTER_PCN.data.nguyenLieu||[]).filter(item=>
-    text(row.maNguyenLieu)&&text(row.tenNguyenLieu)&&
-    text(item.maNguyenLieu)===text(row.maNguyenLieu)&&text(item.tenNguyenLieu)===text(row.tenNguyenLieu))
-    .map(item=>text(item.MaKeToan)).filter(Boolean))];
+  const codes=isCode?masterPCNBom_catalogCodes(row):[];
   const options=isCode?codes.map(code=>({value:code,label:code})):[{value:'TRUE',label:'Có'},{value:'FALSE',label:'Không'}];
   const selected=isCode?value.trim():value.trim().toUpperCase();
   if(selected&&!options.some(option=>option.value===selected)) options.unshift({value:selected,label:selected+' (hiện tại; ngoài danh mục)'});

@@ -1550,6 +1550,7 @@ function masterKho_renderTonKho() {
 
 
   if (!filtered.length) {
+    masterPageEmpty(tbody);
 
     tbody.innerHTML = `
 
@@ -1572,7 +1573,7 @@ function masterKho_renderTonKho() {
 
 
   tbody.innerHTML =
-    filtered.map(
+    masterPagedMap(tbody,filtered,masterKho_renderTonKho,
       (wrapper, displayIndex) => {
 
         const row =
@@ -1678,6 +1679,7 @@ function masterKho_renderNguyenLieu() {
 
 
   if (!filtered.length) {
+    masterPageEmpty(tbody);
 
     tbody.innerHTML = `
 
@@ -1700,7 +1702,7 @@ function masterKho_renderNguyenLieu() {
 
 
   tbody.innerHTML =
-    filtered.map(
+    masterPagedMap(tbody,filtered,masterKho_renderNguyenLieu,
       (wrapper, displayIndex) => {
 
         const row =
@@ -1885,34 +1887,8 @@ function masterKho_autoResize(
 // AUTO RESIZE TẤT CẢ Ô ĐANG HIỂN THỊ
 // ============================================================
 
-function masterKho_resizeAllTextareas() {
+function masterKho_resizeAllTextareas() { masterFitWarehouseTextareas(); }
 
-  requestAnimationFrame(
-    () => {
-
-      document
-        .querySelectorAll(
-          '#masterViewKho .mk-auto-textarea'
-        )
-        .forEach(
-          element => {
-
-            masterKho_autoResize(
-              element
-            );
-
-          }
-        );
-
-    }
-  );
-
-}
-
-
-// ============================================================
-// CHANGE CELL
-// ============================================================
 
 function masterKho_changeCell(
   element

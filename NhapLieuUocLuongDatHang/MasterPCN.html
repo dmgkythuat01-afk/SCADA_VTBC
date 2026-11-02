@@ -153,6 +153,7 @@ function masterPCN_render(){
   document.getElementById('pcnSummary').textContent=rows.length+' dòng dữ liệu';
 
   if(!rows.length){
+    masterPageEmpty(table);
     table.innerHTML='<tbody><tr><td class="pcn-empty">Không có dữ liệu.</td></tr></tbody>';
     return;
   }
@@ -164,7 +165,7 @@ function masterPCN_render(){
       <th ${layout.attrs('__actions')}>Thao tác</th>
     </tr></thead>
     <tbody>
-      ${rows.map((r,i)=>`
+      ${masterPagedMap(table,rows,masterPCN_render,(r,i)=>`
         <tr>
           <td ${layout.attrs('__stt')}>${i+1}</td>
           ${headers.map(h=>`<td ${layout.attrs(h)}>${masterPCNBom_cell(r,h)}</td>`).join('')}

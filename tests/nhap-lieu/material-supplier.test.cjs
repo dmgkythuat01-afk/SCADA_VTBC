@@ -21,6 +21,7 @@ test('material table and new-material form include editable supplier field',()=>
  const nodes=new Map();const node=id=>{if(!nodes.has(id))nodes.set(id,{value:'',innerHTML:'',classList:{add(){},remove(){}}});return nodes.get(id);};
  const ctx=vm.createContext({console,document:{getElementById:node,addEventListener(){},querySelectorAll:()=>[],body:{classList:{add(){}}}},setTimeout(){},requestAnimationFrame(){}});
  const html=fs.readFileSync(path.join(root,'MasterKho.html'),'utf8');
+ vm.runInContext(fs.readFileSync(path.join(root,'MasterTablePaging.html'),'utf8').match(/<script>([\s\S]*?)<\/script>/)[1],ctx);
  vm.runInContext(html.match(/<script>([\s\S]*?)<\/script>/)[1],ctx);
  vm.runInContext('MASTER_KHO_STATE.nguyenLieuRows=[{maNguyenLieu:"NL1",tenNguyenLieu:"Material",nhaCungCapCap:"Supplier & maker"}];masterKho_renderNguyenLieu();masterKho_openAddNguyenLieu()',ctx);
  a.match(node('mkNguyenLieuBody').innerHTML,/data-header="nhaCungCapCap"/);
