@@ -1660,6 +1660,24 @@ function getPendingExportRequests(token) {
   };
 }
 
+function getActivePlanIdsForExport_(ss) {
+  const sheet = ss.getSheetByName('KeHoachSanXuat');
+  if (!sheet) throw new Error('Không tìm thấy sheet KeHoachSanXuat để kiểm tra trạng thái kế hoạch.');
+  const values = sheet.getDataRange().getValues();
+  const headers = values[0].map(normalizeText_);
+  const idIndex = headers.indexOf('Id'), statusIndex = headers.indexOf('trangThai');
+  if (idIndex < 0 || statusIndex < 0) throw new Error('KeHoachSanXuat thiếu cột Id hoặc trangThai.');
+  const states = new Map();
+  values.slice(1).forEach(row => {
+    const id = normalizeText_(row[idIndex]);
+    if (!id) return;
+    const active = normalizeStatus_(row[statusIndex]) === 'hoạt động';
+    // Một dòng đã hủy cũng loại cả kế hoạch, kể cả dữ liệu cũ hủy chưa đủ dòng.
+    states.set(id, (states.has(id) ? states.get(id) : true) && active);
+  });
+  return new Set([...states].filter(([, active]) => active).map(([id]) => id));
+}
+
 function getPendingExportRequests_() {
   const ss = getSpreadsheet_();
   const sheet = ss.getSheetByName(SHEET_PHIEU_XUAT_NGUYEN_LIEU);
@@ -1674,6 +1692,7 @@ function getPendingExportRequests_() {
   const headers = values[0].map(h => normalizeText_(h));
   const idx = getPhieuXuatHeaderIndex_(headers);
   const groups = {};
+  const activePlanIds = getActivePlanIdsForExport_(ss);
 
   values.slice(1).forEach(function(row, offset) {
     const rowNumber = offset + 2;
@@ -1681,6 +1700,7 @@ function getPendingExportRequests_() {
     const status = normalizeText_(row[idx.trangThaiPheDuyet]);
 
     if (!phieuXuatId || !isPendingExportStatus_(status)) return;
+    if (!activePlanIds.has(normalizeText_(row[idx.KeHoachId]))) return;
 
     const maNguyenLieu = normalizeText_(row[idx.maNguyenLieu]);
     const tenNguyenLieu = normalizeText_(row[idx.tenNguyenLieu]);
