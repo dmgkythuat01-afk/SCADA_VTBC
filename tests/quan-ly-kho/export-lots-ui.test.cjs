@@ -6,6 +6,7 @@ test('lot editor preserves custom splits, validates shared stock and serializes 
  vm.runInContext(fs.readFileSync(path.join(__dirname,'../../QuanLyKho/ExportLotSelection.html'),'utf8').match(/<script>([\s\S]*?)<\/script>/)[1],ctx);
  const api=vm.runInContext('ExportLots',ctx);node('exportActualQty_2').value='8';api.prepare(ctx.exportApprovalRequests);
  a.match(api.html(2),/Mã KT 001/);a.equal(api.collect(2).allocationError,'');
+ a.match(api.html(2),/Đã chọn:.*Lot L1/);a.match(api.html(2),/Tồn lô:.*20/);
  api.change(2,0,'quantity',2);api.change(2,1,'quantity',6);a.equal(api.collect(2).allocationError,'');
  a.deepEqual(Array.from(api.collect(2).allocations,part=>[part.id,part.quantity]),[['A',2],['B',6]]);
  api.change(2,0,'quantity',7);a.match(api.collect(2).allocationError,/vượt tồn/);
@@ -14,4 +15,7 @@ test('lot editor preserves custom splits, validates shared stock and serializes 
  ctx.exportApprovalRequests=[{items:[{...item,allocations:[{id:'A',quantity:5},{id:'B',quantity:3}]}]}];
  api.prepare(ctx.exportApprovalRequests);a.deepEqual(Array.from(api.collect(2).allocations,part=>[part.id,part.quantity]),[['A',2],['B',6]]);
  api.reset();api.prepare(ctx.exportApprovalRequests);a.deepEqual(Array.from(api.collect(2).allocations,part=>[part.id,part.quantity]),[['A',5],['B',3]]);
+ api.remove(2,0);api.change(2,0,'quantity',8);
+ a.match(node('exportLotSummary_2').innerHTML,/Lot L2/);a.doesNotMatch(node('exportLotSummary_2').innerHTML,/Lot L1/);
+ a.match(node('exportLotSummary_2').innerHTML,/Xuất.*8.*Tồn lô:.*20/);
 });

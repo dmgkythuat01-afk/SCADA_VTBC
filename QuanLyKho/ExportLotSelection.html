@@ -48,7 +48,13 @@ const ExportLots=(function(){
  function summary(row){
   const line=item(row),draft=drafts.get(Number(row));if(!line||!draft)return '';
   const total=draft.parts.reduce((sum,part)=>sum+number(part.quantity),0),message=error(row);
-  return '<div class="export-lot-summary '+(message?'error':'ok')+'">Phân bổ '+esc(total)+' / '+esc(actual(row))+' '+esc(line.donViCanXuat)+(message?' — '+esc(message):' — Đủ phân bổ')+'</div>';
+  const format=value=>Number.isFinite(number(value))?number(value).toLocaleString('vi-VN',{maximumFractionDigits:6}):'—';
+  const details=draft.parts.map(part=>{
+   const lot=(line.lotOptions||[]).find(lot=>lot.Id===part.id);
+   if(!lot)return '<div>Chưa chọn lô hợp lệ — Xuất '+esc(format(part.quantity))+' '+esc(line.donViCanXuat)+'</div>';
+   return '<div>Đã chọn: <b>Lot '+esc(lot.LotNo||lot.Id)+'</b> — Xuất <b>'+esc(format(part.quantity))+' '+esc(line.donViCanXuat)+'</b> — Tồn lô: '+esc(format(lot.available))+' '+esc(line.donViCanXuat)+(lot.hanSuDung?' — HSD: '+esc(lot.hanSuDung):'')+'</div>';
+  }).join('');
+  return '<div class="export-lot-summary '+(message?'error':'ok')+'">'+details+(message?'<div>Tổng lượng đã chọn: '+esc(format(total))+' / '+esc(format(actual(row)))+' '+esc(line.donViCanXuat)+' — '+esc(message)+'</div>':'')+'</div>';
  }
  function inner(row){
   const line=item(row),draft=drafts.get(Number(row));if(!line||!draft)return '';
