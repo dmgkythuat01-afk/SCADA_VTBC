@@ -4399,7 +4399,8 @@
     }
 
 
-    function loadExportApprovals(silent) {
+    function loadExportApprovals(silent, preserveLots) {
+      if(!preserveLots)ExportLots.reset();
       showMessage("exportApprovalMessage", "", "");
 
       if (!silent) {
@@ -4430,6 +4431,7 @@
     }
 
     function renderExportApprovals() {
+      ExportLots.prepare(exportApprovalRequests);
       const box = document.getElementById("exportApprovalBox");
       if (!box) return;
 
@@ -4476,8 +4478,7 @@
                   <th>Cách xuất</th>
                   <th>Tồn khả dụng</th>
                   <th>Quy cách</th>
-                  <th>Lot QR gốc</th>
-                  <th>HSD QR gốc</th>
+                  <th colspan="2">Lô xuất dự kiến — chọn lô và lượng xuất</th>
                   <th>Trạng thái</th>
                   <th>Cảnh báo</th>
                   <th>Thao tác</th>
@@ -4499,19 +4500,20 @@
               <td>${escapeHtml(item.tenNguyenLieu || "")}</td>
               <td><b>${escapeHtml(item.MaKeToan || "")}</b></td>
               <td>
-                <input class="qty-input" id="exportQty_${item.rowNumber}" type="number" min="0" step="0.001" value="${escapeHtml(item.khoiLuongCanXuat || "")}">
+                <input class="qty-input" id="exportQty_${item.rowNumber}" oninput="ExportLots.quantityChanged(${item.rowNumber},true)" type="number" min="0" step="0.001" value="${escapeHtml(item.khoiLuongCanXuat || "")}">
               </td>
               <td>
                 <input
                 class="qty-input"
                 id="exportActualQty_${item.rowNumber}"
+                oninput="ExportLots.quantityChanged(${item.rowNumber},false)"
                 type="number"
                 min="0"
                 step="0.001"
                 value="${escapeHtml(
                   Math.round(
                     (
-                      Number(item.khoiLuongCanXuat || 0) *
+                      Number(item.khoiLuongXuatThucTe === "" || item.khoiLuongXuatThucTe == null ? item.khoiLuongCanXuat : item.khoiLuongXuatThucTe) *
                       1
                     ) *
                     1000000
@@ -4525,8 +4527,7 @@
               </td>
               <td>${escapeHtml(formatNumber(item.tonKhoKhaDung || 0))} ${escapeHtml(item.donViCanXuat || "")}</td>
               <td>${escapeHtml(item.quyCachDongGoi || "")}</td>
-              <td>${escapeHtml(item.LotNo || "")}</td>
-              <td>${escapeHtml(item.hanSuDung || "")}</td>
+              <td colspan="2">${ExportLots.html(item.rowNumber)}</td>
               <td><span class="status-pill status-wait">${escapeHtml(item.trangThaiPheDuyet || "Chờ")}</span></td>
               <td class="export-message-cell"><span class="status-pill ${item.duSoLuong ? "status-ok" : "status-bad"}">${escapeHtml(warningText)}</span></td>
               <td>
@@ -4558,12 +4559,14 @@
         rowNumber: rowNumber,
         khoiLuongCanXuat: qtyEl ? Number(qtyEl.value) : 0,
         khoiLuongXuatThucTe: actualQtyEl ? Number(actualQtyEl.value) : 0,
-        cachXuat: cachXuatEl ? cachXuatEl.value.trim() : ""
+        cachXuat: cachXuatEl ? cachXuatEl.value.trim() : "",
+        ...ExportLots.collect(rowNumber)
       };
     }
 
     function approveExportLineFromUi(rowNumber) {
       const payload = getExportLineInput(rowNumber);
+      if(payload.allocationError){showMessage("exportApprovalMessage","error",payload.allocationError);return;}
 
       if (!isFinite(payload.khoiLuongCanXuat) || payload.khoiLuongCanXuat <= 0) {
         showMessage("exportApprovalMessage", "error", "Khối lượng cần xuất phải là số lớn hơn 0.");
@@ -4579,7 +4582,7 @@
         return;
       }
 
-      showLoading("Đang phê duyệt phiếu xuất...", "Đang kiểm tra tồn kho và trừ kho theo hạn sử dụng gần nhất");
+      showLoading("Đang phê duyệt phiếu xuất...", "Đang kiểm tra tồn kho và trừ đúng các lô đã chọn");
 
       google.script.run
         .withSuccessHandler(function(res) {
@@ -4602,7 +4605,7 @@
         .withFailureHandler(function(err) {
           hideLoading();
           showMessage("exportApprovalMessage", "error", err.message || "Có lỗi khi phê duyệt phiếu xuất.");
-          loadExportApprovals(true);
+          loadExportApprovals(true, true);
         })
         .approveExportLine(sessionToken, payload);
     }
@@ -4668,6 +4671,7 @@
 
       for (let i = 0; i < payload.items.length; i++) {
         const item = payload.items[i];
+        if(item.allocationError){showMessage("exportApprovalMessage","error","Dòng "+item.rowNumber+": "+item.allocationError);return;}
 
         if (!isFinite(item.khoiLuongCanXuat) || item.khoiLuongCanXuat <= 0) {
           showMessage("exportApprovalMessage", "error", "Có dòng chưa nhập đúng KL cần xuất.");
@@ -4684,7 +4688,7 @@
         return;
       }
 
-      showLoading("Đang phê duyệt toàn bộ phiếu xuất...", "Đang kiểm tra tồn kho và trừ kho theo hạn sử dụng gần nhất");
+      showLoading("Đang phê duyệt toàn bộ phiếu xuất...", "Đang kiểm tra tồn kho và trừ đúng các lô đã chọn");
 
       google.script.run
         .withSuccessHandler(function(res) {
@@ -4708,7 +4712,7 @@
         .withFailureHandler(function(err) {
           hideLoading();
           showMessage("exportApprovalMessage", "error", err.message || "Có lỗi khi phê duyệt toàn bộ phiếu xuất.");
-          loadExportApprovals(true);
+          loadExportApprovals(true, true);
           loadStock(true);
         })
         .approveExportRequest(sessionToken, payload);
@@ -7685,5 +7689,6 @@
     }
 
   </script>
+<?!= HtmlService.createHtmlOutputFromFile('ExportLotSelection').getContent(); ?>
 </body>
 </html>

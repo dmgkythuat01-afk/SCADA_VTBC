@@ -1,7 +1,7 @@
 const test=require('node:test'),a=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm'),path=require('node:path');
 function setup(rows){
  const stock=[['Id','khoiLuongNhap','donVi','trangThai'],['KNL1',0,'kg','Đã xuất hết'],['KNL2',1000,'kg','Đã phê duyệt']];
- const headers=['KeHoachId','trangThaiPheDuyet','IdKhoDaTru','khoiLuongCanXuat','donViCanXuat','khoiLuongXuatThucTe','IdKho','khoiLuongKho','donViKho'];
+ const headers=['KeHoachId','trangThaiPheDuyet','IdKhoDaTru','khoiLuongCanXuat','donViCanXuat','khoiLuongXuatThucTe','IdKho','khoiLuongKho','donViKho','chiTietTruKho'];
  const vouchers=[headers,...rows];let writes=0;
  const sheet=data=>({getLastRow:()=>data.length,getDataRange:()=>({getValues:()=>data.map(row=>row.slice())}),getRange(row,col){return {setValue(value){data[row-1][col-1]=value;writes++;}};}});
  const ctx=vm.createContext({console});
@@ -12,6 +12,16 @@ function setup(rows){
  return {ctx,stock,get writes(){return writes;},run:()=>ctx.hoanKhoKhiHuyKeHoach_('KH1')};
 }
 const multi=['KH1','Đã phê duyệt','KNL1, KNL2',142.5,'kg',142.5,'KNL1, KNL2','94.25, 13113.350719','kg, kg'];
+test('exact ledger restores fractional ton stock without changing the issued kg quantity',()=>{
+ const ledger=JSON.stringify([{IdKho:'KNL1',khoiLuong:.0012345,donVi:'tan'}]);
+ const s=setup([['KH1','Đã phê duyệt','KNL1',1.2345,'kg',1.2345,'','','',ledger]]);
+ s.stock[1][1]=.9987655;s.stock[1][2]='tan';s.run();a.equal(s.stock[1][1],1);
+});
+test('manual non-FEFO split is restored from the exact ledger rather than inferred FIFO',()=>{
+ const ledger=JSON.stringify([{IdKho:'KNL1',khoiLuong:2,donVi:'kg'},{IdKho:'KNL2',khoiLuong:6,donVi:'kg'}]);
+ const s=setup([['KH1','Đã phê duyệt','KNL1, KNL2',8,'kg',8,'KNL1, KNL2','5, 20','kg, kg',ledger]]);
+ s.run();a.equal(s.stock[1][1],2);a.equal(s.stock[2][1],1006);
+});
 test('returns user example FIFO amounts 94.25 and 48.25 to their exact original stock IDs',()=>{
  const s=setup([multi]);const result=s.run();
  a.equal(s.stock[1][1],94.25);a.equal(s.stock[2][1],1048.25);a.equal(s.stock[1][3],'Đã phê duyệt');a.equal(result.tongDongHoan,1);

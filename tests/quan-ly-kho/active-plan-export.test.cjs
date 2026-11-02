@@ -7,6 +7,7 @@ function setup(){
  const ctx=vm.createContext({console});vm.runInContext(fs.readFileSync(path.join(__dirname,'../../QuanLyKho/Code.js'),'utf8'),ctx);
  ctx.getSpreadsheet_=()=>({getSheetByName:name=>name==='KeHoachSanXuat'?sheet(plans):sheet(vouchers)});
  ctx.ensurePhieuXuatHeader_=()=>{};ctx.getPhieuXuatHeaderIndex_=()=>Object.fromEntries(fields.map((field,index)=>[field,index]));
+ ctx.buildExportLotPreview_=groups=>groups;
  ctx.getAvailableKgForExport_=()=>{stockCalls++;return 100;};ctx.toKg_=value=>value;ctx.fromKg_=value=>value;ctx.roundQty_=value=>value;ctx.formatDateValue_=value=>value||'';
  return {ctx,plans,get stockCalls(){return stockCalls;}};
 }

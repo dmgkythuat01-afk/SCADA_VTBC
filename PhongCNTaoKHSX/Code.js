@@ -5943,8 +5943,8 @@ function convertUnitForCancelPlan_(
     toFactor;
 
   return Math.round(
-    result * 1000000
-  ) / 1000000;
+    result * 1000000000000
+  ) / 1000000000000;
 }
 
 function congLaiKhoTheoId_(
@@ -6052,9 +6052,9 @@ function congLaiKhoTheoId_(
         oldQty +
         qtyTheoDonViKho
       ) *
-      1000000
+      1000000000000
     ) /
-    1000000;
+    1000000000000;
 
   /*
    * Ghi trở lại Google Sheet.
@@ -6484,6 +6484,7 @@ function hoanKhoKhiHuyKeHoach_(
   const idxSnapshotIds = phieuHeaders.indexOf("IdKho");
   const idxSnapshotQuantities = phieuHeaders.indexOf("khoiLuongKho");
   const idxSnapshotUnits = phieuHeaders.indexOf("donViKho");
+  const idxExactLedger = phieuHeaders.indexOf("chiTietTruKho");
   const instructions = [];
 
   // Kiểm tra TẤT CẢ dòng và lô trước khi ghi kho, tránh cộng dở rồi lỗi dòng sau.
@@ -6494,7 +6495,7 @@ function hoanKhoKhiHuyKeHoach_(
     const unit = normalizeText_(row[idxDonViCanXuatPhieu]);
     const parts = phanBoHoanKhoNhieuLo_(
       row[idxIdKhoDaTru], qty, unit,
-      row[idxSnapshotIds], row[idxSnapshotQuantities], row[idxSnapshotUnits]
+      row[idxSnapshotIds], row[idxSnapshotQuantities], row[idxSnapshotUnits], row[idxExactLedger]
     );
     parts.forEach(function(part) {
       const targets = khoValues.slice(1).filter(stock => normalizeText_(stock[khoIdx.Id]) === part.id);
