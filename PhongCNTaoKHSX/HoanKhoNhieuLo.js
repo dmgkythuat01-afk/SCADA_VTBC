@@ -1,9 +1,25 @@
 // Dựng lại lượng trừ FIFO từ tổng thực xuất và ảnh chụp tồn từng lô trước khi xuất.
-function phanBoHoanKhoNhieuLo_(idsText, quantity, unit, snapshotIdsText, quantitiesText, unitsText, ledgerText) {
+function phanBoHoanKhoNhieuLo_(idsText, quantity, unit, snapshotIdsText, quantitiesText, unitsText, ledgerText, perLotActualText) {
   const split = value => normalizeText_(value).split(',').map(normalizeText_);
   const ids = split(idsText);
   if (!ids[0] || ids.some(id => !id) || new Set(ids).size !== ids.length) throw new Error('IdKhoDaTru không hợp lệ: ' + idsText);
   if (!isFinite(quantity) || quantity <= 0 || !unit) throw new Error('Thiếu số lượng hoặc đơn vị thực xuất để hoàn kho.');
+  // Actual per-lot amounts follow IdKhoDaTru/LotNo order and use donViCanXuat.
+  if (normalizeText_(perLotActualText)) {
+    const amounts = split(perLotActualText);
+    if (amounts.length !== ids.length) throw new Error('khoiLuongXuatThucTeTheoLotNo: count does not match IdKhoDaTru.');
+    let total = 0;
+    const result = ids.map((id, index) => {
+      const qty = Number(amounts[index]);
+      if (!amounts[index] || !isFinite(qty) || qty <= 0) throw new Error('khoiLuongXuatThucTeTheoLotNo: invalid quantity for ' + id);
+      total += qty;
+      return {id, quantity: qty, unit};
+    });
+    if (Math.abs(convertUnitForCancelPlan_(total, unit, 'kg') - convertUnitForCancelPlan_(quantity, unit, 'kg')) > 0.000001 * Math.max(1, ids.length)) {
+      throw new Error('khoiLuongXuatThucTeTheoLotNo: sum does not match khoiLuongXuatThucTe.');
+    }
+    return result;
+  }
   if (normalizeText_(ledgerText)) {
     let ledger;
     try { ledger=JSON.parse(ledgerText); } catch(error) { throw new Error('Chi tiết trừ kho không hợp lệ.'); }

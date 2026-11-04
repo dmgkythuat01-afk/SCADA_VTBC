@@ -6485,17 +6485,19 @@ function hoanKhoKhiHuyKeHoach_(
   const idxSnapshotQuantities = phieuHeaders.indexOf("khoiLuongKho");
   const idxSnapshotUnits = phieuHeaders.indexOf("donViKho");
   const idxExactLedger = phieuHeaders.indexOf("chiTietTruKho");
+  const idxPerLotActual = phieuHeaders.indexOf("khoiLuongXuatThucTeTheoLotNo");
   const instructions = [];
 
   // Kiểm tra TẤT CẢ dòng và lô trước khi ghi kho, tránh cộng dở rồi lỗi dòng sau.
   phieuRows.forEach(function(row) {
     let qty = idxKhoiLuongXuatThucTe < 0 ? 0 : Number(row[idxKhoiLuongXuatThucTe]) || 0;
     if (qty <= 0) qty = Number(row[idxKhoiLuongCanXuat]) || 0;
-    if (qty <= 0) return;
+    const perLotActual = idxPerLotActual < 0 ? "" : row[idxPerLotActual];
+    if (qty <= 0 && !normalizeText_(perLotActual)) return;
     const unit = normalizeText_(row[idxDonViCanXuatPhieu]);
     const parts = phanBoHoanKhoNhieuLo_(
       row[idxIdKhoDaTru], qty, unit,
-      row[idxSnapshotIds], row[idxSnapshotQuantities], row[idxSnapshotUnits], row[idxExactLedger]
+      row[idxSnapshotIds], row[idxSnapshotQuantities], row[idxSnapshotUnits], row[idxExactLedger], perLotActual
     );
     parts.forEach(function(part) {
       const targets = khoValues.slice(1).filter(stock => normalizeText_(stock[khoIdx.Id]) === part.id);

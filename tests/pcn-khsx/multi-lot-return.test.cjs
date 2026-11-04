@@ -1,7 +1,7 @@
 const test=require('node:test'),a=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm'),path=require('node:path');
 function setup(rows){
  const stock=[['Id','khoiLuongNhap','donVi','trangThai'],['KNL1',0,'kg','Đã xuất hết'],['KNL2',1000,'kg','Đã phê duyệt']];
- const headers=['KeHoachId','trangThaiPheDuyet','IdKhoDaTru','khoiLuongCanXuat','donViCanXuat','khoiLuongXuatThucTe','IdKho','khoiLuongKho','donViKho','chiTietTruKho'];
+ const headers=['KeHoachId','trangThaiPheDuyet','IdKhoDaTru','khoiLuongCanXuat','donViCanXuat','khoiLuongXuatThucTe','IdKho','khoiLuongKho','donViKho','chiTietTruKho','khoiLuongXuatThucTeTheoLotNo'];
  const vouchers=[headers,...rows];let writes=0;
  const sheet=data=>({getLastRow:()=>data.length,getDataRange:()=>({getValues:()=>data.map(row=>row.slice())}),getRange(row,col){return {setValue(value){data[row-1][col-1]=value;writes++;}};}});
  const ctx=vm.createContext({console});
@@ -52,4 +52,24 @@ test('full cancellation restores both lots once and marks every ingredient row c
  data.slice(1).forEach(row=>{a.equal(row[7],'Hủy kế hoạch');a.equal(row[8],'Đã hoàn kho');});
  s.ctx.updateProductionPlanStatus('token',{id:'KH1',trangThai:'Hủy kế hoạch'});
  a.equal(s.stock[1][1],94.25);a.equal(s.stock[2][1],1048.25);
+});
+
+
+test('per-lot actual column takes priority over old ledger and FIFO snapshots',()=>{
+ const oldLedger=JSON.stringify([{IdKho:'KNL1',khoiLuong:5,donVi:'kg'},{IdKho:'KNL2',khoiLuong:3,donVi:'kg'}]);
+ const s=setup([['KH1','Đã phê duyệt','KNL2, KNL1',8,'kg',8,'KNL2, KNL1','20, 5','kg, kg',oldLedger,'6, 2']]);
+ s.run();a.equal(s.stock[1][1],2);a.equal(s.stock[2][1],1006);
+});
+
+test('per-lot quantities use export unit and convert to each stock unit',()=>{
+ const s=setup([['KH1','Đã phê duyệt','KNL1, KNL2',3000,'g',3000,'','','','','1000, 2000']]);
+ s.stock[1][2]='tan';s.run();a.equal(s.stock[1][1],.001);a.equal(s.stock[2][1],1002);
+});
+
+test('invalid per-lot actual column never falls back or partly restores stock',()=>{
+ for(const value of ['2','2, 7','0, 8','-1, 9','2, x','2, 6,','2, ']){
+  const valid=['KH1','Đã phê duyệt','KNL1',1,'kg',1,'','','','','1'];
+  const invalid=['KH1','Đã phê duyệt','KNL1, KNL2',8,'kg',8,'KNL1, KNL2','5, 20','kg, kg','',value];
+  const s=setup([valid,invalid]);a.throws(()=>s.run());a.equal(s.writes,0);
+ }
 });
