@@ -46,3 +46,11 @@ test('export slip date uses approval date for the selected plan and ignores empt
  state.api.edit({target:{dataset:{slipField:'date'},textContent:''}});state.api.print();a.ok(state.output.includes('Ngày 28 tháng 10 năm 2026'));
  state.api.setData('KH02',[{...rows[0],_slip:{...rows[0]._slip,approvalDate:'2026-10-27'}}],{},'');state.api.print();a.ok(state.output.includes('Ngày 27 tháng 10 năm 2026'));a.ok(!state.output.includes('Ngày 28 tháng 10 năm 2026'));
 });
+
+
+test('preview, print and Word split quantities into matching lot rows',()=>{
+ const state=setup();const source={...rows[0],_slip:{...rows[0]._slip,lotQuantities:[5,7.5]}};
+ state.api.setData('KH01',[source],{recipient:'Recipient'},'');
+ const check=html=>{const lines=html.match(/<tr class="slip-data">[\s\S]*?<\/tr>/g)||[];a.equal(lines.length,2);a.ok(lines[0].includes('LOT-A'));a.ok(!lines[0].includes('LOT-B'));a.ok(lines[1].includes('LOT-B'));a.ok(!lines[1].includes('LOT-A'));a.equal((lines[1].match(/7,5/g)||[]).length,2);a.ok(!lines[0].includes('12,5'));a.ok(!lines[1].includes('12,5'));a.ok(lines[0].includes('02/01/2026'));a.ok(lines[1].includes('03/02/2027'));};
+ check(state.el('autoProductionSlipPreview').innerHTML);state.api.print();check(state.output);state.api.word();check(state.wordFile.body);
+});

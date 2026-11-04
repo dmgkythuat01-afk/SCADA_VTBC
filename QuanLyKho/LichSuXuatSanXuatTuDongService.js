@@ -68,6 +68,9 @@ function buildAutoProductionExportHistory_(exports, products, from, to) {
     columns.forEach(function(column) {
       row[column[0]] = source[column[1]] === null || source[column[1]] === undefined ? '' : source[column[1]];
     });
+    const allocation = exportLotHistoryDetails_(source.LotNo, source.khoiLuongXuatThucTeTheoLotNo, source.khoiLuongXuatThucTe, source.donViCanXuat);
+    row['Số lượng theo lô'] = allocation.text;
+    if (allocation.warning) warnings.add((text(source.KeHoachId) || text(source.PhieuXuatId)) + ': ' + allocation.warning);
     const lots = text(source.LotNo).split(/\s*,\s*|[\r\n]+/).map(text).filter(Boolean);
     row['Lot No'] = lots.length > 1 ? lots.map(function(lot, index) { return 'Lot ' + (index + 1) + ': ' + lot; }).join('; ') : (lots[0] || '');
     const codes = Array.from(productMap.get(recipeKey(source.tenBaiLieu)) || []).sort();
@@ -75,6 +78,7 @@ function buildAutoProductionExportHistory_(exports, products, from, to) {
     row._slip = {
       approvalDate: extractDateTextForReport_(source.thoiGianDuyet),
       accountingCode: text(source.MaKeToan), recipe: text(source.tenBaiLieu),
+      lotQuantities: allocation.quantities, lotAllocationWarning: allocation.warning,
       lots: text(source.LotNo), manufactured: String(source.ngaySanXuatKho || ''),
       expires: String(source.hanSuDung || ''), voucher: text(source.PhieuXuatId)
     };
@@ -83,7 +87,7 @@ function buildAutoProductionExportHistory_(exports, products, from, to) {
     rows.push(row);
   });
   rows.sort(function(a, b) { return String(b['Thời gian duyệt']).localeCompare(String(a['Thời gian duyệt'])); });
-  return {success: true, headers: columns.map(function(column) { return column[0]; }).concat(['Mã sản phẩm']), rows: rows, warnings: Array.from(warnings)};
+  return {success: true, headers: columns.map(function(column) { return column[0]; }).concat(['Số lượng theo lô', 'Mã sản phẩm']), rows: rows, warnings: Array.from(warnings)};
 }
 
 // Chỉ đọc các cột cần thiết; không đọc hay trả mật khẩu tài khoản.

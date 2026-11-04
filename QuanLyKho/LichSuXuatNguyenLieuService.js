@@ -24,6 +24,7 @@ function getMaterialExportHistory(token, filter) {
       if (manual ? status !== "đã xuất" : !isApprovedReportStatus_(status)) return;
       const day = extractDateTextForReport_(row.thoiGianDuyet);
       if (!day || day < from || day > to) return;
+      const allocation = exportLotHistoryDetails_(row.LotNo, row.khoiLuongXuatThucTeTheoLotNo, row[manual ? 'khoiLuongNhap' : 'khoiLuongXuatThucTe'], row[manual ? 'donVi' : 'donViCanXuat']);
       rows.push({
         "Thời gian duyệt": row.thoiGianDuyet || "",
         "Mã phiếu": row[manual ? "PhieuXuatThuCongId" : "PhieuXuatId"] || "",
@@ -32,14 +33,15 @@ function getMaterialExportHistory(token, filter) {
         "Tên bài liệu": row.tenBaiLieu || "",
         "Id kho đã trừ": row.IdKhoDaTru || "",
         "LotNo": row.LotNo || "",
+        "Khối lượng xuất theo lô": allocation.text,
         "Khối lượng xuất": row[manual ? "khoiLuongNhap" : "khoiLuongXuatThucTe"] ?? "",
         "Đơn vị": row[manual ? "donVi" : "donViCanXuat"] || "",
         "Người duyệt": row[manual ? "nguoiDuyet" : "nguoiPheDuyet"] || "",
-        "Ghi chú": row.ghiChu || "",
+        "Ghi chú": [row.ghiChu, allocation.warning].filter(Boolean).join("; "),
         "Sheet nguồn": source
       });
     });
   });
   rows.sort(function(a, b) { return String(b["Thời gian duyệt"]).localeCompare(String(a["Thời gian duyệt"])); });
-  return { success: true, headers: ["Thời gian duyệt", "Mã phiếu", "Mã nguyên liệu", "Tên nguyên liệu", "Tên bài liệu", "Id kho đã trừ", "LotNo", "Khối lượng xuất", "Đơn vị", "Người duyệt", "Ghi chú", "Sheet nguồn"], rows: rows };
+  return { success: true, headers: ["Thời gian duyệt", "Mã phiếu", "Mã nguyên liệu", "Tên nguyên liệu", "Tên bài liệu", "Id kho đã trừ", "LotNo", "Khối lượng xuất theo lô", "Khối lượng xuất", "Đơn vị", "Người duyệt", "Ghi chú", "Sheet nguồn"], rows: rows };
 }
