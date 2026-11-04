@@ -729,6 +729,31 @@
       min-height: 260px;
     }
 
+    #manualExportApprovalBox {
+      min-height: 420px;
+      max-height: clamp(520px, 78vh, 960px);
+      overflow: auto;
+      scrollbar-gutter: stable;
+      flex: none;
+    }
+    #manualExportApprovalBox .manual-export-table-wrap { overflow: visible; }
+    #manualExportApprovalBox .export-table thead th { position: sticky; top: 0; z-index: 2; }
+    .manual-approval-horizontal-scroll {
+      overflow-x: auto;
+      overflow-y: hidden;
+      height: 20px;
+      min-height: 20px;
+      background: #fff;
+      position: sticky;
+      top: 8px;
+      z-index: 4;
+    }
+    .manual-approval-horizontal-scroll[hidden] { display: none; }
+    #manualApprovalScrollWidth { height: 1px; }
+    @media (max-width: 700px) {
+      #manualExportApprovalBox { min-height: 320px; max-height: 75vh; }
+    }
+
     .export-request-box {
       border-bottom: 1px solid var(--border);
       background: white;
@@ -1360,7 +1385,7 @@
               <p>
                 Lấy các phiếu có trạng thái
                 <b>Đã tạo</b> từ sheet PhieuXuatThuCong.
-                Khi duyệt, hệ thống tự trừ tồn kho theo hạn sử dụng gần nhất.
+                Chọn lô và lượng xuất; mặc định phân bổ theo hạn sử dụng gần nhất.
               </p>
             </div>
 
@@ -1371,10 +1396,13 @@
             </button>
           </div>
 
+          <div id="manualApprovalHorizontalScroll" class="manual-approval-horizontal-scroll" aria-label="Cuộn ngang danh sách phiếu xuất thủ công" onscroll="syncManualApprovalScroll(this)" hidden>
+            <div id="manualApprovalScrollWidth"></div>
+          </div>
           <div
             id="manualExportApprovalBox"
             class="export-approval-area"
-            style="max-height:520px;">
+            onscroll="syncManualApprovalScroll(this)">
 
             <div class="empty">
               Đang chờ tải phiếu xuất thủ công.
@@ -7262,6 +7290,7 @@
           </div>
         `;
 
+        refreshManualApprovalScroll();
         return;
       }
 
@@ -7351,7 +7380,7 @@
               </div>
 
 
-              <div style="overflow:auto;">
+              <div class="manual-export-table-wrap">
 
                 <table class="export-table">
 
@@ -7504,12 +7533,32 @@
       );
 
       box.innerHTML = html;
+      if (typeof requestAnimationFrame === 'function') requestAnimationFrame(refreshManualApprovalScroll);
+      else refreshManualApprovalScroll();
     }
 
 
     /*
     * Thủ kho duyệt cả phiếu.
     */
+    function syncManualApprovalScroll(source) {
+      const target = document.getElementById(source.id === 'manualExportApprovalBox' ? 'manualApprovalHorizontalScroll' : 'manualExportApprovalBox');
+      if (target && target.scrollLeft !== source.scrollLeft) target.scrollLeft = source.scrollLeft;
+    }
+    function refreshManualApprovalScroll() {
+      const box = document.getElementById('manualExportApprovalBox');
+      const bar = document.getElementById('manualApprovalHorizontalScroll');
+      const spacer = document.getElementById('manualApprovalScrollWidth');
+      if (!box || !bar || !spacer || !spacer.style) return;
+      bar.hidden = box.scrollWidth <= box.clientWidth + 1;
+      spacer.style.width = Math.max(0, box.scrollWidth + bar.clientWidth - box.clientWidth) + 'px';
+      bar.scrollLeft = box.scrollLeft;
+      if (typeof ResizeObserver !== 'undefined' && !box.manualScrollObserver) {
+        box.manualScrollObserver = new ResizeObserver(refreshManualApprovalScroll);
+        box.manualScrollObserver.observe(box);
+      }
+    }
+
     function approveManualExportVoucherFromUi(
       phieuId
     ) {
