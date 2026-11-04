@@ -50,7 +50,7 @@ function validateExportLotSelections_(lines,provider) {
       state.remainingNative=Math.round(Math.max(0,beforeQty-nativeQty)*1e12)/1e12;
       const deducted=Math.round((beforeQty-state.remainingNative)*1e12)/1e12;
       if(Math.abs(toKg_(deducted,lot.donVi)-kg)>0.000001)throw new Error('Số lượng lô không biểu diễn được chính xác trong đơn vị kho.');
-      parts.push({id,lot,beforeQty,nativeQty:deducted,unit:lot.donVi});
+      parts.push({id,lot,beforeQty,nativeQty:deducted,unit:lot.donVi,exportQty:qty});
     });
     if(Math.abs(totalKg-toKg_(line.khoiLuongXuatThucTe,line.donViCanXuat))>0.000001)throw new Error('Dòng '+line.rowNumber+': tổng phân bổ lô phải bằng khối lượng thực xuất.');
     prepared.push({...line,parts});
@@ -86,6 +86,8 @@ function approveExportWithLots_(token,payload,whole) {
     const kho=getSheet_(SHEET_KHO_NGUYEN_LIEU),kIdx=getKhoHeaderIndex_(kho.getDataRange().getValues()[0].map(normalizeText_));
     let ledgerColumn=headers.indexOf('chiTietTruKho')+1;
     if(!ledgerColumn){ledgerColumn=sheet.getLastColumn()+1;sheet.getRange(1,ledgerColumn).setValue('chiTietTruKho');}
+    let perLotColumn=headers.indexOf('khoiLuongXuatThucTeTheoLotNo')+1;
+    if(!perLotColumn){perLotColumn=sheet.getLastColumn()+1;sheet.getRange(1,perLotColumn).setValue('khoiLuongXuatThucTeTheoLotNo');}
     const time=nowText_();
     prepared.stock.forEach(state=>{
       kho.getRange(state.lot.rowNumber,kIdx.khoiLuongNhap+1).setValue(state.remainingNative);
@@ -95,6 +97,8 @@ function approveExportWithLots_(token,payload,whole) {
       updateExportLineFields_(sheet,idx,line.rowNumber,line.khoiLuongCanXuat,line.khoiLuongXuatThucTe,line.cachXuat,true);
       const ids=line.parts.map(part=>part.id);ids.beforeLots=line.parts.map(part=>({...part.lot,khoiLuongNhap:part.beforeQty}));
       fillExportStockDetails_(sheet,idx,line.rowNumber,ids);
+      // Same order as LotNo; quantities use donViCanXuat, matching the total actual issue.
+      sheet.getRange(line.rowNumber,perLotColumn).setValue(line.parts.map(part=>String(part.exportQty)).join(", "));
       sheet.getRange(line.rowNumber,ledgerColumn).setValue(JSON.stringify(line.parts.map(part=>({IdKho:part.id,khoiLuong:part.nativeQty,donVi:part.unit}))));
       sheet.getRange(line.rowNumber,idx.trangThaiPheDuyet+1).setValue('Đã phê duyệt');
       sheet.getRange(line.rowNumber,idx.nguoiPheDuyet+1).setValue(session.useName||'');sheet.getRange(line.rowNumber,idx.thoiGianDuyet+1).setValue(time);

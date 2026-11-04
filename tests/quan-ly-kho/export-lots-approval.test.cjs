@@ -32,3 +32,25 @@ test('single approval honors selection and rejects stale identity or fresh stock
   a.throws(()=>s.ctx.approveExportRequest('token',s.payload));a.equal(s.writes,0);
  }
 });
+
+test('whole approval writes per-lot quantities in exactly the saved LotNo order',()=>{
+ const s=setup();s.payload.items[0].allocations=[{id:'LATE',quantity:3},{id:'EARLY',quantity:5}];s.payload.items[1].allocations=[{id:'LATE',quantity:3}];
+ s.ctx.approveExportRequest('token',s.payload);
+ const ix=f=>s.vouchers[0].indexOf(f);
+ a.equal(s.vouchers[1][ix('LotNo')],'LATE, EARLY');
+ a.equal(s.vouchers[1][ix('khoiLuongXuatThucTeTheoLotNo')],'3, 5');
+ a.equal(s.vouchers[1][ix('khoiLuongXuatThucTe')],8);
+ a.equal(s.vouchers[2][ix('khoiLuongXuatThucTeTheoLotNo')],'3');
+});
+
+test('single approval reuses existing per-lot column and writes in export unit, not stock unit',()=>{
+ const s=setup(),field='khoiLuongXuatThucTeTheoLotNo';s.vouchers[0].push(field);s.vouchers[1].push('old');s.vouchers[2].push('unchanged');
+ s.vouchers[1][s.headers.indexOf('donViCanXuat')]='g';
+ const item=s.payload.items[0],revision=JSON.parse(item.revision);revision[5]='g';item.revision=JSON.stringify(revision);
+ item.khoiLuongCanXuat=8000;item.khoiLuongXuatThucTe=8000;item.allocations=[{id:'LATE',quantity:3000},{id:'EARLY',quantity:5000}];
+ s.ctx.approveExportLine('token',item);
+ const ix=f=>s.vouchers[0].indexOf(f);
+ a.equal(s.vouchers[1][ix(field)],'3000, 5000');a.equal(s.vouchers[1][ix('LotNo')],'LATE, EARLY');
+ a.equal(s.vouchers[2][ix(field)],'unchanged');a.equal(s.vouchers[0].filter(h=>h===field).length,1);
+ a.equal(s.inventory[1][1],0);a.equal(s.inventory[2][1],17);
+});
