@@ -7,18 +7,19 @@
  .export-lot-summary.error{color:#b91c1c}.export-lot-summary.ok{color:#065f46}
 </style>
 <script>
-const ExportLots=(function(){
+function createExportLotEditor(options){
+ const groups=()=>options.getGroups();
  const drafts=new Map();let source=null;
  const text=value=>String(value??'');
  const number=value=>Number(value||0);
  const esc=value=>text(value).replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
  const el=id=>document.getElementById(id);
- function item(row){return (exportApprovalRequests||[]).flatMap(group=>group.items||[]).find(line=>Number(line.rowNumber)===Number(row));}
+ function item(row){return (groups()||[]).flatMap(group=>group.items||[]).find(line=>Number(line.rowNumber)===Number(row));}
  function prepare(groups){
   if(source===groups)return;const previous=new Map(drafts);source=groups;drafts.clear();
   (groups||[]).forEach(group=>(group.items||[]).forEach(line=>{
    const old=previous.get(Number(line.rowNumber));
-   if(old?.revision===line.revision){
+   if(options.editable!==false&&old?.revision===line.revision){
     [['khoiLuongCanXuat','exportQty_'],['khoiLuongXuatThucTe','exportActualQty_'],['cachXuat','exportCachXuat_']].forEach(([field,prefix])=>{
      const input=el(prefix+line.rowNumber);if(input)line[field]=field==='cachXuat'?input.value:number(input.value);
     });
@@ -27,7 +28,7 @@ const ExportLots=(function(){
   }));
  }
  function reset(){source=null;drafts.clear();}
- function actual(row){return number(el('exportActualQty_'+row)?.value??item(row)?.khoiLuongXuatThucTe??item(row)?.khoiLuongCanXuat);}
+ function actual(row){return number((options.editable===false?undefined:el('exportActualQty_'+row)?.value)??item(row)?.khoiLuongXuatThucTe??item(row)?.khoiLuongCanXuat);}
  function error(row){
   const line=item(row),draft=drafts.get(Number(row));if(!line||!draft)return 'Chưa có phân bổ lô.';
   const seen=new Set();let total=0;
@@ -36,7 +37,7 @@ const ExportLots=(function(){
    if(number(part.quantity)<0||!Number.isFinite(number(part.quantity)))return 'Số lượng từng lô không hợp lệ.';
    if(seen.has(part.id))return 'Không chọn trùng một lô trong cùng dòng.';seen.add(part.id);total+=number(part.quantity);
    const lot=(line.lotOptions||[]).find(lot=>lot.Id===part.id);if(!lot)return 'Lô không thuộc mã kế toán trên phiếu.';
-   const group=(exportApprovalRequests||[]).find(group=>(group.items||[]).some(value=>value===line));
+   const group=(groups()||[]).find(group=>(group.items||[]).some(value=>value===line));
    let reservedKg=0;
    (group?.items||[]).forEach(other=>{const factor=unitFactor(other.donViCanXuat);(drafts.get(Number(other.rowNumber))?.parts||[]).forEach(value=>{if(value.id===part.id)reservedKg+=number(value.quantity)*factor;});});
    if(reservedKg>number(lot.qtyKg)+0.000001)return 'Tổng phân bổ vượt tồn lô '+(lot.LotNo||lot.Id)+'.';
@@ -58,18 +59,18 @@ const ExportLots=(function(){
  }
  function inner(row){
   const line=item(row),draft=drafts.get(Number(row));if(!line||!draft)return '';
-  return draft.parts.map((part,index)=>'<div class="export-lot-row"><select aria-label="Lot No dòng '+row+'" onchange="ExportLots.change('+row+','+index+',\'id\',this.value)"><option value="">Chọn lô</option>'+(line.lotOptions||[]).map(lot=>'<option value="'+esc(lot.Id)+'" '+(lot.Id===part.id?'selected':'')+'>'+esc((lot.LotNo||'(Không có Lot No)')+' | Mã KT '+line.MaKeToan+' | Tồn '+lot.available+' '+line.donViCanXuat+' | HSD '+(lot.hanSuDung||'chưa có')+' | '+lot.Id)+'</option>').join('')+'</select><input type="number" min="0" step="0.000001" aria-label="Số lượng lô dòng '+row+'" value="'+esc(part.quantity)+'" oninput="ExportLots.change('+row+','+index+',\'quantity\',this.value)"><button type="button" aria-label="Bỏ lô" onclick="ExportLots.remove('+row+','+index+')">×</button></div>').join('')+
-  '<button type="button" class="btn btn-light mini-btn" onclick="ExportLots.add('+row+')">+ Thêm lô</button> <button type="button" class="btn btn-light mini-btn" onclick="ExportLots.auto('+row+')">Tính lại FEFO</button><div id="exportLotSummary_'+row+'">'+summary(row)+'</div>';
+  return draft.parts.map((part,index)=>'<div class="export-lot-row"><select aria-label="Lot No dòng '+row+'" onchange="'+options.name+'.change('+row+','+index+',\'id\',this.value)"><option value="">Chọn lô</option>'+(line.lotOptions||[]).map(lot=>'<option value="'+esc(lot.Id)+'" '+(lot.Id===part.id?'selected':'')+'>'+esc((lot.LotNo||'(Không có Lot No)')+' | Mã KT '+line.MaKeToan+' | Tồn '+lot.available+' '+line.donViCanXuat+' | HSD '+(lot.hanSuDung||'chưa có')+' | '+lot.Id)+'</option>').join('')+'</select><input type="number" min="0" step="0.000001" aria-label="Số lượng lô dòng '+row+'" value="'+esc(part.quantity)+'" oninput="'+options.name+'.change('+row+','+index+',\'quantity\',this.value)"><button type="button" aria-label="Bỏ lô" onclick="'+options.name+'.remove('+row+','+index+')">×</button></div>').join('')+
+  '<button type="button" class="btn btn-light mini-btn" onclick="'+options.name+'.add('+row+')">+ Thêm lô</button> <button type="button" class="btn btn-light mini-btn" onclick="'+options.name+'.auto('+row+')">Tính lại FEFO</button><div id="'+options.summaryPrefix+row+'">'+summary(row)+'</div>';
  }
- function html(row){return '<div class="export-lot-editor" id="exportLots_'+row+'">'+inner(row)+'</div>';}
- function draw(row){const box=el('exportLots_'+row);if(box)box.innerHTML=inner(row);}
- function updateSummaries(){drafts.forEach((_,row)=>{const box=el('exportLotSummary_'+row);if(box)box.innerHTML=summary(row);});}
+ function html(row){return '<div class="export-lot-editor" id="'+options.boxPrefix+row+'">'+inner(row)+'</div>';}
+ function draw(row){const box=el(options.boxPrefix+row);if(box)box.innerHTML=inner(row);}
+ function updateSummaries(){drafts.forEach((_,row)=>{const box=el(options.summaryPrefix+row);if(box)box.innerHTML=summary(row);});}
  function change(row,index,field,value){const draft=drafts.get(Number(row));if(!draft?.parts[index])return;draft.parts[index][field]=field==='quantity'?value:text(value);draft.manual=true;updateSummaries();}
  function add(row){const draft=drafts.get(Number(row)),line=item(row);if(!draft||!line)return;const next=(line.lotOptions||[]).find(lot=>!draft.parts.some(part=>part.id===lot.Id));draft.parts.push({id:next?.Id||'',quantity:''});draft.manual=true;draw(row);updateSummaries();}
  function remove(row,index){const draft=drafts.get(Number(row));draft.parts.splice(index,1);draft.manual=true;draw(row);updateSummaries();}
  function auto(row){
   const line=item(row),draft=drafts.get(Number(row));if(!line||!draft)return;
-  const group=(exportApprovalRequests||[]).find(group=>(group.items||[]).includes(line));let need=actual(row)*unitFactor(line.donViCanXuat);const parts=[];
+  const group=(groups()||[]).find(group=>(group.items||[]).includes(line));let need=actual(row)*unitFactor(line.donViCanXuat);const parts=[];
   (line.lotOptions||[]).forEach(lot=>{
    let reserved=0;(group?.items||[]).forEach(other=>{if(other===line)return;(drafts.get(Number(other.rowNumber))?.parts||[]).forEach(part=>{if(part.id===lot.Id)reserved+=number(part.quantity)*unitFactor(other.donViCanXuat);});});
    const taken=Math.min(Math.max(0,need),Math.max(0,number(lot.qtyKg)-reserved));
@@ -79,5 +80,7 @@ const ExportLots=(function(){
  function quantityChanged(row,sync){if(sync&&el('exportActualQty_'+row))el('exportActualQty_'+row).value=el('exportQty_'+row).value;const draft=drafts.get(Number(row));if(draft&&!draft.manual)auto(row);else updateSummaries();}
  function collect(row){const line=item(row);return {revision:line?.revision||'',allocations:(drafts.get(Number(row))?.parts||[]).map(part=>({id:part.id,quantity:number(part.quantity)})),allocationError:error(row)};}
  return {prepare,reset,html,change,add,remove,auto,collect,quantityChanged};
-})();
+}
+const ExportLots=createExportLotEditor({getGroups:()=>exportApprovalRequests,name:'ExportLots',boxPrefix:'exportLots_',summaryPrefix:'exportLotSummary_'});
+const ManualExportLots=createExportLotEditor({getGroups:()=>manualApprovalRequests,name:'ManualExportLots',boxPrefix:'manualExportLots_',summaryPrefix:'manualExportLotSummary_',editable:false});
 </script>

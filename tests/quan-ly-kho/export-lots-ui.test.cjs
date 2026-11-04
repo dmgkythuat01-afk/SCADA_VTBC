@@ -19,3 +19,15 @@ test('lot editor preserves custom splits, validates shared stock and serializes 
  a.match(node('exportLotSummary_2').innerHTML,/Lot L2/);a.doesNotMatch(node('exportLotSummary_2').innerHTML,/Lot L1/);
  a.match(node('exportLotSummary_2').innerHTML,/Xuất.*8.*Tồn lô:.*20/);
 });
+
+test('manual lot editor is independent from production rows and renders inside manual approval card',()=>{
+ const nodes=new Map(),node=id=>{if(!nodes.has(id))nodes.set(id,{value:'999',innerHTML:''});return nodes.get(id)};
+ const line={rowNumber:2,MaKeToan:'001',donViCanXuat:'kg',donVi:'kg',khoiLuongNhap:8,khoiLuongCanXuat:8,khoiLuongXuatThucTe:8,revision:'MANUAL',lotOptions:[{Id:'A',LotNo:'L1',qtyKg:5,available:5},{Id:'B',LotNo:'L2',qtyKg:20,available:20}],allocations:[{id:'A',quantity:5},{id:'B',quantity:3}]};
+ const c=vm.createContext({console,document:{getElementById:node},manualApprovalRequests:[{PhieuXuatThuCongId:'M1',duToanBo:true,items:[line]}],exportApprovalRequests:[],escapeHtml:v=>String(v??''),escapeJs:v=>String(v??''),formatNumber:v=>String(v??'')});
+ vm.runInContext(fs.readFileSync(path.join(__dirname,'../../QuanLyKho/ExportLotSelection.html'),'utf8').match(/<script>([\s\S]*?)<\/script>/)[1],c);
+ const page=fs.readFileSync(path.join(__dirname,'../../QuanLyKho/index.html'),'utf8');vm.runInContext(page.slice(page.indexOf('    function renderManualExportApprovals()'),page.indexOf('    function approveManualExportVoucherFromUi(')),c);
+ c.renderManualExportApprovals();const api=vm.runInContext('ManualExportLots',c);
+ a.equal(api.collect(2).allocationError,'');a.match(node('manualExportApprovalBox').innerHTML,/ManualExportLots.change/);a.match(node('manualExportApprovalBox').innerHTML,/manualExportLots_2/);
+ api.change(2,0,'quantity',2);api.change(2,1,'quantity',6);a.equal(api.collect(2).allocationError,'');a.match(api.html(2),/manualExportLotSummary_2/);
+ a.equal(vm.runInContext('ExportLots.collect(2).allocations.length',c),0);
+});

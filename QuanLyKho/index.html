@@ -7174,6 +7174,7 @@
     * Tải danh sách phiếu Đã tạo.
     */
     function loadManualExportApprovals(silent) {
+      ManualExportLots.reset();
       showMessage(
         "manualExportApprovalMessage",
         "",
@@ -7248,6 +7249,8 @@
       if (!box) {
         return;
       }
+
+      ManualExportLots.prepare(manualApprovalRequests);
 
       if (
         !manualApprovalRequests ||
@@ -7355,8 +7358,8 @@
                   <thead>
                     <tr>
                       <th>STT</th>
-                      <th>Id kho</th>
-                      <th>LotNo</th>
+                      <th>Id kho gốc</th>
+                      <th>Lô xuất dự kiến — chọn lô và lượng xuất</th>
                       <th>Mã NL</th>
                       <th>Mã kế toán</th>
                       <th>Tên nguyên liệu</th>
@@ -7397,9 +7400,7 @@
                   </td>
 
                   <td>
-                    ${escapeHtml(
-                      item.LotNo || ""
-                    )}
+                    ${ManualExportLots.html(item.rowNumber)}
                   </td>
 
                   <td>
@@ -7516,11 +7517,17 @@
         return;
       }
 
+      const group = (manualApprovalRequests || []).find(value => value.PhieuXuatThuCongId === phieuId);
+      if (!group) return;
+      const items = group.items.map(line => ({rowNumber:line.rowNumber,...ManualExportLots.collect(line.rowNumber)}));
+      const invalid = items.find(item => item.allocationError);
+      if (invalid) {showMessage('manualExportApprovalMessage','error',invalid.allocationError);return;}
+
       const ok =
         confirm(
           "Bạn có chắc muốn duyệt và xuất kho phiếu:\n\n" +
           phieuId +
-          "\n\nHệ thống sẽ trừ tồn kho theo hạn sử dụng gần nhất."
+          "\n\nHệ thống sẽ trừ đúng các lô và số lượng bạn đã chọn."
         );
 
       if (!ok) {
@@ -7535,7 +7542,7 @@
 
       showLoading(
         "Đang xuất kho...",
-        "Đang kiểm tra tồn và trừ nguyên liệu theo FEFO"
+        "Đang kiểm tra tồn và trừ đúng các lô đã chọn"
       );
 
       google.script.run
@@ -7590,7 +7597,7 @@
 
         .approveManualExportVoucher(
           sessionToken,
-          phieuId
+          {phieuXuatThuCongId:phieuId,items:items}
         );
     }
 
