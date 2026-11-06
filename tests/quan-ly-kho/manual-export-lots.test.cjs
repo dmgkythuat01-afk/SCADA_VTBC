@@ -3,11 +3,12 @@ function setup(){
  const h=['PhieuXuatThuCongId','STT','Id','maNguyenLieu','tenNguyenLieu','khoiLuongNhap','donVi','TrangThaiXuatThuCong','nguoiDuyet','thoiGianDuyet','IdKhoDaTru','MaKeToan','LotNo','ngaySanXuat','hanSuDung'];
  const p=[h,['M1',1,'A','NL','Name',8,'kg','Đã tạo','','','','001','OLD','',''],['M1',2,'B','NL','Name',3,'kg','Đã tạo','','','','001','OLD','','']];
  const stock=[['Id','khoiLuongNhap','trangThai'],['A',5,'Đã phê duyệt'],['B',20,'Đã phê duyệt']];let writes=0;
- const sheet=data=>({getLastRow:()=>data.length,getLastColumn:()=>data[0].length,getDataRange:()=>({getValues:()=>data.map(r=>r.slice())}),getRange(r,c){return {setValue(v){data[r-1][c-1]=v;writes++}}}});
+ const sheet=data=>({getLastRow:()=>data.length,getLastColumn:()=>data[0].length,getDataRange:()=>({getValues:()=>data.map(r=>r.slice())}),getRange(r,c){return {setValue(v){data[r-1][c-1]=v;writes++},setValues(values){values.forEach((row,i)=>row.forEach((v,j)=>{data[r-1+i][c-1+j]=v;writes++}))}}}});
  const c=vm.createContext({console,LockService:{getScriptLock:()=>({waitLock(){},releaseLock(){}})}});
- for(const f of ['Code.js','ExportLotSelectionGs.js','DuyetPhieuXuatThuCong.js','ManualExportLotSelectionGs.js']){const name=path.join(__dirname,'../../QuanLyKho',f);if(fs.existsSync(name))vm.runInContext(fs.readFileSync(name,'utf8'),c)}
+ for(const f of ['Code.js','ExportLotSelectionGs.js','DuyetPhieuXuatThuCong.js','ManualExportLotSelectionGs.js','ExportApprovalPerformanceGs.js']){const name=path.join(__dirname,'../../QuanLyKho',f);if(fs.existsSync(name))vm.runInContext(fs.readFileSync(name,'utf8'),c)}
  c.requireInventoryRole_=()=>({useName:'keeper'});c.getSheet_=name=>name==='PhieuXuatThuCong'?sheet(p):sheet(stock);c.manualApprovalGetMaterialInfoByAccountingCodeMap_=()=>({});c.getAvailableKgByMaterial_=()=>999;c.nowText_=()=> '2026-11-04 12:00';c.getKhoHeaderIndex_=()=>({khoiLuongNhap:1,trangThai:2});
  c.getApprovedStockLotsForExport_=(code,name,account)=>{a.equal(code,'NL');a.equal(account,'001');return stock.slice(1).map((r,i)=>({Id:r[0],rowNumber:i+2,khoiLuongNhap:r[1],qtyKg:r[1],donVi:'kg',LotNo:'LOT-'+r[0],ngaySanXuat:i?'2026-02-01':'2026-01-01',hanSuDung:i?'2027-02-01':'2027-01-01'}))};
+ c.createExportLotLookup_=()=>({sheet:sheet(stock),values:stock,idx:{khoiLuongNhap:1,trangThai:2},getLots:line=>c.getApprovedStockLotsForExport_(line.maNguyenLieu,line.tenNguyenLieu,line.MaKeToan),clear(){}});c.getApprovedInventoryItems_=()=>[];c.getPendingInventoryItems_=()=>[];
  return {c,p,stock,get writes(){return writes}};
 }
 function payload(s){const groups=s.c.getPendingManualExportApprovals('t').phieu;return {phieuXuatThuCongId:'M1',items:groups[0].items.map(i=>({rowNumber:i.rowNumber,revision:i.revision,allocations:i.allocations}))}}

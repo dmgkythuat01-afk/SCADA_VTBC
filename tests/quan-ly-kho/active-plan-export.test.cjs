@@ -13,7 +13,7 @@ function setup(){
 }
 test('approval list only returns pending exports of explicitly active plans; cancelled ingredient row overrides active rows',()=>{
  const s=setup(),rows=s.ctx.getPendingExportRequests_();
- a.deepEqual(Array.from(rows,row=>row.PhieuXuatId),['PX1']);a.equal(s.stockCalls,1);
+ a.deepEqual(Array.from(rows,row=>row.PhieuXuatId),['PX1']);a.equal(s.stockCalls,0);
 });
 test('active plan lookup requires ID and status headers',()=>{
  const s=setup();s.plans[0][1]='wrong';a.throws(()=>s.ctx.getPendingExportRequests_(),/trangThai/);a.equal(s.stockCalls,0);

@@ -200,7 +200,7 @@ function manualApprovalGetMaterialInfoByAccountingCodeMap_() {
    LẤY CÁC PHIẾU "ĐÃ TẠO"
    ========================================================= */
 
-function getPendingManualExportApprovalsData_() {
+function getPendingManualExportApprovalsData_(lookup) {
 
   const sheet =
     getSheet_(SHEET_PHIEU_XUAT_THU_CONG);
@@ -330,31 +330,6 @@ function getPendingManualExportApprovalsData_() {
         materialInfo.nhaCungCap
       );
 
-    let availableKg = 0;
-
-    try {
-      availableKg =
-        getAvailableKgByMaterial_(
-          tenNguyenLieu
-        );
-    }
-    catch (err) {
-      availableKg = 0;
-    }
-
-    let requiredKg = 0;
-
-    try {
-      requiredKg =
-        toKg_(
-          qty,
-          donVi
-        );
-    }
-    catch (err) {
-      requiredKg = 0;
-    }
-
     groupMap[phieuId].items.push({
       rowNumber: i + 1,
 
@@ -426,10 +401,10 @@ function getPendingManualExportApprovalsData_() {
         ),
 
       tonKhoKhaDungKg:
-        availableKg,
+        0,
 
       duSoLuong:
-        availableKg + 0.000001 >= requiredKg
+        false
     });
   }
 
@@ -461,7 +436,7 @@ function getPendingManualExportApprovalsData_() {
 
   return {
     success: true,
-    phieu: buildManualExportLotPreview_(result)
+    phieu: buildManualExportLotPreview_(result, lookup)
   };
 }
 
@@ -479,8 +454,8 @@ function approveManualExportVoucher(token, payload) {
   return approveManualExportWithLots_(token, payload);
 }
 
-function getPendingManualExportApprovalsInternal_() {
-  return getPendingManualExportApprovalsData_().phieu;
+function getPendingManualExportApprovalsInternal_(lookup) {
+  return getPendingManualExportApprovalsData_(lookup).phieu;
 }
 
 function cancelManualExportVoucher(

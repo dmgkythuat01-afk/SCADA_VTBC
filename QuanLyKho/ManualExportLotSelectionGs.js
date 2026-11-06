@@ -2,7 +2,7 @@
 function manualExportLotRevision_(line) {
   return JSON.stringify([line.PhieuXuatThuCongId, line.rowNumber, line.maNguyenLieu, line.tenNguyenLieu, line.MaKeToan, line.donVi, String(line.khoiLuongNhap)].map(normalizeText_));
 }
-function buildManualExportLotPreview_(groups) {
+function buildManualExportLotPreview_(groups, lookup) {
   groups.forEach(group => group.items.forEach(line => {
     line.PhieuXuatThuCongId = group.PhieuXuatThuCongId;
     line.PhieuXuatId = group.PhieuXuatThuCongId;
@@ -11,7 +11,7 @@ function buildManualExportLotPreview_(groups) {
     line.khoiLuongCanXuat = line.khoiLuongNhap;
     line.khoiLuongXuatThucTe = line.khoiLuongNhap;
   }));
-  buildExportLotPreview_(groups);
+  buildExportLotPreview_(groups, lookup);
   groups.forEach(group => {
     group.items.forEach(line => {
       line.revision = manualExportLotRevision_(line);
@@ -46,28 +46,33 @@ function approveManualExportWithLots_(token, payload) {
       lines.push(line);
     });
     if (!lines.length || lines.length !== clients.size) throw new Error('Phi\u1ebfu kh\u00f4ng c\u00f2n \u0110\u00e3 t\u1ea1o ho\u1eb7c danh s\u00e1ch d\u00f2ng kh\u00f4ng kh\u1edbp.');
-    const prepared = validateExportLotSelections_(lines,line => getApprovedStockLotsForExport_(line.maNguyenLieu,line.tenNguyenLieu,line.MaKeToan));
-    const stock = getSheet_(SHEET_KHO_NGUYEN_LIEU), kIdx = getKhoHeaderIndex_(stock.getDataRange().getValues()[0].map(normalizeText_));
+    const lookup = createExportLotLookup_();
+    const prepared = validateExportLotSelections_(lines,lookup.getLots);
+    const stock = lookup.sheet, kIdx = lookup.idx;
     const fields = ['LotNo','ngaySanXuat','hanSuDung','khoiLuongXuatThucTeTheoLotNo','chiTietTruKho'], columns = {};
     fields.forEach(field => {
       let column = headers.indexOf(field)+1;
       if (!column) {column = sheet.getLastColumn()+1;sheet.getRange(1,column).setValue(field);headers.push(field);}
       columns[field] = column;
     });
+    const stockChanges = [], voucherChanges = [];
     prepared.stock.forEach(state => {
-      stock.getRange(state.lot.rowNumber,kIdx.khoiLuongNhap+1).setValue(state.remainingNative);
-      if (state.remainingNative <= 0.000001) stock.getRange(state.lot.rowNumber,kIdx.trangThai+1).setValue('\u0110\u00e3 xu\u1ea5t h\u1ebft');
+      stockChanges.push({row:state.lot.rowNumber,column:kIdx.khoiLuongNhap+1,value:state.remainingNative});
+      if (state.remainingNative <= 0.000001) stockChanges.push({row:state.lot.rowNumber,column:kIdx.trangThai+1,value:'\u0110\u00e3 xu\u1ea5t h\u1ebft'});
     });
     const time = nowText_();
     prepared.lines.forEach(line => {
-      ['LotNo','ngaySanXuat','hanSuDung'].forEach(field => sheet.getRange(line.rowNumber,columns[field]).setValue(line.parts.map(part => part.lot[field] || '').join(', ')));
-      sheet.getRange(line.rowNumber,columns.khoiLuongXuatThucTeTheoLotNo).setValue(line.parts.map(part => String(part.exportQty)).join(', '));
-      sheet.getRange(line.rowNumber,columns.chiTietTruKho).setValue(JSON.stringify(line.parts.map(part => ({IdKho:part.id,khoiLuong:part.nativeQty,donVi:part.unit}))));
-      sheet.getRange(line.rowNumber,idx.IdKhoDaTru+1).setValue(line.parts.map(part => part.id).join(', '));
-      sheet.getRange(line.rowNumber,idx.nguoiDuyet+1).setValue(session.useName || '');
-      sheet.getRange(line.rowNumber,idx.thoiGianDuyet+1).setValue(time);
-      sheet.getRange(line.rowNumber,idx.TrangThaiXuatThuCong+1).setValue('\u0110\u00e3 xu\u1ea5t');
+      ['LotNo','ngaySanXuat','hanSuDung'].forEach(field => voucherChanges.push({row:line.rowNumber,column:columns[field],value:line.parts.map(part => part.lot[field] || '').join(', ')}));
+      voucherChanges.push({row:line.rowNumber,column:columns.khoiLuongXuatThucTeTheoLotNo,value:line.parts.map(part => String(part.exportQty)).join(', ')});
+      voucherChanges.push({row:line.rowNumber,column:columns.chiTietTruKho,value:JSON.stringify(line.parts.map(part => ({IdKho:part.id,khoiLuong:part.nativeQty,donVi:part.unit})))});
+      voucherChanges.push({row:line.rowNumber,column:idx.IdKhoDaTru+1,value:line.parts.map(part => part.id).join(', ')});
+      voucherChanges.push({row:line.rowNumber,column:idx.nguoiDuyet+1,value:session.useName || ''});
+      voucherChanges.push({row:line.rowNumber,column:idx.thoiGianDuyet+1,value:time});
+      voucherChanges.push({row:line.rowNumber,column:idx.TrangThaiXuatThuCong+1,value:'\u0110\u00e3 xu\u1ea5t'});
     });
-    return {success:true,message:'\u0110\u00e3 duy\u1ec7t v\u00e0 tr\u1eeb \u0111\u00fang c\u00e1c l\u00f4 \u0111\u00e3 ch\u1ecdn.',phieu:getPendingManualExportApprovalsInternal_()};
+    writeExportApprovalCells_(stock,stockChanges,lookup.values);
+    writeExportApprovalCells_(sheet,voucherChanges);
+    lookup.clear();
+    return {success:true,message:'\u0110\u00e3 duy\u1ec7t v\u00e0 tr\u1eeb \u0111\u00fang c\u00e1c l\u00f4 \u0111\u00e3 ch\u1ecdn.',phieu:getPendingManualExportApprovalsInternal_(lookup),tonKho:getApprovedInventoryItems_(lookup),chuaDuyet:getPendingInventoryItems_(lookup)};
   } finally {lock.releaseLock();}
 }

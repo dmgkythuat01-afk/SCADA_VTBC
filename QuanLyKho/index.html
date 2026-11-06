@@ -7618,7 +7618,10 @@
           * Tải lại tồn kho để màn hình
           * phản ánh số lượng mới.
           */
-          loadStock(true);
+          stockItems = res.tonKho || stockItems;
+          pendingItems = res.chuaDuyet || pendingItems;
+          renderStockTable();
+          renderPendingTable();
 
           /*
           * Lịch sử xuất thủ công cũng thay đổi trạng thái.

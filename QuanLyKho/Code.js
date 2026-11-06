@@ -930,15 +930,15 @@ function getApprovedInventoryItems(token) {
   };
 }
 
-function getApprovedInventoryItems_() {
-  const sheet = getSheet_(SHEET_KHO_NGUYEN_LIEU);
-  ensureKhoHeader_(sheet);
+function getApprovedInventoryItems_(snapshot) {
+  const sheet = snapshot ? snapshot.sheet : getSheet_(SHEET_KHO_NGUYEN_LIEU);
+  if (!snapshot) ensureKhoHeader_(sheet);
 
-  if (sheet.getLastRow() < 2) return [];
+  if (snapshot ? snapshot.values.length < 2 : sheet.getLastRow() < 2) return [];
 
-  const values = sheet.getDataRange().getValues();
+  const values = snapshot ? snapshot.values : sheet.getDataRange().getValues();
   const headers = values[0].map(h => normalizeText_(h));
-  const idx = getKhoHeaderIndex_(headers);
+  const idx = snapshot ? snapshot.idx : getKhoHeaderIndex_(headers);
 
   const nhaCungCapCapMap =
   getNhaCungCapCapByMaKeToanMap_();
@@ -1079,15 +1079,15 @@ function getPendingInventoryItems(token) {
   };
 }
 
-function getPendingInventoryItems_() {
-  const sheet = getSheet_(SHEET_KHO_NGUYEN_LIEU);
-  ensureKhoHeader_(sheet);
+function getPendingInventoryItems_(snapshot) {
+  const sheet = snapshot ? snapshot.sheet : getSheet_(SHEET_KHO_NGUYEN_LIEU);
+  if (!snapshot) ensureKhoHeader_(sheet);
 
-  if (sheet.getLastRow() < 2) return [];
+  if (snapshot ? snapshot.values.length < 2 : sheet.getLastRow() < 2) return [];
 
-  const values = sheet.getDataRange().getValues();
+  const values = snapshot ? snapshot.values : sheet.getDataRange().getValues();
   const headers = values[0].map(h => normalizeText_(h));
-  const idx = getKhoHeaderIndex_(headers);
+  const idx = snapshot ? snapshot.idx : getKhoHeaderIndex_(headers);
 
   return values
     .slice(1)
@@ -1349,15 +1349,15 @@ function getApprovedStockLotsByMaterial_(tenNguyenLieu) {
   return lots;
 }
 
-function getApprovedStockLotsForExport_(maNguyenLieu, tenNguyenLieu, maKeToan) {
-  const sheet = getSheet_(SHEET_KHO_NGUYEN_LIEU);
-  ensureKhoHeader_(sheet);
+function getApprovedStockLotsForExport_(maNguyenLieu, tenNguyenLieu, maKeToan, snapshot) {
+  const sheet = snapshot ? snapshot.sheet : getSheet_(SHEET_KHO_NGUYEN_LIEU);
+  if (!snapshot) ensureKhoHeader_(sheet);
 
-  if (sheet.getLastRow() < 2) return [];
+  if (snapshot ? snapshot.values.length < 2 : sheet.getLastRow() < 2) return [];
 
-  const values = sheet.getDataRange().getValues();
+  const values = snapshot ? snapshot.values : sheet.getDataRange().getValues();
   const headers = values[0].map(h => normalizeText_(h));
-  const idx = getKhoHeaderIndex_(headers);
+  const idx = snapshot ? snapshot.idx : getKhoHeaderIndex_(headers);
 
   const targetMa = normalizeText_(maNguyenLieu).toLowerCase();
   const targetName = normalizeText_(tenNguyenLieu).toLowerCase();
@@ -1484,7 +1484,7 @@ function getAvailableKgForExport_(maNguyenLieu, tenNguyenLieu, maKeToan) {
 
 
 
-function fillExportStockDetails_(phieuSheet, pIdx, rowNumber, deductedIds) {
+function fillExportStockDetails_(phieuSheet, pIdx, rowNumber, deductedIds, changes) {
   if (!Array.isArray(deductedIds) || deductedIds.length === 0) {
     throw new Error("Không có Id kho đã trừ để cập nhật phiếu xuất.");
   }
@@ -1526,6 +1526,11 @@ function fillExportStockDetails_(phieuSheet, pIdx, rowNumber, deductedIds) {
 
     IdKhoDaTru: idText
   };
+
+  if (changes) {
+    Object.keys(details).forEach(field => changes.push({row:rowNumber,column:pIdx[field]+1,value:details[field]}));
+    return;
+  }
 
   Object.keys(details).forEach(function(fieldName) {
     phieuSheet
@@ -1678,7 +1683,7 @@ function getActivePlanIdsForExport_(ss) {
   return new Set([...states].filter(([, active]) => active).map(([id]) => id));
 }
 
-function getPendingExportRequests_() {
+function getPendingExportRequests_(lookup) {
   const ss = getSpreadsheet_();
   const sheet = ss.getSheetByName(SHEET_PHIEU_XUAT_NGUYEN_LIEU);
 
@@ -1713,12 +1718,7 @@ function getPendingExportRequests_() {
       ? khoiLuongXuatThucTe
       : khoiLuongCanXuat;
     const donViCanXuat = normalizeText_(row[idx.donViCanXuat]);
-    const availableKg = getAvailableKgForExport_(
-      maNguyenLieu,
-      tenNguyenLieu,
-      maKeToan
-    );
-    const requiredKg = toKg_(effectiveQty, donViCanXuat);
+
 
     if (!groups[phieuXuatId]) {
       groups[phieuXuatId] = {
@@ -1765,17 +1765,17 @@ function getPendingExportRequests_() {
       nguoiPheDuyet: normalizeText_(row[idx.nguoiPheDuyet]),
       thoiGianDuyet: normalizeText_(row[idx.thoiGianDuyet]),
       IdKhoDaTru: normalizeText_(row[idx.IdKhoDaTru]),
-      tonKhoKhaDung: roundQty_(fromKg_(availableKg, donViCanXuat)),
-      duSoLuong: availableKg + 0.000001 >= requiredKg
+      tonKhoKhaDung: 0,
+      duSoLuong: false
     });
   });
 
   return buildExportLotPreview_(Object.values(groups).sort(function(a, b) {
     return String(b.ngayTao || "").localeCompare(String(a.ngayTao || ""));
-  }));
+  }), lookup);
 }
 
-function updateExportLineFields_(sheet, idx, rowNumber, khoiLuongCanXuat, khoiLuongXuatThucTe, cachXuat, requireActualQty) {
+function updateExportLineFields_(sheet, idx, rowNumber, khoiLuongCanXuat, khoiLuongXuatThucTe, cachXuat, requireActualQty, changes) {
   const plannedQty = Number(khoiLuongCanXuat);
   const actualQty = Number(khoiLuongXuatThucTe);
 
@@ -1785,6 +1785,13 @@ function updateExportLineFields_(sheet, idx, rowNumber, khoiLuongCanXuat, khoiLu
 
   if (requireActualQty && (!isFinite(actualQty) || actualQty <= 0)) {
     throw new Error("Khối lượng xuất thực tế phải là số lớn hơn 0.");
+  }
+
+  if (changes) {
+    changes.push({row:rowNumber,column:idx.khoiLuongCanXuat+1,value:plannedQty},
+      {row:rowNumber,column:idx.khoiLuongXuatThucTe+1,value:isFinite(actualQty) && actualQty > 0 ? actualQty : ''},
+      {row:rowNumber,column:idx.cachXuat+1,value:normalizeText_(cachXuat)});
+    return;
   }
 
   sheet.getRange(rowNumber, idx.khoiLuongCanXuat + 1).setValue(plannedQty);

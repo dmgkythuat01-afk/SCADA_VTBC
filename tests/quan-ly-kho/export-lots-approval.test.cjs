@@ -6,9 +6,10 @@ function setup(){
  const inventory=[['Id','khoiLuongNhap','trangThai'],['EARLY',5,'Đã phê duyệt'],['LATE',20,'Đã phê duyệt']];let writes=0;
  function sheet(data){return {getLastRow:()=>data.length,getLastColumn:()=>data[0].length,getDataRange:()=>({getValues:()=>data.map(row=>Array.from({length:data[0].length},(_,i)=>row[i]??''))}),getRange(row,col,count=1,width=1){return {setValue(value){data[row-1][col-1]=value;writes++;},setValues(values){values.forEach((r,i)=>r.forEach((v,j)=>{data[row-1+i][col-1+j]=v;writes++;}));}};}};}
  const phieu=sheet(vouchers),kho=sheet(inventory),ctx=vm.createContext({console,LockService:{getScriptLock:()=>({waitLock(){},releaseLock(){}})}});
- for(const file of ['Code.js','ExportLotSelectionGs.js'])vm.runInContext(fs.readFileSync(path.join(__dirname,'../../QuanLyKho',file),'utf8'),ctx);
+ for(const file of ['Code.js','ExportLotSelectionGs.js','ExportApprovalPerformanceGs.js'])vm.runInContext(fs.readFileSync(path.join(__dirname,'../../QuanLyKho',file),'utf8'),ctx);
  ctx.requireInventoryRole_=()=>({useName:'kho'});ctx.getPhieuXuatSheet_=()=>phieu;ctx.getSheet_=()=>kho;ctx.getSpreadsheet_=()=>({});ctx.getActivePlanIdsForExport_=()=>new Set(['KH']);ctx.getKhoHeaderIndex_=()=>({Id:0,khoiLuongNhap:1,trangThai:2});ctx.nowText_=()=> '2026-11-02';ctx.getPendingExportRequests_=()=>[];ctx.getApprovedInventoryItems_=()=>[];ctx.getPendingInventoryItems_=()=>[];
  ctx.getApprovedStockLotsForExport_=(code,name,account)=>{a.equal(account,'001');return inventory.slice(1).map((row,i)=>({Id:row[0],rowNumber:i+2,khoiLuongNhap:row[1],qtyKg:row[1],donVi:'kg',LotNo:row[0],hanSuDung:i?'2027-01-01':'2026-12-01'}));};
+ ctx.createExportLotLookup_=()=>({sheet:kho,values:inventory,idx:{khoiLuongNhap:1,trangThai:2},getLots:line=>ctx.getApprovedStockLotsForExport_(line.maNguyenLieu,line.tenNguyenLieu,line.MaKeToan),clear(){}});
  const revision=ctx.exportLotRevision_(record);
  const payload={phieuXuatId:'PX',items:[{rowNumber:2,revision,khoiLuongCanXuat:8,khoiLuongXuatThucTe:8,allocations:[{id:'LATE',quantity:8}]},{rowNumber:3,revision,khoiLuongCanXuat:3,khoiLuongXuatThucTe:3,allocations:[{id:'EARLY',quantity:3}]}]};
  return {ctx,vouchers,inventory,headers,payload,get writes(){return writes;}};

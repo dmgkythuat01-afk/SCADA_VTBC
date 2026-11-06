@@ -4,14 +4,17 @@ function exportLotMaterialKey_(line) {
 function exportLotRevision_(line) {
   return JSON.stringify([line.PhieuXuatId,line.KeHoachId,line.maNguyenLieu,line.tenNguyenLieu,line.MaKeToan,line.donViCanXuat].map(normalizeText_));
 }
-function buildExportLotPreview_(groups) {
+function buildExportLotPreview_(groups, lookup) {
+  if (!groups.some(group => group.items.length)) return groups;
+  lookup = lookup || createExportLotLookup_();
   const cache=new Map();
   groups.forEach(group=>{
     const remaining=new Map();
     group.items.forEach(item=>{
       const key=exportLotMaterialKey_(item);
-      if(!cache.has(key))cache.set(key,getApprovedStockLotsForExport_(item.maNguyenLieu,item.tenNguyenLieu,item.MaKeToan));
+      if(!cache.has(key))cache.set(key,lookup.getLots(item));
       const lots=cache.get(key);
+      item.tonKhoKhaDung = roundQty_(fromKg_(lots.reduce((sum,lot)=>sum+lot.qtyKg,0),item.donViCanXuat));
       item.lotOptions=lots.map(lot=>({Id:lot.Id,LotNo:lot.LotNo,MaKeToan:item.MaKeToan,hanSuDung:lot.hanSuDung,ngayNhap:lot.ngayNhap,donVi:lot.donVi,qtyKg:lot.qtyKg,available:roundQty_(fromKg_(lot.qtyKg,item.donViCanXuat))}));
       let need=toKg_(Number(item.khoiLuongXuatThucTe)>0?Number(item.khoiLuongXuatThucTe):Number(item.khoiLuongCanXuat),item.donViCanXuat);
       item.allocations=[];
@@ -82,27 +85,31 @@ function approveExportWithLots_(token,payload,whole) {
       Object.assign(line,{khoiLuongCanXuat:Number(client.khoiLuongCanXuat),khoiLuongXuatThucTe:Number(client.khoiLuongXuatThucTe),cachXuat:normalizeText_(client.cachXuat),allocations:client.allocations});lines.push(line);
     });
     if(lines.length!==clients.size||!lines.length)throw new Error('Phiếu đã thay đổi hoặc không còn dòng chờ duyệt. Hãy tải lại.');
-    const prepared=validateExportLotSelections_(lines,line=>getApprovedStockLotsForExport_(line.maNguyenLieu,line.tenNguyenLieu,line.MaKeToan));
-    const kho=getSheet_(SHEET_KHO_NGUYEN_LIEU),kIdx=getKhoHeaderIndex_(kho.getDataRange().getValues()[0].map(normalizeText_));
+    const lookup=createExportLotLookup_();
+    const prepared=validateExportLotSelections_(lines,lookup.getLots);
+    const kho=lookup.sheet,kIdx=lookup.idx;
     let ledgerColumn=headers.indexOf('chiTietTruKho')+1;
     if(!ledgerColumn){ledgerColumn=sheet.getLastColumn()+1;sheet.getRange(1,ledgerColumn).setValue('chiTietTruKho');}
     let perLotColumn=headers.indexOf('khoiLuongXuatThucTeTheoLotNo')+1;
     if(!perLotColumn){perLotColumn=sheet.getLastColumn()+1;sheet.getRange(1,perLotColumn).setValue('khoiLuongXuatThucTeTheoLotNo');}
-    const time=nowText_();
+    const time=nowText_(),stockChanges=[],voucherChanges=[];
     prepared.stock.forEach(state=>{
-      kho.getRange(state.lot.rowNumber,kIdx.khoiLuongNhap+1).setValue(state.remainingNative);
-      if(state.remainingNative<=0.000001)kho.getRange(state.lot.rowNumber,kIdx.trangThai+1).setValue('Đã xuất hết');
+      stockChanges.push({row:state.lot.rowNumber,column:kIdx.khoiLuongNhap+1,value:state.remainingNative});
+      if(state.remainingNative<=0.000001)stockChanges.push({row:state.lot.rowNumber,column:kIdx.trangThai+1,value:'Đã xuất hết'});
     });
     prepared.lines.forEach(line=>{
-      updateExportLineFields_(sheet,idx,line.rowNumber,line.khoiLuongCanXuat,line.khoiLuongXuatThucTe,line.cachXuat,true);
+      updateExportLineFields_(sheet,idx,line.rowNumber,line.khoiLuongCanXuat,line.khoiLuongXuatThucTe,line.cachXuat,true,voucherChanges);
       const ids=line.parts.map(part=>part.id);ids.beforeLots=line.parts.map(part=>({...part.lot,khoiLuongNhap:part.beforeQty}));
-      fillExportStockDetails_(sheet,idx,line.rowNumber,ids);
+      fillExportStockDetails_(sheet,idx,line.rowNumber,ids,voucherChanges);
       // Same order as LotNo; quantities use donViCanXuat, matching the total actual issue.
-      sheet.getRange(line.rowNumber,perLotColumn).setValue(line.parts.map(part=>String(part.exportQty)).join(", "));
-      sheet.getRange(line.rowNumber,ledgerColumn).setValue(JSON.stringify(line.parts.map(part=>({IdKho:part.id,khoiLuong:part.nativeQty,donVi:part.unit}))));
-      sheet.getRange(line.rowNumber,idx.trangThaiPheDuyet+1).setValue('Đã phê duyệt');
-      sheet.getRange(line.rowNumber,idx.nguoiPheDuyet+1).setValue(session.useName||'');sheet.getRange(line.rowNumber,idx.thoiGianDuyet+1).setValue(time);
+      voucherChanges.push({row:line.rowNumber,column:perLotColumn,value:line.parts.map(part=>String(part.exportQty)).join(", ")});
+      voucherChanges.push({row:line.rowNumber,column:ledgerColumn,value:JSON.stringify(line.parts.map(part=>({IdKho:part.id,khoiLuong:part.nativeQty,donVi:part.unit})))});
+      voucherChanges.push({row:line.rowNumber,column:idx.trangThaiPheDuyet+1,value:'Đã phê duyệt'});
+      voucherChanges.push({row:line.rowNumber,column:idx.nguoiPheDuyet+1,value:session.useName||''},{row:line.rowNumber,column:idx.thoiGianDuyet+1,value:time});
     });
-    return {success:true,message:'Đã phê duyệt '+lines.length+' dòng và trừ đúng các lô đã chọn.',phieuXuatChoDuyet:getPendingExportRequests_(),tonKho:getApprovedInventoryItems_(),chuaDuyet:getPendingInventoryItems_()};
+    writeExportApprovalCells_(kho,stockChanges,lookup.values);
+    writeExportApprovalCells_(sheet,voucherChanges);
+    lookup.clear();
+    return {success:true,message:'Đã phê duyệt '+lines.length+' dòng và trừ đúng các lô đã chọn.',phieuXuatChoDuyet:getPendingExportRequests_(lookup),tonKho:getApprovedInventoryItems_(lookup),chuaDuyet:getPendingInventoryItems_(lookup)};
   }finally{lock.releaseLock();}
 }
