@@ -66,7 +66,8 @@ function manualApprovalGetHeaderIndex_(headers) {
     "loaiNguyenLieu",
     "MaKeToan",
     "heSoQuyDoiKho",
-    "doViTinhToan"
+    "doViTinhToan",
+    "anhXuat"
   ].forEach(function(name) {
     idx[name] = headers.indexOf(name);
   });
@@ -332,6 +333,7 @@ function getPendingManualExportApprovalsData_(lookup) {
 
     groupMap[phieuId].items.push({
       rowNumber: i + 1,
+      coAnhXuat: !!normalizeText_(manualApprovalValue_(row, idx.anhXuat)),
 
       STT:
         row[idx.STT],

@@ -1,0 +1,14 @@
+﻿<style>
+#manualApprovalPhotoModal[hidden]{display:none!important}#manualApprovalPhotoModal{position:fixed;inset:0;z-index:10000;background:#000a;display:flex;align-items:center;justify-content:center;padding:16px}#manualApprovalPhotoModal .photo-panel{background:white;border-radius:16px;padding:18px;max-width:960px;width:100%;max-height:95vh;overflow:auto}#manualApprovalPhotoModal img{display:block;max-width:100%;max-height:75vh;margin:12px auto;object-fit:contain}#manualApprovalPhotoModal .photo-head{display:flex;justify-content:space-between;align-items:center;gap:12px}
+</style>
+<div id="manualApprovalPhotoModal" hidden role="dialog" aria-modal="true" aria-label="&#7842;nh xu&#7845;t kho" onclick="if(event.target===this)ManualApprovalPhoto.close()"><div class="photo-panel"><div class="photo-head"><b>&#7842;nh xu&#7845;t nguy&#234;n li&#7879;u</b><button type="button" class="btn btn-secondary" onclick="ManualApprovalPhoto.close()">&#272;&#243;ng</button></div><p id="manualApprovalPhotoStatus" role="status"></p><img id="manualApprovalPhotoImage" hidden alt="&#7842;nh nguy&#234;n li&#7879;u khi xu&#7845;t kho"></div></div>
+<script>
+const ManualApprovalPhoto=(()=>{
+ let generation=0;const el=id=>document.getElementById(id);
+ function close(){generation++;el('manualApprovalPhotoModal').hidden=true;el('manualApprovalPhotoImage').removeAttribute('src');}
+ function open(row){const request=++generation;el('manualApprovalPhotoModal').hidden=false;el('manualApprovalPhotoImage').hidden=true;el('manualApprovalPhotoImage').removeAttribute('src');el('manualApprovalPhotoStatus').textContent='\u0110ang t\u1ea3i \u1ea3nh...';
+ google.script.run.withSuccessHandler(result=>{if(request!==generation)return;if(!result||!/^data:image\/jpeg;base64,/.test(result.dataUrl)){el('manualApprovalPhotoStatus').textContent='\u1ea2nh kh\u00f4ng h\u1ee3p l\u1ec7.';return;}el('manualApprovalPhotoImage').src=result.dataUrl;el('manualApprovalPhotoImage').hidden=false;el('manualApprovalPhotoStatus').textContent='';}).withFailureHandler(error=>{if(request===generation)el('manualApprovalPhotoStatus').textContent=error.message||'Kh\u00f4ng t\u1ea3i \u0111\u01b0\u1ee3c \u1ea3nh.';}).getManualApprovalPhoto(sessionToken,row);}
+ function button(item){const row=Number(item.rowNumber);return item.coAnhXuat&&Number.isInteger(row)?'<button type="button" class="btn btn-secondary mini-btn" onclick="ManualApprovalPhoto.open('+row+')">Xem &#7843;nh</button>':'<span class="muted">Ch&#432;a c&#243; &#7843;nh</span>';}
+ document.addEventListener('keydown',event=>{if(event.key==='Escape')close();});return {open,close,button};
+})();
+</script>

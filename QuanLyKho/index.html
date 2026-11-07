@@ -7398,6 +7398,7 @@
                       <th>Đơn vị</th>
                       <th>Tồn khả dụng</th>
                       <th>Kiểm tra</th>
+                      <th>Xem ảnh</th>
                       <th>Ghi chú</th>
                     </tr>
                   </thead>
@@ -7508,6 +7509,7 @@
 
                   </td>
 
+                  <td>${ManualApprovalPhoto.button(item)}</td>
                   <td class="export-message-cell">
                     ${escapeHtml(
                       item.ghiChu || ""
@@ -7749,5 +7751,6 @@
 
   </script>
 <?!= HtmlService.createHtmlOutputFromFile('ExportLotSelection').getContent(); ?>
+<?!= HtmlService.createHtmlOutputFromFile('ManualApprovalPhoto').getContent(); ?>
 </body>
 </html>
