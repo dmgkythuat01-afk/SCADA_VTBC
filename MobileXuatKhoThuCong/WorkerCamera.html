@@ -1,0 +1,53 @@
+<style>
+.worker-photo{margin:14px 0;padding:16px;border:1px solid #cfe3d6;border-radius:16px;background:#f5fbf7}.worker-photo-label{font-size:16px;font-weight:750;margin-bottom:10px}.worker-photo img,.worker-photo-thumb{width:116px;height:88px;object-fit:cover;border-radius:12px;border:1px solid #d6e7dc;display:block;margin-bottom:10px}.worker-photo-hint{font-size:13px;color:#5c7467;line-height:1.5;margin-top:8px}.worker-camera-modal[hidden],.worker-camera-modal [hidden]{display:none!important}.worker-camera-modal{position:fixed;inset:0;z-index:3000;display:flex;align-items:center;justify-content:center;background:#0d211bd9;padding:14px;box-sizing:border-box}.worker-camera-panel{min-width:0;width:100%;max-width:540px;max-height:95dvh;overflow:auto;background:#fff;border-radius:24px;padding:18px;box-sizing:border-box}.worker-camera-head>span{min-width:0;overflow-wrap:anywhere}.worker-camera-head>button{flex:none;min-width:44px;width:44px;padding:8px}.worker-camera-head{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:20px;font-weight:800;margin-bottom:14px}.worker-camera-stage{background:#102b22;border-radius:18px;overflow:hidden;min-height:200px}.worker-camera-stage video,.worker-camera-stage img{width:100%;max-height:60dvh;object-fit:contain;display:block}.worker-camera-stage [hidden]{display:none!important}.worker-camera-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}.worker-camera-actions .btn{flex:1;min-height:50px;font-size:16px}.worker-camera-status{font-size:15px;line-height:1.5;margin-top:10px;color:#455f50}.worker-camera-panel button:focus-visible{outline:3px solid #34b183;outline-offset:3px}
+</style>
+<div id="workerCameraModal" class="worker-camera-modal" role="dialog" aria-modal="true" aria-labelledby="workerCameraTitle" hidden>
+ <div class="worker-camera-panel"><div class="worker-camera-head"><span id="workerCameraTitle">Ch&#7909;p &#7843;nh xu&#7845;t kho</span><button type="button" class="btn btn-light" onclick="WorkerCamera.close()" aria-label="??ng camera">&#10005;</button></div>
+ <div class="worker-camera-stage"><video id="workerCameraVideo" autoplay muted playsinline></video><img id="workerCameraStill" alt="?nh v?a ch?p" hidden></div>
+ <div id="workerCameraStatus" class="worker-camera-status" role="status"></div>
+ <div class="worker-camera-actions"><button id="workerCameraSwitch" class="btn btn-light" type="button" onclick="WorkerCamera.flip()">&#272;&#7893;i camera</button><button id="workerCameraShoot" class="btn btn-primary" type="button" onclick="WorkerCamera.capture()">Ch&#7909;p &#7843;nh</button><button id="workerCameraRetake" class="btn btn-light" type="button" onclick="WorkerCamera.retake()" hidden>Ch&#7909;p l&#7841;i</button><button id="workerCameraUse" class="btn btn-success" type="button" onclick="WorkerCamera.use()" hidden>D&#249;ng &#7843;nh n&#224;y</button></div></div>
+</div>
+<script>
+const WorkerCamera=(function(){
+ const photos=new Map();let stream=null,activeKey='',pending='',facing='environment',generation=0,previousFocus=null;
+ const el=id=>document.getElementById(id);
+ const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+ function valid(data){return typeof data==='string'&&data.startsWith('data:image/jpeg;base64,')&&data.length<4200000;}
+ function inner(key){const image=photos.get(key);return '<div class="worker-photo-label">\u1ea2nh xu\u1ea5t <span style="color:#b42318">*</span></div>'+(image?'<img src="'+esc(image)+'" alt="\u1ea2nh xu\u1ea5t \u0111\u00e3 ch\u1ee5p">':'')+'<button class="btn btn-light" type="button" data-camera-key="'+esc(key)+'" onclick="WorkerCamera.open(this.dataset.cameraKey)">'+(image?'Ch\u1ee5p l\u1ea1i \u1ea3nh':'M\u1edf camera ch\u1ee5p \u1ea3nh')+'</button><div class="worker-photo-hint">Ch\u1ee5p r\u00f5 nguy\u00ean li\u1ec7u v\u00e0 nh\u00e3n l\u00f4 tr\u01b0\u1edbc khi t\u1ea1o phi\u1ebfu.</div>';}
+ function field(key){return '<div class="worker-photo" data-photo-key="'+esc(key)+'">'+inner(key)+'</div>';}
+ function refresh(key){document.querySelectorAll('[data-photo-key]').forEach(box=>{if(box.dataset.photoKey===key)box.innerHTML=inner(key);});}
+ function set(key,data){if(valid(data))photos.set(key,data);else photos.delete(key);refresh(key);}
+ function clear(key){photos.delete(key);refresh(key);}
+ function clearPlans(){Array.from(photos.keys()).filter(key=>key.startsWith('plan:')).forEach(clear);}
+ function planKey(item){return 'plan:'+JSON.stringify([selectedPlan?.Id||'',item.STT,item.maNguyenLieu,item.MaKeToan||''].map(v=>String(v??'').trim()));}
+ function stop(){if(stream)stream.getTracks().forEach(track=>track.stop());stream=null;const video=el('workerCameraVideo');if(video)video.srcObject=null;}
+ function close(){generation++;stop();el('workerCameraModal').hidden=true;pending='';if(previousFocus?.focus)previousFocus.focus();}
+ async function open(key){
+  generation++;const request=generation;stop();activeKey=key;pending='';previousFocus=document.activeElement;
+  el('workerCameraModal').hidden=false;el('workerCameraVideo').hidden=false;el('workerCameraStill').hidden=true;el('workerCameraShoot').hidden=false;el('workerCameraShoot').disabled=true;el('workerCameraSwitch').hidden=false;el('workerCameraRetake').hidden=true;el('workerCameraUse').hidden=true;
+  el('workerCameraTitle').textContent='Ch\u1ee5p \u1ea3nh xu\u1ea5t kho';
+  el('workerCameraStatus').textContent='\u0110ang m\u1edf camera...';
+  try{
+   if(!navigator.mediaDevices?.getUserMedia)throw Error('Tr\u00ecnh duy\u1ec7t ch\u01b0a h\u1ed7 tr\u1ee3 camera. H\u00e3y m\u1edf trang b\u1eb1ng Chrome ho\u1eb7c Safari v\u00e0 c\u1ea5p quy\u1ec1n camera.');
+   const media=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:facing},width:{ideal:1600},height:{ideal:1200}},audio:false});
+   if(request!==generation){media.getTracks().forEach(t=>t.stop());return;}
+   stream=media;el('workerCameraVideo').srcObject=stream;await el('workerCameraVideo').play();
+   el('workerCameraShoot').disabled=false;el('workerCameraStatus').textContent='\u0110\u01b0a nguy\u00ean li\u1ec7u v\u00e0 nh\u00e3n l\u00f4 v\u00e0o khung, r\u1ed3i b\u1ea5m Ch\u1ee5p \u1ea3nh.';
+  }catch(error){if(request!==generation)return;stop();el('workerCameraStatus').textContent=(error.name==='NotAllowedError'?'B\u1ea1n c\u1ea7n cho ph\u00e9p trang s\u1eed d\u1ee5ng camera. ': '')+(error.message||'Kh\u00f4ng m\u1edf \u0111\u01b0\u1ee3c camera.');}
+ }
+ function capture(){const video=el('workerCameraVideo');if(!stream||!video.videoWidth)return;const canvas=document.createElement('canvas'),scale=Math.min(1,1280/Math.max(video.videoWidth,video.videoHeight));canvas.width=Math.round(video.videoWidth*scale);canvas.height=Math.round(video.videoHeight*scale);canvas.getContext('2d').drawImage(video,0,0,canvas.width,canvas.height);pending=canvas.toDataURL('image/jpeg',.78);if(!valid(pending))return;stop();el('workerCameraStill').src=pending;el('workerCameraStill').hidden=false;video.hidden=true;el('workerCameraShoot').hidden=true;el('workerCameraSwitch').hidden=true;el('workerCameraRetake').hidden=false;el('workerCameraUse').hidden=false;el('workerCameraStatus').textContent='Ki\u1ec3m tra \u1ea3nh, ch\u1ecdn D\u00f9ng \u1ea3nh n\u00e0y ho\u1eb7c Ch\u1ee5p l\u1ea1i.';}
+ function use(){if(!valid(pending))return;set(activeKey,pending);close();}
+ function view(voucherId,stt){
+  generation++;const request=generation;stop();pending='';previousFocus=document.activeElement;
+  el('workerCameraModal').hidden=false;el('workerCameraTitle').textContent='\u1ea2nh xu\u1ea5t kho';el('workerCameraVideo').hidden=true;el('workerCameraStill').hidden=true;
+  ['Switch','Shoot','Retake','Use'].forEach(name=>el('workerCamera'+name).hidden=true);
+  el('workerCameraStatus').textContent='\u0110ang t\u1ea3i \u1ea3nh...';
+  google.script.run.withSuccessHandler(result=>{if(request!==generation)return;el('workerCameraStill').src=result.dataUrl;el('workerCameraStill').hidden=false;el('workerCameraStatus').textContent='';}).withFailureHandler(error=>{if(request===generation)el('workerCameraStatus').textContent=error.message||'Kh\u00f4ng t\u1ea3i \u0111\u01b0\u1ee3c \u1ea3nh.';}).getWorkerExportPhoto(sessionToken,voucherId,stt);
+ }
+ function flip(){facing=facing==='environment'?'user':'environment';return open(activeKey);}
+ function retake(){return open(activeKey);}
+ document.addEventListener('DOMContentLoaded',()=>{const box=el('manualPhotoBox');if(box)box.innerHTML=field('manual');});
+ document.addEventListener('visibilitychange',()=>{if(document.hidden)close();});window.addEventListener('pagehide',stop);document.addEventListener('keydown',event=>{if(event.key==='Escape'&&!el('workerCameraModal').hidden)close();});
+ return {field,get:key=>photos.get(key)||'',set,clear,clearPlans,planKey,valid,open,close,capture,use,flip,retake,view};
+})();
+</script>

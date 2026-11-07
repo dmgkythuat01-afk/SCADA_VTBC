@@ -1515,6 +1515,7 @@
 
 
 
+          <div id="manualPhotoBox"></div>
           <div class="row-3" style="margin-top:14px;">
 
             <div class="field">
@@ -3006,6 +3007,8 @@
 
 
   function handleManualIdChange() {
+    WorkerCamera.clear("manual");
+    document.getElementById("manualPhotoBox").innerHTML=WorkerCamera.field("manual");
 
     const id =
 
@@ -3225,6 +3228,8 @@
 
 
   function resetManualForm() {
+    WorkerCamera.clear("manual");
+    document.getElementById("manualPhotoBox").innerHTML=WorkerCamera.field("manual");
 
     manualEditingIndex = -1;
 
@@ -3386,7 +3391,9 @@
 
 
 
+    if(!WorkerCamera.valid(WorkerCamera.get('manual'))){showMessage('manualMessage','error','Vui l\u00f2ng ch\u1ee5p \u1ea3nh nguy\u00ean li\u1ec7u tr\u01b0\u1edbc khi th\u00eam.');return;}
     const item = {
+      anhXuat:WorkerCamera.get("manual"),
 
       IdKho: stock.Id,
 
@@ -3544,6 +3551,7 @@
 
             <th>Ghi chú</th>
 
+            <th>Ảnh xuất</th>
             <th>Thao tác</th>
 
           </tr>
@@ -3586,6 +3594,7 @@
 
             <td>${escapeHtml(item.ghiChu)}</td>
 
+            <td>${item.anhXuat ? '<img class="worker-photo-thumb" src="'+escapeHtml(item.anhXuat)+'" alt="Anh xuat">' : 'Chua chup anh'}</td>
             <td>
 
               <button class="btn btn-light mini-btn"
@@ -3690,6 +3699,7 @@
 
 
 
+    WorkerCamera.set("manual",item.anhXuat);
     manualEditingIndex = index;
 
 
@@ -3842,6 +3852,7 @@
 
 
 
+    if(manualDraft.some(item=>!WorkerCamera.valid(item.anhXuat))){showMessage('manualMessage','error','M\u1ed7i nguy\u00ean li\u1ec7u ph\u1ea3i c\u00f3 \u1ea3nh xu\u1ea5t.');return;}
     if (
 
       !confirm(
@@ -4169,6 +4180,7 @@
 
 
   function handlePlanDateChange() {
+    WorkerCamera.clearPlans();
 
     selectedPlan = null;
 
@@ -4225,6 +4237,7 @@
 
 
   function handlePlanChange() {
+    WorkerCamera.clearPlans();
 
     const id =
 
@@ -4518,6 +4531,7 @@
             <th>KL tại lô</th>
 
             <th>Trạng thái</th>
+            <th>Ảnh xuất</th>
 
           </tr>
 
@@ -4634,7 +4648,9 @@
 
                 <td></td>
 
-              `;
+
+                <td></td>
+`;
 
             }
 
@@ -4692,6 +4708,7 @@
 
               </td>
 
+              <td>${first ? WorkerCamera.field(WorkerCamera.planKey(item)) : ""}</td>
             </tr>
 
             `;
@@ -4914,7 +4931,10 @@
 
 
 
+      const photo=WorkerCamera.get(WorkerCamera.planKey(item));
+      if(!WorkerCamera.valid(photo)){showMessage('planMessage','error','Ch\u01b0a ch\u1ee5p \u1ea3nh: '+item.tenNguyenLieu);return;}
       actualItems.push({
+        anhXuat:photo,
 
         STT: item.STT,
 
@@ -4987,6 +5007,7 @@
 
 
 
+        WorkerCamera.clearPlans();
         planItems = [];
 
         planCanCreate = false;
@@ -5276,6 +5297,7 @@
 
             <th>Trạng thái</th>
 
+            <th>Ảnh xuất</th>
             <th>Ghi chú</th>
 
           </tr>
@@ -5327,6 +5349,7 @@
 
           </td>
 
+          <td>${item.anhXuat ? '<button type="button" class="btn btn-light mini-btn" data-voucher="'+escapeHtml(item.PhieuXuatThuCongId)+'" data-stt="'+escapeHtml(item.STT)+'" onclick="WorkerCamera.view(this.dataset.voucher,this.dataset.stt)">Xem \u1ea3nh</button>' : '—'}</td>
           <td>${escapeHtml(item.ghiChu)}</td>
 
         </tr>
@@ -5355,6 +5378,7 @@
 
 
 
+<?!= HtmlService.createHtmlOutputFromFile('WorkerCamera').getContent(); ?>
 </body>
 
 </html>

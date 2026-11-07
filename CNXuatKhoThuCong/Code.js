@@ -35,7 +35,8 @@ function doGet() {
 
   return HtmlService
 
-    .createHtmlOutputFromFile("index")
+    .createTemplateFromFile("index").evaluate()
+    .addMetaTag("viewport", "width=device-width, initial-scale=1, viewport-fit=cover")
 
     .setTitle("Công nhân xuất kho thủ công")
 
@@ -1491,7 +1492,9 @@ function ensurePhieuXuatThuCongHeader_(sheet) {
 
     "thoiGianLuu",
 
-    "TrangThaiXuatThuCong"
+    "TrangThaiXuatThuCong",
+
+    "anhXuat"
 
   ];
 
@@ -1549,7 +1552,8 @@ function buildManualExportLogObject_(
 
   session,
 
-  ghiChu
+  ghiChu,
+  anhXuat
 
 ) {
 
@@ -1642,6 +1646,7 @@ function buildManualExportLogObject_(
 
 
     ghiChu: ghiChu || "",
+    anhXuat: anhXuat || "",
 
 
 
@@ -1714,6 +1719,8 @@ function createWorkerManualExportVoucher(
   }
 
 
+
+  const photoInputs = items.map(item => validateWorkerExportPhoto_(item.anhXuat));
 
   const lock = LockService.getScriptLock();
 
@@ -1915,6 +1922,7 @@ function createWorkerManualExportVoucher(
 
 
 
+    const photoUrls = photoInputs.map(bytes => saveWorkerExportPhoto_(bytes, session.useName));
     const phieuId = generateId_("PXTC");
 
     const sheet = getPhieuXuatThuCongSheet_();
@@ -1969,7 +1977,8 @@ function createWorkerManualExportVoucher(
 
           ghiChu ||
 
-            "Công nhân tạo phiếu xuất thủ công"
+            "Công nhân tạo phiếu xuất thủ công",
+          photoUrls[index]
 
         )
 
@@ -3045,6 +3054,7 @@ function createWorkerPlanExportVoucher(
 
 
 
+    const photoInputs = validateWorkerPlanPhotos_(actualItems, lines);
     const phieuId = generateId_("PXTC");
 
     const sheet = getPhieuXuatThuCongSheet_();
@@ -3072,6 +3082,10 @@ function createWorkerPlanExportVoucher(
     );
 
 
+
+    lines.forEach(line => line.lots.forEach(lot => {if (!stockMap[lot.Id]) throw new Error('Id kho kh\u00f4ng c\u00f2n t\u1ed3n kh\u1ea3 d\u1ee5ng: '+lot.Id);}));
+    const photoUrls = new Map();
+    photoInputs.forEach((bytes,key) => photoUrls.set(key,saveWorkerExportPhoto_(bytes,session.useName)));
 
     let sttLog = 1;
 
@@ -3167,7 +3181,8 @@ function createWorkerPlanExportVoucher(
 
             session,
 
-            note
+            note,
+            photoUrls.get(workerPlanPhotoKey_(line))
 
           )
 
@@ -3370,6 +3385,7 @@ function getWorkerManualExportHistory_(
 
 
   const idx = {
+    anhXuat: findOptionalHeaderIndex_(headers,["anhXuat"]),
 
     PhieuXuatThuCongId:
 
@@ -3576,6 +3592,7 @@ function getWorkerManualExportHistory_(
           ),
 
         STT: row[idx.STT],
+        anhXuat: idx.anhXuat < 0 ? "" : normalizeText_(row[idx.anhXuat]),
 
         Id: normalizeText_(row[idx.Id]),
 
