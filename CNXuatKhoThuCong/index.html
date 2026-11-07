@@ -1340,6 +1340,19 @@
 
             <div class="field">
 
+              <label>Tên nguyên liệu</label>
+
+              <input id="manualName"
+
+                     type="text" list="manualNameList" autocomplete="off" oninput="handleManualNameChange()">
+              <datalist id="manualNameList"></datalist>
+
+            </div>
+
+
+
+            <div class="field">
+
               <label>Id kho</label>
 
               <select id="manualId"
@@ -1349,20 +1362,6 @@
                 <option value="">-- Chọn Id kho --</option>
 
               </select>
-
-            </div>
-
-
-
-            <div class="field">
-
-              <label>Tên nguyên liệu</label>
-
-              <input id="manualName"
-
-                     type="text"
-
-                     readonly>
 
             </div>
 
@@ -2797,95 +2796,27 @@
 
 
 
+  function manualMaterialOptions() {
+    const pairs=new Map();
+    stockItems.forEach(item=>{const ma=String(item.maNguyenLieu||'').trim(),name=String(item.tenNguyenLieu||'').trim();if(ma)pairs.set(JSON.stringify([ma,name]),{ma,name});});
+    return Array.from(pairs.values()).sort((a,b)=>a.name.localeCompare(b.name,'vi')||a.ma.localeCompare(b.ma));
+  }
   function renderManualMaList() {
-
-    const list =
-
-      document.getElementById(
-
-        "manualMaList"
-
-      );
-
-
-
-    if (!list) return;
-
-
-
-    const materials = {};
-
-
-
-    stockItems.forEach(function(item) {
-
-      if (!item.maNguyenLieu) return;
-
-
-
-      materials[
-
-        item.maNguyenLieu
-
-      ] = item.tenNguyenLieu || "";
-
-    });
-
-
-
-    list.innerHTML =
-
-      Object.keys(materials)
-
-        .sort()
-
-        .map(function(ma) {
-
-          return (
-
-            '<option value="' +
-
-            escapeHtml(ma) +
-
-            '" label="' +
-
-            escapeHtml(materials[ma]) +
-
-            '"></option>'
-
-          );
-
-        })
-
-        .join("");
-
+    const items=manualMaterialOptions();
+    document.getElementById('manualMaList').innerHTML=items.map(item=>'<option value="'+escapeHtml(item.ma+' | '+item.name)+'"></option>').join('');
+    document.getElementById('manualNameList').innerHTML=items.map(item=>'<option value="'+escapeHtml(item.name+' | '+item.ma)+'"></option>').join('');
   }
-
-
-
-  function getManualMa() {
-
-    return document
-
-      .getElementById("manualMa")
-
-      .value
-
-      .trim();
-
-  }
-
-
-
-  function handleManualMaChange() {
-
+  function getManualMa(){return document.getElementById('manualMa').value.trim();}
+  function selectManualMaterial(field){
+    const input=document.getElementById(field),query=input.value.trim().toLocaleLowerCase('vi');
+    const matches=manualMaterialOptions().filter(item=>[item.ma,item.name,item.ma+' | '+item.name,item.name+' | '+item.ma].some(value=>value.toLocaleLowerCase('vi')===query));
     resetManualStockDetail(false);
-
-    renderManualIdOptions();
-
+    input.value=query?input.value:'';
+    if(matches.length===1){document.getElementById('manualMa').value=matches[0].ma;document.getElementById('manualName').value=matches[0].name;renderManualIdOptions();}
+    else {if(field==='manualName')document.getElementById('manualMa').value='';document.getElementById('manualId').innerHTML='<option value="">-- Ch\u1ecdn nguy\u00ean li\u1ec7u t\u1eeb g\u1ee3i \u00fd --</option>';}
   }
-
-
+  function handleManualMaChange(){selectManualMaterial('manualMa');}
+  function handleManualNameChange(){const value=document.getElementById('manualName').value;selectManualMaterial('manualName');if(!document.getElementById('manualMa').value)document.getElementById('manualName').value=value;}
 
   function renderManualIdOptions() {
 
