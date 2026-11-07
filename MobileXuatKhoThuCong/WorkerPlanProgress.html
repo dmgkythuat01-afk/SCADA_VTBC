@@ -1,0 +1,39 @@
+<style>
+.worker-plan-saved{display:block;padding:12px;border-radius:12px;background:#e6f5ec;color:#176443;font-size:15px;line-height:1.5}.worker-plan-saved small{display:block;font-size:13px;overflow-wrap:anywhere}.worker-plan-summary{margin:14px 0;font-size:16px;font-weight:750;color:#225941}.worker-plan-save{min-width:140px;white-space:normal}
+</style>
+<script>
+const WorkerPlanProgress=(function(){
+ let saving=false;
+ const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+ const key=line=>JSON.stringify([String(line.STT??''),String(line.maNguyenLieu??'')]);
+ function cell(item,index){
+  if(item.daLuu)return '<span class="worker-plan-saved">\u2713 \u0110\u00e3 l\u01b0u<small>Phi\u1ebfu: '+esc(item.phieuDaLuu)+'</small><small>'+esc(item.nguoiDaLuu||'')+'</small></span>';
+  return '<button type="button" class="btn btn-success worker-plan-save" '+(!item.duSoLuong?'disabled':'')+' onclick="WorkerPlanProgress.save('+index+')">L\u01b0u nguy\u00ean li\u1ec7u</button>';
+ }
+ function apply(result){
+  const previous=new Map((planItems||[]).map((item,index)=>{const input=document.getElementById('planActual_'+index);return [key(item),Number(input?input.value:item.khoiLuongXuatThucTe)];}));
+  planItems=result.items||[];
+  planItems.forEach(item=>{const qty=previous.get(key(item));if(!item.daLuu&&Number.isFinite(qty)&&qty>0)item.khoiLuongXuatThucTe=qty;});
+  const remaining=planItems.filter(item=>!item.daLuu),saved=planItems.length-remaining.length;
+  planCanCreate=remaining.length>0&&remaining.every(item=>item.duSoLuong);
+  renderPlanItems();
+  const button=document.getElementById('planCreateBtn');button.disabled=!planCanCreate;button.textContent=remaining.length?'L\u01b0u c\u00e1c nguy\u00ean li\u1ec7u c\u00f2n l\u1ea1i':'T\u1ea5t c\u1ea3 nguy\u00ean li\u1ec7u \u0111\u00e3 l\u01b0u';
+  const summary=document.getElementById('planSaveSummary');if(summary)summary.textContent='\u0110\u00e3 l\u01b0u '+saved+'/'+planItems.length+' nguy\u00ean li\u1ec7u'+(remaining.length?' \u00b7 C\u00f2n '+remaining.length:'');
+  showMessage('planMessage',remaining.length?'info':'success',remaining.length?'Ch\u1ee5p \u1ea3nh v\u00e0 l\u01b0u ri\u00eang t\u1eebng nguy\u00ean li\u1ec7u. D\u00f2ng \u0111\u00e3 l\u01b0u s\u1ebd \u0111\u01b0\u1ee3c kh\u00f3a.':'K\u1ebf ho\u1ea1ch \u0111\u00e3 l\u01b0u \u0111\u1ee7 nguy\u00ean li\u1ec7u.');
+ }
+ function save(index){
+  const item=planItems[index];if(saving||!selectedPlan||!item||item.daLuu)return;
+  const input=document.getElementById('planActual_'+index),quantity=Number(input?input.value:item.khoiLuongXuatThucTe),photo=WorkerCamera.get(WorkerCamera.planKey(item));
+  if(!Number.isFinite(quantity)||quantity<=0){showMessage('planMessage','error','Kh\u1ed1i l\u01b0\u1ee3ng ph\u1ea3i l\u1edbn h\u01a1n 0.');return;}
+  if(!WorkerCamera.valid(photo)){showMessage('planMessage','error','Vui l\u00f2ng ch\u1ee5p \u1ea3nh: '+item.tenNguyenLieu);return;}
+  const planId=selectedPlan.Id,photoKey=WorkerCamera.planKey(item),record={STT:item.STT,maNguyenLieu:item.maNguyenLieu,MaKeToan:item.MaKeToan||'',khoiLuongXuatThucTe:quantity,anhXuat:photo};
+  saving=true;showLoading(' \u0110ang l\u01b0u nguy\u00ean li\u1ec7u...',item.tenNguyenLieu);
+  google.script.run.withSuccessHandler(result=>{
+    saving=false;hideLoading();WorkerCamera.clear(photoKey);
+    historyRows=result.recentRequests||historyRows;renderHistory();
+    if(selectedPlan&&selectedPlan.Id===planId)loadPlanDetail();
+  }).withFailureHandler(error=>{saving=false;hideLoading();showMessage('planMessage','error',error.message||'Kh\u00f4ng l\u01b0u \u0111\u01b0\u1ee3c nguy\u00ean li\u1ec7u.');if((error.message||'').toLowerCase().includes('\u0111\u00e3 l\u01b0u')&&selectedPlan&&selectedPlan.Id===planId)loadPlanDetail();}).createWorkerPlanExportVoucher(sessionToken,planId,[record]);
+ }
+ return {cell,apply,save};
+})();
+</script>

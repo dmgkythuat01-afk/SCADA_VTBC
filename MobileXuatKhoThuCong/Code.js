@@ -231,100 +231,12 @@ function generateId_(prefix) {
 
 
 function ensureSheetHeaders_(sheet, expectedHeaders) {
-
-  if (sheet.getLastRow() === 0) {
-
-    sheet
-
-      .getRange(1, 1, 1, expectedHeaders.length)
-
-      .setValues([expectedHeaders]);
-
-    return;
-
-  }
-
-
-
-  let currentLastCol = Math.max(
-
-    sheet.getLastColumn(),
-
-    expectedHeaders.length
-
-  );
-
-
-
-  let headers = sheet
-
-    .getRange(1, 1, 1, currentLastCol)
-
-    .getValues()[0]
-
-    .map(function(h) {
-
-      return normalizeText_(h);
-
-    });
-
-
-
-  if (headers.every(function(h) { return !h; })) {
-
-    sheet
-
-      .getRange(1, 1, 1, expectedHeaders.length)
-
-      .setValues([expectedHeaders]);
-
-    return;
-
-  }
-
-
-
-  expectedHeaders.forEach(function(header) {
-
-    const currentHeaders = sheet
-
-      .getRange(
-
-        1,
-
-        1,
-
-        1,
-
-        Math.max(sheet.getLastColumn(), expectedHeaders.length)
-
-      )
-
-      .getValues()[0]
-
-      .map(function(h) {
-
-        return normalizeText_(h);
-
-      });
-
-
-
-    if (currentHeaders.indexOf(header) === -1) {
-
-      sheet
-
-        .getRange(1, sheet.getLastColumn() + 1)
-
-        .setValue(header);
-
-    }
-
-  });
-
+  const lastColumn=sheet.getLastColumn();
+  const headers=sheet.getLastRow()===0?[]:sheet.getRange(1,1,1,Math.max(lastColumn,expectedHeaders.length)).getValues()[0].map(normalizeText_);
+  if(!headers.length||headers.every(value=>!value)){sheet.getRange(1,1,1,expectedHeaders.length).setValues([expectedHeaders]);return;}
+  const missing=expectedHeaders.filter(header=>!headers.includes(header));
+  if(missing.length)sheet.getRange(1,lastColumn+1,1,missing.length).setValues([missing]);
 }
-
-
 
 function getHeaderMap_(sheet) {
 
@@ -1397,10 +1309,10 @@ function getApprovedInventoryItems_() {
 
 
 
-function getApprovedStockLotsByMaterial_(tenNguyenLieu, maKeToan) {
+function getApprovedStockLotsByMaterial_(tenNguyenLieu, maKeToan, stockItems) {
   const target = lowerText_(tenNguyenLieu);
   const targetAccounting = lowerText_(maKeToan);
-  return getApprovedInventoryItems_().filter(function(item) {
+  return (stockItems || getApprovedInventoryItems_()).filter(function(item) {
     return lowerText_(item.tenNguyenLieu) === target &&
       (!targetAccounting || lowerText_(item.MaKeToan) === targetAccounting);
   }).map(function(item) {
@@ -1410,8 +1322,8 @@ function getApprovedStockLotsByMaterial_(tenNguyenLieu, maKeToan) {
   });
 }
 
-function getAvailableKgByMaterial_(tenNguyenLieu, maKeToan) {
-  return getApprovedStockLotsByMaterial_(tenNguyenLieu, maKeToan).reduce(function(sum, item) {
+function getAvailableKgByMaterial_(tenNguyenLieu, maKeToan, stockItems) {
+  return getApprovedStockLotsByMaterial_(tenNguyenLieu, maKeToan, stockItems).reduce(function(sum, item) {
     return sum + Number(item.qtyKg || 0);
   }, 0);
 }
@@ -1494,7 +1406,9 @@ function ensurePhieuXuatThuCongHeader_(sheet) {
 
     "TrangThaiXuatThuCong",
 
-    "anhXuat"
+    "anhXuat",
+    "KeHoachId",
+    "STTBaiLieu"
 
   ];
 
@@ -1722,7 +1636,7 @@ function createWorkerManualExportVoucher(
 
   const photoInputs = items.map(item => validateWorkerExportPhoto_(item.anhXuat));
 
-  const lock = LockService.getScriptLock();
+  const lock = getWorkerPlanSaveLock_();
 
 
 
@@ -2480,11 +2394,12 @@ function allocateMaterialLots_(
   maKeToan,
   requiredKg,
 
-  virtualRemainingMap
+  virtualRemainingMap,
+  stockItems
 
 ) {
 
-  const lots = getApprovedStockLotsByMaterial_(tenNguyenLieu, maKeToan);
+  const lots = getApprovedStockLotsByMaterial_(tenNguyenLieu, maKeToan, stockItems);
 
 
 
@@ -2610,7 +2525,10 @@ function buildPlanPreview_(
 
   plan,
 
-  actualMap
+  actualMap,
+  selectedKeys,
+  savedMap,
+  stockItems
 
 ) {
 
@@ -2649,11 +2567,12 @@ function buildPlanPreview_(
 
 
 
+  stockItems = stockItems || getApprovedInventoryItems_();
   const virtualRemainingMap = {};
 
 
 
-  return recipeRows.map(function(item) {
+  return recipeRows.filter(item=>!selectedKeys||selectedKeys.has(workerPlanSaveKey_(plan.Id,item))).map(function(item) {
     const maKeToan = planAccountingMap[lowerText_(item.tenNguyenLieu)] || "";
 
     const calculated =
@@ -2736,20 +2655,20 @@ function buildPlanPreview_(
 
 
 
-    const availableKg =
-
-      getAvailableKgByMaterial_(item.tenNguyenLieu, maKeToan);
+    const alreadySaved = savedMap && savedMap.has(workerPlanSaveKey_(plan.Id,item));
+    const availableKg = alreadySaved ? 0 : getAvailableKgByMaterial_(item.tenNguyenLieu, maKeToan, stockItems);
 
 
 
     const allocation =
 
-      allocateMaterialLots_(
+      alreadySaved ? {allocations:[],duSoLuong:true} : allocateMaterialLots_(
         item.tenNguyenLieu,
         maKeToan,
         actualKg,
 
-        virtualRemainingMap
+        virtualRemainingMap,
+        stockItems
 
       );
 
@@ -2854,13 +2773,14 @@ function getWorkerProductionPlanDetail(
 
 
 
-  const items = buildPlanPreview_(
+  const saved=getWorkerPlanSavedMap_(keHoachId);
+  const items = decorateWorkerPlanProgress_(keHoachId,buildPlanPreview_(
 
     plan,
 
-    {}
+    {}, null, saved
 
-  );
+  ),saved);
 
 
 
@@ -2872,7 +2792,7 @@ function getWorkerProductionPlanDetail(
 
     items: items,
 
-    duToanBo: items.every(function(item) {
+    duToanBo: items.filter(item=>!item.daLuu).every(function(item) {
 
       return item.duSoLuong;
 
@@ -2929,6 +2849,8 @@ function createWorkerPlanExportVoucher(
 
 
   const actualMap = {};
+  const selectedKeys=new Set();
+  if(!Array.isArray(actualItems)||!actualItems.length)throw new Error("Ch\u01b0a ch\u1ecdn nguy\u00ean li\u1ec7u \u0111\u1ec3 l\u01b0u.");
 
 
 
@@ -2968,7 +2890,10 @@ function createWorkerPlanExportVoucher(
 
 
 
-    if (!stt || !ma) return;
+    if (!stt || !ma) throw new Error("Thi\u1ebfu m\u00e3 ho\u1eb7c STT nguy\u00ean li\u1ec7u.");
+    const saveKey=workerPlanSaveKey_(plan.Id,item);
+    if(selectedKeys.has(saveKey))throw new Error("Tr\u00f9ng nguy\u00ean li\u1ec7u trong y\u00eau c\u1ea7u l\u01b0u.");
+    selectedKeys.add(saveKey);
 
 
 
@@ -2994,7 +2919,7 @@ function createWorkerPlanExportVoucher(
 
 
 
-  const lock = LockService.getScriptLock();
+  const lock = getWorkerPlanSaveLock_();
 
 
 
@@ -3012,13 +2937,17 @@ function createWorkerPlanExportVoucher(
 
      */
 
+    const saved=getWorkerPlanSavedMap_(plan.Id);
+    selectedKeys.forEach(key=>{if(saved.has(key))throw new Error('Nguy\u00ean li\u1ec7u \u0111\u00e3 l\u01b0u trong phi\u1ebfu '+saved.get(key).phieuId+'. H\u00e3y t\u1ea3i l\u1ea1i k\u1ebf ho\u1ea1ch.');});
+    const stockItems=getApprovedInventoryItems_();
     const lines = buildPlanPreview_(
 
       plan,
 
-      actualMap
+      actualMap, selectedKeys, null, stockItems
 
     );
+    if(lines.length!==selectedKeys.size)throw new Error("Nguy\u00ean li\u1ec7u kh\u00f4ng thu\u1ed9c k\u1ebf ho\u1ea1ch hi\u1ec7n t\u1ea1i.");
 
 
 
@@ -3071,7 +3000,7 @@ function createWorkerPlanExportVoucher(
 
 
 
-    getApprovedInventoryItems_().forEach(
+    stockItems.forEach(
 
       function(item) {
 
@@ -3088,6 +3017,7 @@ function createWorkerPlanExportVoucher(
     photoInputs.forEach((bytes,key) => photoUrls.set(key,saveWorkerExportPhoto_(bytes,session.useName)));
 
     let sttLog = 1;
+    const logRows=[];
 
 
 
@@ -3165,11 +3095,7 @@ function createWorkerPlanExportVoucher(
 
 
 
-        appendObjectRowByHeader_(
-
-          sheet,
-
-          buildManualExportLogObject_(
+        logRows.push(Object.assign(buildManualExportLogObject_(
 
             stock,
 
@@ -3184,9 +3110,7 @@ function createWorkerPlanExportVoucher(
             note,
             photoUrls.get(workerPlanPhotoKey_(line))
 
-          )
-
-        );
+          ),{KeHoachId:plan.Id,STTBaiLieu:line.STT}));
 
 
 
@@ -3197,6 +3121,8 @@ function createWorkerPlanExportVoucher(
     });
 
 
+
+    appendWorkerPlanRows_(sheet,logRows);
 
     return {
 

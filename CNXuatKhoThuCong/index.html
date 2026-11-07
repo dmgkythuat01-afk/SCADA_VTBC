@@ -1740,6 +1740,7 @@
 
 
 
+          <div id="planSaveSummary" class="worker-plan-summary" role="status"></div>
           <div id="planItemsBox"
 
                class="table-area"
@@ -4373,51 +4374,7 @@
 
 
 
-        planItems = res.items || [];
-
-        planCanCreate = !!res.duToanBo;
-
-
-
-        renderPlanItems();
-
-
-
-        document.getElementById(
-
-          "planCreateBtn"
-
-        ).disabled =
-
-          !planCanCreate;
-
-
-
-        if (planCanCreate) {
-
-          showMessage(
-
-            "planMessage",
-
-            "success",
-
-            "Đủ tồn tại thời điểm kiểm tra. Có thể tạo phiếu chờ duyệt."
-
-          );
-
-        } else {
-
-          showMessage(
-
-            "planMessage",
-
-            "error",
-
-            "Có nguyên liệu thiếu tồn tại thời điểm kiểm tra."
-
-          );
-
-        }
+        WorkerPlanProgress.apply(res);
 
       })
 
@@ -4532,6 +4489,7 @@
 
             <th>Trạng thái</th>
             <th>Ảnh xuất</th>
+            <th>Lưu nguyên liệu</th>
 
           </tr>
 
@@ -4603,6 +4561,7 @@
                   <input
 
                     class="plan-actual-input"
+                    ${item.daLuu ? "disabled" : ""}
 
                     id="planActual_${itemIndex}"
 
@@ -4622,9 +4581,7 @@
 
                 <td>
 
-                  ${escapeHtml(formatNumber(item.tonKhoKhaDung))}
-
-                  ${escapeHtml(item.donViCanXuat)}
+                  ${item.daLuu ? "" : escapeHtml(formatNumber(item.tonKhoKhaDung))+" "+escapeHtml(item.donViCanXuat)}
 
                 </td>
 
@@ -4698,7 +4655,7 @@
 
                 ${
 
-                  item.duSoLuong
+                  item.daLuu ? '<span class="status status-approved">Đã lưu</span>' : item.duSoLuong
 
                     ? '<span class="status status-approved">Đủ tồn</span>'
 
@@ -4708,7 +4665,8 @@
 
               </td>
 
-              <td>${first ? WorkerCamera.field(WorkerCamera.planKey(item)) : ""}</td>
+              <td>${first ? (item.daLuu ? "Đã lưu ảnh" : WorkerCamera.field(WorkerCamera.planKey(item))) : ""}</td>
+              <td>${first ? WorkerPlanProgress.cell(item,itemIndex) : ""}</td>
             </tr>
 
             `;
@@ -4882,6 +4840,7 @@
     ) {
 
       const item = planItems[i];
+      if(item.daLuu)continue;
 
 
 
@@ -4951,6 +4910,7 @@
 
 
 
+    if(!actualItems.length){showMessage('planMessage','info','T\u1ea5t c\u1ea3 nguy\u00ean li\u1ec7u \u0111\u00e3 l\u01b0u.');return;}
     if (
 
       !confirm(
@@ -5008,29 +4968,7 @@
 
 
         WorkerCamera.clearPlans();
-        planItems = [];
-
-        planCanCreate = false;
-
-
-
-        document.getElementById(
-
-          "planCreateBtn"
-
-        ).disabled = true;
-
-
-
-        document.getElementById(
-
-          "planItemsBox"
-
-        ).innerHTML =
-
-          '<div class="empty">Đã tạo phiếu. Có thể chọn kế hoạch khác.</div>';
-
-
+        loadPlanDetail();
 
         showMessage(
 
@@ -5379,6 +5317,7 @@
 
 
 <?!= HtmlService.createHtmlOutputFromFile('WorkerCamera').getContent(); ?>
+<?!= HtmlService.createHtmlOutputFromFile('WorkerPlanProgress').getContent(); ?>
 </body>
 
 </html>

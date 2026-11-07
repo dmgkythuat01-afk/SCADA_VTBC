@@ -1,6 +1,15 @@
 {
   "timeZone": "Asia/Ho_Chi_Minh",
-  "dependencies": {},
+  "dependencies": {
+    "libraries": [
+      {
+        "userSymbol": "WorkerPlanLock",
+        "libraryId": "1F5YccDfsm2CwpRbjmQZAyvmDOkqjKSqp4baoVA9VvQoWFCg8PoAt0PLG",
+        "version": "6",
+        "developmentMode": false
+      }
+    ]
+  },
   "exceptionLogging": "STACKDRIVER",
   "runtimeVersion": "V8",
   "webapp": {
