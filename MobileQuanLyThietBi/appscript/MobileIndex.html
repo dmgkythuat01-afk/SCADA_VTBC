@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width,initial-scale=1,viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#123e35" />
+    <title>DMG · Yêu cầu bảo trì</title>
+    <?!= HtmlService.createHtmlOutputFromFile('MobileStyles').getContent(); ?>
+  </head>
+  <body>
+    <input
+      id="mobileInitialRequest"
+      type="hidden"
+      value="<?= initialRequestId ?>"
+    />
+    <section id="mobileLogin" class="m-login">
+      <div class="m-login-brand">
+        <span class="m-logo">D</span
+        ><span>DMG <small>BẢO TRÌ THIẾT BỊ</small></span>
+      </div>
+      <div class="m-login-copy">
+        <span class="m-eyebrow">KẾT NỐI VẬN HÀNH & KỸ THUẬT</span>
+        <h1>
+          Gửi yêu cầu.<br />Theo dõi đến khi<br /><em>khắc phục xong.</em>
+        </h1>
+        <p>
+          Mỗi công việc đều có người thực hiện, hình ảnh và xác nhận rõ ràng.
+        </p>
+      </div>
+      <form id="mobileLoginForm" class="m-login-form">
+        <h2>Đăng nhập</h2>
+        <label
+          >Tên đăng nhập<input
+            id="mobileUsername"
+            autocomplete="username"
+            autocapitalize="none"
+            autocorrect="off"
+            required
+            placeholder="Tên đăng nhập trong TaiKhoan" /></label
+        ><label
+          >Mật khẩu
+          <div class="m-password">
+            <input
+              id="mobilePassword"
+              type="password"
+              autocomplete="current-password"
+              required
+              placeholder="Nhập mật khẩu"
+            /><button
+              id="mobilePasswordToggle"
+              type="button"
+              aria-label="Hiện mật khẩu"
+            >
+              Hiện
+            </button>
+          </div></label
+        >
+        <p id="mobileLoginError" class="m-error" role="alert"></p>
+        <button class="m-primary m-wide" id="mobileLoginButton" type="submit">
+          Đăng nhập →
+        </button>
+        <p class="m-hint">Dùng chung tài khoản với trang quản lý thiết bị.</p>
+      </form>
+      <a class="m-desktop-link" target="_top" href="<?= equipmentBaseUrl_() ?>"
+        >Mở trang quản lý trên máy tính</a
+      >
+    </section>
+    <div id="mobileApp" hidden>
+      <header class="m-topbar">
+        <a href="#" id="mobileBrand" class="m-brand"
+          ><span class="m-logo">D</span
+          ><span>DMG<small>YÊU CẦU BẢO TRÌ</small></span></a
+        >
+        <div class="m-top-actions">
+          <button
+            id="mobileRefresh"
+            class="m-icon-button"
+            aria-label="Tải lại dữ liệu"
+          >
+            ↻</button
+          ><button id="mobileAvatar" class="m-avatar" aria-label="Tài khoản">
+            D
+          </button>
+        </div>
+      </header>
+      <main class="m-main">
+        <p id="mobileSync" class="m-sync"></p>
+        <div id="mobileError" class="m-error-panel" role="alert" hidden></div>
+        <section id="mobileContent"></section>
+      </main>
+      <nav id="mobileNav" class="m-bottom" aria-label="Menu chính"></nav>
+    </div>
+    <dialog id="mobileReportDialog" class="m-sheet">
+      <form id="mobileReportForm">
+        <header class="m-sheet-head">
+          <div>
+            <span class="m-eyebrow">KẾT QUẢ KHẮC PHỤC</span>
+            <h2>Báo cáo thực hiện</h2>
+          </div>
+          <button
+            type="button"
+            data-mobile-action="closeReport"
+            class="m-icon-button"
+            aria-label="Đóng"
+          >
+            ✕
+          </button>
+        </header>
+        <fieldset id="mobileReportFields">
+          <div id="mobileReportInfo"></div>
+          <label
+            >Ngày thực tế thực hiện<input
+              name="performedDate"
+              id="mobilePerformedDate"
+              type="date"
+              required /></label
+          ><label
+            >Nội dung báo cáo<textarea
+              name="content"
+              id="mobileReportText"
+              rows="5"
+              required
+              placeholder="Đã kiểm tra gì, sửa/thay gì, kết quả chạy thử như thế nào…"
+            ></textarea>
+          </label>
+          <div id="mobileReportChecklist"></div>
+          <label
+            >Ảnh kết quả <span class="m-optional">tối đa 12 ảnh</span></label
+          >
+          <div class="m-photo-actions">
+            <button type="button" data-mobile-action="camera">▣ Chụp ảnh</button
+            ><button type="button" data-mobile-action="gallery">
+              ＋ Tải ảnh
+            </button>
+          </div>
+          <input
+            id="mobileCameraInput"
+            type="file"
+            accept="image/*"
+            capture="environment"
+            hidden
+          /><input
+            id="mobileGalleryInput"
+            type="file"
+            accept="image/*"
+            multiple
+            hidden
+          />
+          <div id="mobileReportPhotos" class="m-photo-grid"></div>
+          <p id="mobileReportProgress" class="m-hint" role="status"></p>
+          <p id="mobileReportError" class="m-error" role="alert"></p>
+          <div class="m-sheet-actions">
+            <button type="button" id="mobileSaveDraft">Lưu nháp</button
+            ><button type="submit" id="mobileSendReport" class="m-primary">
+              Gửi xác nhận →
+            </button>
+          </div>
+        </fieldset>
+      </form>
+    </dialog>
+    <dialog id="mobileReviewDialog" class="m-sheet">
+      <form id="mobileReviewForm">
+        <header class="m-sheet-head">
+          <div>
+            <span class="m-eyebrow">NGƯỜI YÊU CẦU XÁC NHẬN</span>
+            <h2>Kết quả đã đạt chưa?</h2>
+          </div>
+          <button
+            type="button"
+            data-mobile-action="closeReview"
+            class="m-icon-button"
+            aria-label="Đóng"
+          >
+            ✕
+          </button>
+        </header>
+        <fieldset id="mobileReviewFields">
+          <div id="mobileReviewInfo"></div>
+          <label class="m-choice"
+            ><input name="decision" type="radio" value="accept" checked /><span
+              ><b>Đồng ý, đã khắc phục</b
+              ><small>Hoàn tất phiếu yêu cầu.</small></span
+            ></label
+          ><label class="m-choice"
+            ><input name="decision" type="radio" value="reject" /><span
+              ><b>Chưa đạt, cần làm lại</b
+              ><small>Gửi lý do để kỹ thuật tiếp tục xử lý.</small></span
+            ></label
+          ><label id="mobileReviewReasonLabel"
+            >Ý kiến xác nhận<textarea
+              id="mobileReviewReason"
+              name="reason"
+              rows="4"
+              placeholder="Nêu rõ vấn đề còn tồn tại nếu cần khắc phục lại…"
+            ></textarea>
+          </label>
+          <p id="mobileReviewError" class="m-error" role="alert"></p>
+          <button
+            class="m-primary m-wide"
+            id="mobileReviewButton"
+            type="submit"
+          >
+            Gửi xác nhận
+          </button>
+        </fieldset>
+      </form>
+    </dialog>
+    <dialog id="mobilePhotoDialog" class="m-photo-dialog">
+      <button
+        type="button"
+        data-mobile-action="closePhoto"
+        class="m-icon-button"
+        aria-label="Đóng ảnh"
+      >
+        ✕</button
+      ><img id="mobileFullPhoto" alt="Ảnh kết quả khắc phục" />
+    </dialog>
+    <div id="mobileToast" class="m-toast" role="status" hidden></div>
+    <?!= HtmlService.createHtmlOutputFromFile('MobileClient').getContent(); ?>
+  </body>
+</html>

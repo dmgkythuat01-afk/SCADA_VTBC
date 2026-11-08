@@ -1,7 +1,7 @@
 # DMG Quản lý thiết bị — Google Sheets + Apps Script
 
 App: https://script.google.com/macros/s/AKfycbwK1JwWhrazLtOZ7YnPZedvkS71KLvCWCQDY52fvmLVk4505FulJFF_ER7Cz1mkaYguJg/exec
-Mobile: https://script.google.com/macros/s/AKfycbxySBhZ2vOCKpWAgPOj8IlsIRCnH0HjkPxbzPr6pF5VsHuyL_RTDmJQfh4dKjCeVfRvKg/exec?view=mobile
+Mobile (project riêng): https://script.google.com/macros/s/AKfycbzMajCHwyZ8ohRElBG5SKeE0jbG6orEIHXOUBh_bF611yGq8zLDgCZK-UrsBj8gPQQUhA/exec
 Sheet: https://docs.google.com/spreadsheets/d/1GyLKh_9gwPeAzTMuowR3OE8eYnSSnoMPMLnWcUYxpoI/edit
 Apps Script: https://script.google.com/d/1n2ecVQFAiRDNFKI6t3gXWxNBqCwtjlOWoploVOcluxowBSxSe_GY_o9T/edit
 
@@ -62,7 +62,7 @@ TaiKhoan có cột email cuối bảng, để trống được. Form tài khoả
 Chủ project có thể chạy capNhatCauTrucNguoiQuanLy để chỉ thêm các cột/bảng còn thiếu. Hàm đối chiếu các ô cũ trước/sau; không đổi dữ liệu hay mật khẩu. Mã JavaScript nội bộ vẫn dùng khóa username trong thuộc tính email từ các phiên bản cũ; email liên hệ được trả qua contactEmail, không dùng nó làm khóa đăng nhập hiện tại.
 
 ## Mobile yêu cầu sửa chữa / bảo dưỡng
-Mở cùng link app với `?view=mobile`. Trang desktop có liên kết mở mobile. Dùng chung Sheets, tài khoản và thư mục ảnh Drive riêng tư.
+App mobile đã tách sang project MobileQuanLyThietBi theo yêu cầu. Trang desktop có liên kết mở mobile. Dùng chung Sheets, tài khoản và thư mục ảnh Drive riêng tư; backend được ghim dưới dạng thư viện để giữ chung khóa cập nhật. Xem hướng dẫn cấp quyền project mới trong MobileQuanLyThietBi/README.md.
 
 - `TruongCa`, `CongNhan`, `PhongCongNghe`: tạo yêu cầu theo xưởng → máy → bộ phận (bộ phận có thể bỏ trống), chọn người được giao, theo dõi phiếu của mình và xác nhận kết quả.
 - `KyThuat`, `CoKhi`, `TuDongHoa`: thấy tất cả phiếu gom theo xưởng. Bất kỳ tài khoản kỹ thuật nào cũng được nhận và xử lý, kể cả phiếu giao cho người khác. Báo cáo ghi người thực tế thực hiện từ tài khoản đăng nhập, nội dung, ngày hoàn thành và nhiều ảnh.

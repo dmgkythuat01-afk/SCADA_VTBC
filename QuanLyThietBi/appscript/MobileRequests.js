@@ -65,7 +65,7 @@ function equipmentBaseUrl_() {
   );
 }
 function equipmentMobileUrl_() {
-  return equipmentBaseUrl_() + "?view=mobile";
+  return "https://script.google.com/macros/s/AKfycbzMajCHwyZ8ohRElBG5SKeE0jbG6orEIHXOUBh_bF611yGq8zLDgCZK-UrsBj8gPQQUhA/exec";
 }
 function mobileSnapshot_(u) {
   const caps = mobileRequireAccess_(u),
