@@ -11,6 +11,11 @@ Tài khoản ban đầu: `admin`. Mật khẩu ngẫu nhiên hiện trong Execut
 Có thể dùng tài khoản bạn tự điền trong sheet Account. Quên mật khẩu admin: chủ project chạy `resetEquipmentAdminPassword` trong editor.
 Không cần Firebase, Web Push key hoặc cấp IAM. App dùng link Apps Script trực tiếp; link Hosting cũ chỉ dẫn đến app mới. Các tài nguyên cloud đã tạo trước đó không bị xóa.
 
+## Dữ liệu mẫu
+File đã có bộ mẫu: 2 tài khoản (`demo.admin`, `demo.kt`), 2 xưởng, 3 khu vực, 3 máy, 6 bộ phận, 6 lịch bảo dưỡng và 4 công việc. Mật khẩu mẫu nằm trong cột `passWord` của Account; không ghi vào source Git.
+Các danh mục/công việc minh họa có nhãn `[MẪU]` và ID bắt đầu `DEMO_`. Nhật ký `demo` chỉ là minh họa, không phải email đã gửi. Không dùng ảnh giả cho công việc mẫu.
+Chủ project có thể chạy `taoDuLieuMauThietBi` trong Apps Script để bổ sung lại những dòng mẫu còn thiếu. Hàm không ghi đè dòng đã có, không đổi mật khẩu tài khoản đã tồn tại và không gửi email. Tab Assets và Account được đưa lên đầu để dễ xem.
+
 ## Sheet Account
 Đúng bốn cột theo thứ tự: `useName`, `passWord`, `role`, `name`.
 - useName: tên đăng nhập; không phân biệt chữ hoa/thường, bỏ khoảng trắng đầu/cuối. Không được trùng.
