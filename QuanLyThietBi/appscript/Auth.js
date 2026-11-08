@@ -32,6 +32,9 @@ function members_() {
   return rows_("Account").map((row) => ({
     _row: row._row,
     useName: row.useName,
+    contactEmail: String(row.email || " ")
+      .trim()
+      .toLowerCase(),
     email: text_(row.useName, 100).toLowerCase(),
     name: text_(row.name) || text_(row.useName),
     role: authRole_(row.role),
@@ -105,6 +108,7 @@ function loginEquipment(useName, password) {
       user: {
         email: key,
         useName: m.useName,
+        contactEmail: m.contactEmail,
         name: m.name,
         role: m.role,
         position: m.position,
@@ -129,6 +133,7 @@ function identity_(token) {
   return {
     email: m.email,
     useName: m.useName,
+    contactEmail: m.contactEmail,
     name: m.name,
     role: m.role,
     position: m.position,
@@ -238,6 +243,7 @@ function equipmentApi(token, action, payload) {
   try {
     const actions = {
       saveAsset: saveAsset_,
+      saveManager: saveManager_,
       saveSchedule: saveSchedule_,
       openJob: openJob_,
       assignJob: assignJob_,

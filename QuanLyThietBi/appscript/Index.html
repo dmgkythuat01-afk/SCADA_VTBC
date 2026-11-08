@@ -46,6 +46,7 @@
         <nav>
           <button data-page="dashboard" class="active">◷ Tổng quan</button
           ><button data-page="assets">▦ Hồ sơ thiết bị</button
+          ><button data-page="managers">♙ Người quản lý</button
           ><button data-page="calendar">▤ Lịch bảo dưỡng</button
           ><button data-page="jobs">⚒ Công việc & lịch sử</button
           ><button data-page="settings">⚙ Cài đặt</button>
@@ -100,6 +101,7 @@
     </dialog>
     <div id="toast" role="status" hidden></div>
 
-    <?!= HtmlService.createHtmlOutputFromFile('Client').getContent(); ?>
+    <?!= HtmlService.createHtmlOutputFromFile('Client').getContent(); ?> <?!=
+    HtmlService.createHtmlOutputFromFile('ManagersUi').getContent(); ?>
   </body>
 </html>

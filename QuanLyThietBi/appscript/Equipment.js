@@ -22,12 +22,14 @@ function snapshot_(u) {
     user: u,
     today: today_(),
     assets: rows_("Assets"),
+    managers: rows_("Managers"),
     schedules: rows_("Schedules"),
     jobs: rows_("Jobs"),
     members: members_()
       .filter(enabled_)
       .map((m) => ({
         email: m.email,
+        contactEmail: m.contactEmail || "",
         name: m.name,
         role: m.role,
         position: m.position || m.role,
@@ -68,6 +70,7 @@ function saveAsset_(u, p) {
   const item = Object.assign(old || { id: id_() }, {
     type,
     parentId,
+    managerId: machineManagerId_(type, old, p),
     name: required_(p.name, "tên", 250),
     code: text_(p.code, 100),
     purpose: text_(p.purpose),
@@ -279,9 +282,25 @@ function saveMember_(u, p) {
     all.filter((m) => m.role === "admin" && enabled_(m)).length <= 1
   )
     throw Error("Phải giữ ít nhất một quản trị viên.");
+  const contactEmail = optionalEquipmentEmail_(
+    p.contactEmail === undefined
+      ? (old && old.contactEmail) || ""
+      : p.contactEmail,
+  );
+  if (
+    contactEmail &&
+    all.some(
+      (m) =>
+        m.email !== useName &&
+        enabled_(m) &&
+        String(m.contactEmail || "").toLowerCase() === contactEmail,
+    )
+  )
+    throw Error("Email này đã được gắn với một tài khoản khác.");
   const account = {
     _row: old && old._row,
     useName,
+    email: contactEmail,
     passWord: (old && old.passWord) || "",
     role: p.active === false ? "disabled" : position,
     name: required_(p.name, "họ tên", 200),

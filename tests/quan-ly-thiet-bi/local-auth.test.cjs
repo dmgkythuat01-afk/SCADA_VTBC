@@ -125,3 +125,21 @@ test("duplicate Account usernames cannot select an arbitrary account", () => {
   );
   a.throws(() => s.c.loginEquipment("worker", "123456"));
 });
+
+test("future Workspace email does not change username/password login or current session", () => {
+  const s = setup();
+  s.members.push({
+    useName: "pcn.dung",
+    passWord: "123456",
+    role: "Kỹ thuật",
+    name: "Dung",
+    email: " Dung@Example.com ",
+  });
+  const r = s.c.loginEquipment("PCN.DUNG", "123456");
+  a.equal(r.user.email, "pcn.dung");
+  a.equal(r.user.contactEmail, "dung@example.com");
+  a.throws(() => s.c.loginEquipment("dung@example.com", "123456"));
+  s.members[0].email = "new@example.com";
+  a.equal(s.c.identity_(r.token).email, "pcn.dung");
+  a.equal(s.c.identity_(r.token).contactEmail, "new@example.com");
+});

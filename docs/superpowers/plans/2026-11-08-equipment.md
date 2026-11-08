@@ -10,3 +10,5 @@ Execute inline with executing-plans. User approved Google Sheets/Apps Script onl
 Do not claim live completion before owner consent. No sample machine data uploaded. Previous cloud resources left intact; old Hosting URL is only a link to Apps Script.
 
 Schema đã chuyển sang 7 sheet tiếng Việt không dấu: DanhMucThietBi, LichBaoDuong, CongViec, TaiKhoan, NhatKyThongBao, NhatKyThaoTac, CauHinh. Đọc/ghi theo tên cột với alias cũ để tương thích; dữ liệu và ID không đổi. Chuyển đổi thật kiểm tra digest giữ nguyên toàn bộ các dòng.
+
+Bổ sung: danh mục NguoiQuanLy (thêm/sửa, admin) độc lập TaiKhoan; mỗi máy mới chọn một quản lý đang sử dụng, mã lưu ở maNguoiQuanLy cuối DanhMucThietBi. Máy cũ giữ nguyên và có thể gán từ hồ sơ. TaiKhoan thêm email ở cột cuối; đăng nhập vẫn tenDangNhap/matKhau, Workspace chưa kích hoạt. Email tách khỏi khóa username trong API, giữ mật khẩu và phiên hiện có khi đổi email.

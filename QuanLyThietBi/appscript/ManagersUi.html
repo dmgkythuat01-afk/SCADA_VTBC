@@ -1,0 +1,130 @@
+<script>
+  function machineManagerField(selected) {
+    const managers = state.data.managers || [],
+      options = managers.filter((m) => enabled(m) || m.id === selected);
+    return (
+      '<label class="field">Người quản lý máy<select name="managerId" required><option value="">-- Chọn người quản lý --</option>' +
+      options
+        .map(
+          (m) =>
+            '<option value="' +
+            esc(m.id) +
+            '" ' +
+            (m.id === selected ? "selected" : "") +
+            ">" +
+            esc(
+              m.name +
+                (m.position ? " — " + m.position : "") +
+                (m.email ? " — " + m.email : "") +
+                (!enabled(m) ? " (ngừng sử dụng)" : ""),
+            ) +
+            "</option>",
+        )
+        .join("") +
+      "</select></label>" +
+      (!options.length
+        ? '<p class="hint">Thêm người quản lý ở mục Người quản lý trước khi lưu máy.</p>'
+        : "")
+    );
+  }
+  function machineManagerSummary(asset) {
+    let machine = asset,
+      n = 0;
+    while (machine && machine.type !== "machine" && n++ < 5)
+      machine = state.data.assets.find((a) => a.id === machine.parentId);
+    if (!machine || !["machine", "component"].includes(asset.type)) return "";
+    const manager = (state.data.managers || []).find(
+      (m) => m.id === machine.managerId,
+    );
+    if (!manager)
+      return '<div class="manager-summary"><label>NGƯỜI QUẢN LÝ MÁY</label><p class="muted">Chưa gán người quản lý</p></div>';
+    return (
+      '<div class="manager-summary"><label>NGƯỜI QUẢN LÝ MÁY</label><h3>' +
+      esc(manager.name) +
+      "</h3><p>" +
+      esc(
+        [manager.position, manager.email, manager.phone]
+          .filter(Boolean)
+          .join(" · ") || "Chưa cập nhật liên hệ",
+      ) +
+      "</p>" +
+      (!enabled(manager)
+        ? '<span class="pill amber">Ngừng sử dụng</span>'
+        : "") +
+      "</div>"
+    );
+  }
+  function renderManagers() {
+    const managers = state.data.managers || [],
+      admin = state.data.user.role === "admin";
+    const body = managers.length
+      ? '<div class="table-scroll"><table><thead><tr><th>HỌ TÊN</th><th>CHỨC VỤ</th><th>EMAIL</th><th>ĐIỆN THOẠI</th><th>MÁY ĐANG QUẢN LÝ</th><th>TRẠNG THÁI</th>' +
+        (admin ? "<th></th>" : "") +
+        "</tr></thead><tbody>" +
+        managers
+          .map((m) => {
+            const machines = state.data.assets.filter(
+              (a) => a.type === "machine" && enabled(a) && a.managerId === m.id,
+            );
+            return (
+              "<tr><td><b>" +
+              esc(m.name) +
+              "</b></td><td>" +
+              esc(m.position || "—") +
+              "</td><td>" +
+              esc(m.email || "—") +
+              "</td><td>" +
+              esc(m.phone || "—") +
+              '</td><td><div class="actions">' +
+              (machines.length
+                ? machines
+                    .map((a) => action("selectAsset", esc(a.name), a.id))
+                    .join("")
+                : '<span class="muted">Chưa gán máy</span>') +
+              '</div></td><td><span class="pill ' +
+              (enabled(m) ? "" : "amber") +
+              '">' +
+              (enabled(m) ? "Đang sử dụng" : "Ngừng sử dụng") +
+              "</span></td>" +
+              (admin
+                ? "<td>" + action("editManager", "Sửa", m.id) + "</td>"
+                : "") +
+              "</tr>"
+            );
+          })
+          .join("") +
+        "</tbody></table></div>"
+      : empty(
+          "Chưa có người quản lý",
+          "Thêm người quản lý, sau đó mở hồ sơ máy để gán người phụ trách.",
+        );
+    $("content").innerHTML = card(
+      "Danh sách người quản lý",
+      "Mỗi máy gắn với một người quản lý. Danh sách này độc lập với tài khoản đăng nhập.",
+      body,
+      admin ? action("addManager", "＋ Thêm người quản lý", "", "primary") : "",
+    );
+  }
+  function managerEditor(id) {
+    const manager = (state.data.managers || []).find((m) => m.id === id);
+    editor(
+      manager ? "Sửa người quản lý" : "Thêm người quản lý",
+      field("Họ tên", "name", manager?.name, "text", true) +
+        field("Chức vụ", "position", manager?.position) +
+        field("Email", "email", manager?.email, "email") +
+        field("Số điện thoại", "phone", manager?.phone, "tel") +
+        (manager
+          ? '<label class="check"><input type="checkbox" name="active" ' +
+            (enabled(manager) ? "checked" : "") +
+            ">Đang sử dụng</label>"
+          : ""),
+      (f) =>
+        api("saveManager", {
+          id: manager?.id,
+          revision: manager?.revision,
+          ...Object.fromEntries(f),
+          active: manager ? f.has("active") : true,
+        }),
+    );
+  }
+</script>

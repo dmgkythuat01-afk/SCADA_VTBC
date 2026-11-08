@@ -12,6 +12,7 @@ const EQUIPMENT_SHEETS = {
     "updatedAt",
     "updatedBy",
     "revision",
+    "managerId",
   ],
   Schedules: [
     "id",
@@ -46,7 +47,17 @@ const EQUIPMENT_SHEETS = {
     "revision",
     "completionRequestId",
   ],
-  Account: ["useName", "passWord", "role", "name"],
+  Account: ["useName", "passWord", "role", "name", "email"],
+  Managers: [
+    "id",
+    "name",
+    "email",
+    "phone",
+    "position",
+    "active",
+    "updatedAt",
+    "revision",
+  ],
   Notifications: [
     "id",
     "date",
@@ -76,6 +87,7 @@ const EQUIPMENT_STORAGE = {
       "thoiGianCapNhat",
       "nguoiCapNhat",
       "phienBan",
+      "maNguoiQuanLy",
     ],
   },
   Schedules: {
@@ -119,7 +131,20 @@ const EQUIPMENT_STORAGE = {
   },
   Account: {
     sheet: "TaiKhoan",
-    columns: ["tenDangNhap", "matKhau", "chucVu", "hoTen"],
+    columns: ["tenDangNhap", "matKhau", "chucVu", "hoTen", "email"],
+  },
+  Managers: {
+    sheet: "NguoiQuanLy",
+    columns: [
+      "maNguoiQuanLy",
+      "hoTen",
+      "email",
+      "soDienThoai",
+      "chucVu",
+      "dangSuDung",
+      "thoiGianCapNhat",
+      "phienBan",
+    ],
   },
   Notifications: {
     sheet: "NhatKyThongBao",

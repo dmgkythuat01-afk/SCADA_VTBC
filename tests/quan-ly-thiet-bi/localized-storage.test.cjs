@@ -29,6 +29,11 @@ function sheet(name, data) {
               (_, j) => data[r - 1 + i]?.[c - 1 + j] ?? "",
             ),
           ),
+        setValue(value) {
+          data[r - 1] ??= [];
+          data[r - 1][c - 1] = value;
+          return this;
+        },
         setNumberFormat() {
           return this;
         },
@@ -78,7 +83,7 @@ test("writes use Vietnamese headers in their actual order and preserve additiona
     role: "admin",
     name: "New",
   });
-  a.deepEqual(data[1], ["New", "KEEP", "worker", "new", "admin"]);
+  a.deepEqual(data[1], ["New", "KEEP", "worker", "new", "admin", ""]);
 });
 test("ambiguous old/new sheets or duplicate header aliases fail without writing", () => {
   const c = setup([

@@ -6,6 +6,7 @@ function setup() {
   let n = 0;
   const tables = {
       Assets: [],
+      Managers: [{ id: "MGR", name: "Manager", active: true }],
       Schedules: [],
       Jobs: [],
       Members: [
@@ -33,6 +34,7 @@ function setup() {
     "Store",
     "Auth",
     "Equipment",
+    "Managers",
     "Photos",
     "Reports",
   ])
@@ -71,6 +73,7 @@ function chain(s) {
     const item = s.c.saveAsset_(s.admin, {
       name: type,
       type,
+      managerId: type === "machine" ? "MGR" : "",
       parentId,
       checklist: ["Check bearing"],
     });

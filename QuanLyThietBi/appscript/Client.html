@@ -241,6 +241,7 @@
     const titles = {
       dashboard: "Tổng quan vận hành",
       assets: "Hồ sơ thiết bị",
+      managers: "Người quản lý máy",
       calendar: "Lịch bảo dưỡng",
       jobs: "Công việc & lịch sử",
       settings: "Thiết lập ứng dụng",
@@ -249,6 +250,7 @@
     ({
       dashboard: renderDashboard,
       assets: renderAssets,
+      managers: renderManagers,
       calendar: renderCalendar,
       jobs: renderJobs,
       settings: renderSettings,
@@ -382,6 +384,7 @@
         "</p></div><div><label>CHI TIẾT / THÔNG SỐ</label><p>" +
         esc(a.details || "Chưa cập nhật") +
         "</p></div></div>" +
+        machineManagerSummary(a) +
         (parse(a.checklist).length
           ? "<h3>Danh mục kiểm tra</h3>" +
             parse(a.checklist)
@@ -563,7 +566,7 @@
       card(
         "Thành viên",
         "Tài khoản đăng nhập từ sheet TaiKhoan.",
-        '<div class="table-scroll"><table><thead><tr><th>HỌ TÊN</th><th>TÊN ĐĂNG NHẬP</th><th>CHỨC VỤ</th><th></th></tr></thead><tbody>' +
+        '<div class="table-scroll"><table><thead><tr><th>HỌ TÊN</th><th>TÊN ĐĂNG NHẬP</th><th>EMAIL</th><th>CHỨC VỤ</th><th></th></tr></thead><tbody>' +
           state.data.members
             .map(
               (m) =>
@@ -571,6 +574,8 @@
                 esc(m.name) +
                 "</td><td>" +
                 esc(m.email) +
+                "</td><td>" +
+                esc(m.contactEmail || "—") +
                 "</td><td>" +
                 esc(
                   m.position || (m.role === "admin" ? "Quản trị" : "Kỹ thuật"),
@@ -668,6 +673,7 @@
       (a ? "Sửa " : "Thêm ") + TYPES[type],
       field("Tên " + TYPES[type], "name", a?.name, "text", true) +
         field("Mã nhận diện", "code", a?.code) +
+        (type === "machine" ? machineManagerField(a?.managerId || "") : "") +
         area("Ứng dụng / dùng để làm gì", "purpose", a?.purpose) +
         area("Thông số, model, hãng, chi tiết", "details", a?.details) +
         area(
@@ -824,6 +830,8 @@
       render();
       return;
     }
+    if (cmd === "addManager") return managerEditor();
+    if (cmd === "editManager") return managerEditor(id);
     if (cmd === "addAsset") return assetEditor(null, id);
     if (cmd === "editAsset") return assetEditor(id);
     if (cmd === "addSchedule") return scheduleEditor(null, id);
@@ -898,7 +906,13 @@
       return editor(
         m ? "Sửa thành viên" : "Thêm thành viên",
         field("Họ tên", "name", m?.name, "text", true) +
-          field("Tên đăng nhập", "email", m?.email, "email", true) +
+          field("Tên đăng nhập", "email", m?.email, "text", true) +
+          field(
+            "Email (dùng cho Google Workspace sau này)",
+            "contactEmail",
+            m?.contactEmail,
+            "email",
+          ) +
           field(
             m
               ? "Mật khẩu mới (để trống nếu giữ nguyên)"

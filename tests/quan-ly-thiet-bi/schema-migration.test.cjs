@@ -90,8 +90,8 @@ test("migration changes names/headers only and is idempotent, with metadata back
       [
         "Account",
         [
-          ["useName", "passWord", "role", "name"],
-          ["demo.admin", "Secret!", "admin", "Name"],
+          ["useName", "passWord", "role", "name", "email"],
+          ["demo.admin", "Secret!", "admin", "Name", ""],
         ],
       ],
       ["Sheet1", []],
@@ -108,6 +108,7 @@ test("migration changes names/headers only and is idempotent, with metadata back
     "matKhau",
     "chucVu",
     "hoTen",
+    "email",
   ]);
   a.equal(JSON.stringify(s.sheets[0].data.slice(1)), before);
   a.equal(s.sheets[1].name, "HuongDan");
@@ -117,8 +118,8 @@ test("migration changes names/headers only and is idempotent, with metadata back
 });
 test("migration preflight rejects conflicts before changing any sheet", () => {
   const s = setup([
-    ["Account", [["useName", "passWord", "role", "name"]]],
-    ["TaiKhoan", [["tenDangNhap", "matKhau", "chucVu", "hoTen"]]],
+    ["Account", [["useName", "passWord", "role", "name", "email"]]],
+    ["TaiKhoan", [["tenDangNhap", "matKhau", "chucVu", "hoTen", "email"]]],
   ]);
   a.throws(() => s.c.migrateEquipmentVietnamese_(true));
   a.equal(s.sheets[0].name, "Account");
@@ -130,8 +131,8 @@ test("failed header write restores original sheet names and headers", () => {
       [
         "Account",
         [
-          ["useName", "passWord", "role", "name"],
-          ["a", "pw", "admin", "A"],
+          ["useName", "passWord", "role", "name", "email"],
+          ["a", "pw", "admin", "A", ""],
         ],
       ],
     ],
@@ -139,6 +140,12 @@ test("failed header write restores original sheet names and headers", () => {
   );
   a.throws(() => s.c.migrateEquipmentVietnamese_(true));
   a.equal(s.sheets[0].name, "Account");
-  a.deepEqual(s.sheets[0].data[0], ["useName", "passWord", "role", "name"]);
-  a.deepEqual(s.sheets[0].data[1], ["a", "pw", "admin", "A"]);
+  a.deepEqual(s.sheets[0].data[0], [
+    "useName",
+    "passWord",
+    "role",
+    "name",
+    "email",
+  ]);
+  a.deepEqual(s.sheets[0].data[1], ["a", "pw", "admin", "A", ""]);
 });

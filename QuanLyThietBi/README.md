@@ -17,7 +17,7 @@ Các danh mục/công việc minh họa có nhãn `[MẪU]` và ID bắt đầu 
 Chủ project có thể chạy `taoDuLieuMauThietBi` trong Apps Script để bổ sung lại những dòng mẫu còn thiếu. Hàm không ghi đè dòng đã có, không đổi mật khẩu tài khoản đã tồn tại và không gửi email. Tab DanhMucThietBi và TaiKhoan được đưa lên đầu để dễ xem.
 
 ## Sheet TaiKhoan
-Đúng bốn cột theo thứ tự: `tenDangNhap`, `matKhau`, `chucVu`, `hoTen`.
+Đúng năm cột theo thứ tự: `tenDangNhap`, `matKhau`, `chucVu`, `hoTen`, `email`.
 - useName: tên đăng nhập; không phân biệt chữ hoa/thường, bỏ khoảng trắng đầu/cuối. Không được trùng.
 - passWord: mật khẩu; phân biệt hoa/thường. Hỗ trợ mật khẩu bạn điền trực tiếp trong sheet. Mật khẩu tạo từ app được lưu dưới dạng băm trong chính cột này.
 - role: chức vụ; `admin` (hoặc Quản trị/Quản trị viên) có quyền quản trị. Chức vụ khác dùng quyền kỹ thuật; `disabled` khóa tài khoản.
@@ -44,11 +44,18 @@ Cập nhật deployment: `clasp deploy -i AKfycbwK1JwWhrazLtOZ7YnPZedvkS71KLvCWC
 Google vẫn cần chủ project cấp quyền một lần. Gửi email thật/ghi ảnh thật chỉ được xác nhận sau bước khởi tạo; kiểm thử tự động không ghi dữ liệu mẫu vào Sheets.
 
 ## Tên sheet và cột tiếng Việt không dấu
-- DanhMucThietBi: maDinhDanh, loaiDanhMuc, maCapTren, tenDanhMuc, maThietBi, congDung, chiTiet, danhSachKiemTra, dangSuDung, thoiGianCapNhat, nguoiCapNhat, phienBan.
+- DanhMucThietBi: maDinhDanh, loaiDanhMuc, maCapTren, tenDanhMuc, maThietBi, congDung, chiTiet, danhSachKiemTra, dangSuDung, thoiGianCapNhat, nguoiCapNhat, phienBan, maNguoiQuanLy.
 - LichBaoDuong: maLich, maBoPhan, tenCongViec, chuKy, donViChuKy, ngayDenHan, nguoiPhuTrach, danhSachKiemTra, dangApDung, thoiGianCapNhat, phienBan.
 - CongViec: maCongViec, maBoPhan, maLich, loaiCongViec, tieuDe, moTa, nguoiPhuTrach, trangThai, thoiGianTao, nguoiTao, ngayHoanThanh, thoiGianHoanThanh, nguoiHoanThanh, ketQua, danhSachAnh, maYeuCau, phienBan, maYeuCauHoanThanh.
-- TaiKhoan: tenDangNhap, matKhau, chucVu, hoTen.
+- TaiKhoan: tenDangNhap, matKhau, chucVu, hoTen, email.
 - NhatKyThongBao: maThongBao, ngay, kenh, nguoiNhan, trangThai, noiDung, thoiGianGui.
 - NhatKyThaoTac: maThaoTac, thoiGian, nguoiThaoTac, hanhDong, doiTuong, chiTiet.
 - CauHinh: tenCauHinh, giaTri.
 Code ánh xạ theo tiêu đề cột, hỗ trợ tên cũ trong thời gian chuyển đổi. Tên thuộc tính JavaScript nội bộ không phải tên cột vật lý. Hàm chủ project `doiTenSheetVaCotTiengViet` kiểm tra trước khi đổi, sao lưu metadata tên cũ và đối chiếu digest các dòng dữ liệu; không đổi nội dung, ID hay mật khẩu. Chuyển đổi đã thực hiện trên file hiện tại.
+
+## Người quản lý máy và email tài khoản
+Menu Người quản lý cho thêm/sửa họ tên, chức vụ, email, điện thoại và trạng thái. Dữ liệu nằm ở sheet NguoiQuanLy: maNguoiQuanLy, hoTen, email, soDienThoai, chucVu, dangSuDung, thoiGianCapNhat, phienBan.
+Trong Hồ sơ thiết bị, thêm/sửa một máy và chọn người quản lý. DanhMucThietBi có thêm cột maNguoiQuanLy cuối bảng; các bộ phận hiển thị người quản lý của máy cha. Danh mục người quản lý độc lập với tài khoản đăng nhập. Chỉ admin được sửa; người đã gán cho máy đang sử dụng cần được thay người phụ trách trước khi ngừng sử dụng.
+Máy có sẵn trước nâng cấp được giữ nguyên, ban đầu hiện Chưa gán; chọn quản lý khi sửa máy. Máy mới phải chọn người quản lý.
+TaiKhoan có cột email cuối bảng, để trống được. Form tài khoản có trường email riêng. Email dùng làm thông tin liên hệ/chuẩn bị Google Workspace; đăng nhập vẫn là tenDangNhap + matKhau. Đổi email không đổi tên đăng nhập hay mật khẩu. Email nhập qua app được chuẩn hóa chữ thường và kiểm tra trùng giữa các tài khoản đang hoạt động.
+Chủ project có thể chạy capNhatCauTrucNguoiQuanLy để chỉ thêm các cột/bảng còn thiếu. Hàm đối chiếu các ô cũ trước/sau; không đổi dữ liệu hay mật khẩu. Mã JavaScript nội bộ vẫn dùng khóa username trong thuộc tính email từ các phiên bản cũ; email liên hệ được trả qua contactEmail, không dùng nó làm khóa đăng nhập hiện tại.

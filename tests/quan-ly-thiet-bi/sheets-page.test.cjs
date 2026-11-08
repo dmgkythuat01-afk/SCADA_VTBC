@@ -7,7 +7,7 @@ test("Apps Script page composes all styles/scripts without Firebase, bridge or P
   const html = fs
     .readFileSync(root + "Index.html", "utf8")
     .replace(
-      /<\?!= HtmlService\.createHtmlOutputFromFile\('([^']+)'\)\.getContent\(\); \?>/g,
+      /<\?!=\s*HtmlService\.createHtmlOutputFromFile\('([^']+)'\)\.getContent\(\);\s*\?>/g,
       (_, file) => fs.readFileSync(root + file + ".html", "utf8"),
     );
   const scripts = Array.from(
@@ -34,6 +34,22 @@ test("TaiKhoan has the requested Vietnamese sheet and column names", () => {
   a.equal(vm.runInContext("EQUIPMENT_STORAGE.Account.sheet", c), "TaiKhoan");
   a.deepEqual(
     Array.from(vm.runInContext("EQUIPMENT_STORAGE.Account.columns", c)),
-    ["tenDangNhap", "matKhau", "chucVu", "hoTen"],
+    ["tenDangNhap", "matKhau", "chucVu", "hoTen", "email"],
   );
+});
+
+test("machine manager UI and account contact email remain separate", () => {
+  const html = fs.readFileSync("QuanLyThietBi/appscript/Index.html", "utf8"),
+    client = fs.readFileSync("QuanLyThietBi/appscript/Client.html", "utf8"),
+    manager = fs.readFileSync(
+      "QuanLyThietBi/appscript/ManagersUi.html",
+      "utf8",
+    );
+  a.ok(html.includes('data-page="managers"'));
+  a.ok(client.includes("machineManagerField"));
+  a.ok(client.includes("contactEmail"));
+  a.ok(
+    client.includes('field("Tên đăng nhập", "email", m?.email, "text", true)'),
+  );
+  a.ok(manager.includes('name="managerId" required'));
 });

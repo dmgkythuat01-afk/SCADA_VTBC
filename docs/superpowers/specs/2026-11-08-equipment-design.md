@@ -4,3 +4,5 @@ Xưởng > khu vực > máy > bộ phận. Công dụng, chi tiết/checklist ch
 Email thứ Hai/thứ Sáu khung8–9h Việt Nam: quá hạn, 14ngày tới, đang làm, hoàn thành7ngày gần nhất. Phân quyền server mọi thao tác. Chống lưu lặp, kiểm tra revision và khôi phục lịch khi ghi gián đoạn. Không tác động project kho cũ.
 
 Schema đã chuyển sang 7 sheet tiếng Việt không dấu: DanhMucThietBi, LichBaoDuong, CongViec, TaiKhoan, NhatKyThongBao, NhatKyThaoTac, CauHinh. Đọc/ghi theo tên cột với alias cũ để tương thích; dữ liệu và ID không đổi. Chuyển đổi thật kiểm tra digest giữ nguyên toàn bộ các dòng.
+
+Bổ sung: danh mục NguoiQuanLy (thêm/sửa, admin) độc lập TaiKhoan; mỗi máy mới chọn một quản lý đang sử dụng, mã lưu ở maNguoiQuanLy cuối DanhMucThietBi. Máy cũ giữ nguyên và có thể gán từ hồ sơ. TaiKhoan thêm email ở cột cuối; đăng nhập vẫn tenDangNhap/matKhau, Workspace chưa kích hoạt. Email tách khỏi khóa username trong API, giữ mật khẩu và phiên hiện có khi đổi email.
