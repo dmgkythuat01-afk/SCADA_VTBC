@@ -369,18 +369,14 @@ function equipmentDemoRows_(today, passwords, ownerEmail, appUrl) {
 function seedEquipmentDemo_() {
   ensureStore_();
   Object.keys(EQUIPMENT_SHEETS).forEach((name) => {
-    const expected = EQUIPMENT_SHEETS[name],
-      actual = db_()
-        .getSheetByName(name)
-        .getRange(1, 1, 1, expected.length)
-        .getValues()[0];
-    if (
-      expected.some(
-        (value, index) => String(actual[index] || "").trim() !== value,
-      )
-    )
+    const sheet = equipmentSheet_(db_(), name),
+      headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0],
+      map = equipmentColumnMap_(name, headers);
+    if (EQUIPMENT_SHEETS[name].some((key) => map[key] < 0))
       throw Error(
-        "Tiêu đề sheet " + name + " chưa đúng cấu trúc. Chưa nhập dữ liệu mẫu.",
+        "Tiêu đề sheet " +
+          EQUIPMENT_STORAGE[name].sheet +
+          " chưa đúng cấu trúc. Chưa nhập dữ liệu mẫu.",
       );
   });
   const passwords = {
@@ -420,7 +416,7 @@ function seedEquipmentDemo_() {
     );
   const ss = db_();
   Object.keys(fixture).forEach((name) => {
-    const sheet = ss.getSheetByName(name);
+    const sheet = equipmentSheet_(ss, name);
     sheet.setFrozenRows(1);
     sheet
       .getRange(1, 1, 1, EQUIPMENT_SHEETS[name].length)
@@ -429,11 +425,11 @@ function seedEquipmentDemo_() {
     sheet.autoResizeColumns(1, EQUIPMENT_SHEETS[name].length);
   });
   SpreadsheetApp.flush();
-  ss.setActiveSheet(ss.getSheetByName("Assets"));
+  ss.setActiveSheet(equipmentSheet_(ss, "Assets"));
   ss.moveActiveSheet(1);
-  ss.setActiveSheet(ss.getSheetByName("Account"));
+  ss.setActiveSheet(equipmentSheet_(ss, "Account"));
   ss.moveActiveSheet(2);
-  ss.setActiveSheet(ss.getSheetByName("Assets"));
+  ss.setActiveSheet(equipmentSheet_(ss, "Assets"));
   const totals = {};
   Object.keys(fixture).forEach((name) => (totals[name] = rows_(name).length));
   return {

@@ -73,19 +73,23 @@ test("sample importer preserves existing records and repeated imports add no dup
     getUrl: () => "sheet",
     setActiveSheet() {},
     moveActiveSheet() {},
-    getSheetByName: (name) => ({
-      getRange: () => ({
-        getValues: () => [schema[name]],
-        setFontWeight() {
-          return this;
-        },
-        setBackground() {
-          return this;
-        },
-      }),
-      setFrozenRows() {},
-      autoResizeColumns() {},
-    }),
+    getSheetByName: (name) =>
+      schema[name]
+        ? {
+            getLastColumn: () => schema[name].length,
+            getRange: () => ({
+              getValues: () => [schema[name]],
+              setFontWeight() {
+                return this;
+              },
+              setBackground() {
+                return this;
+              },
+            }),
+            setFrozenRows() {},
+            autoResizeColumns() {},
+          }
+        : null,
   });
   c.SpreadsheetApp = { flush() {} };
   const one = c.seedEquipmentDemo_();

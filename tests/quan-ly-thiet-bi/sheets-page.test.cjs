@@ -24,17 +24,16 @@ test("Apps Script page composes all styles/scripts without Firebase, bridge or P
   a.ok(!manifest.oauthScopes.some((s) => /firebase|external_request/.test(s)));
 });
 
-test("Account source has exactly the requested login columns", () => {
+test("TaiKhoan has the requested Vietnamese sheet and column names", () => {
   const c = {};
   vm.createContext(c);
   vm.runInContext(
     fs.readFileSync("QuanLyThietBi/appscript/Store.js", "utf8"),
     c,
   );
-  a.deepEqual(Array.from(vm.runInContext("EQUIPMENT_SHEETS.Account", c)), [
-    "useName",
-    "passWord",
-    "role",
-    "name",
-  ]);
+  a.equal(vm.runInContext("EQUIPMENT_STORAGE.Account.sheet", c), "TaiKhoan");
+  a.deepEqual(
+    Array.from(vm.runInContext("EQUIPMENT_STORAGE.Account.columns", c)),
+    ["tenDangNhap", "matKhau", "chucVu", "hoTen"],
+  );
 });

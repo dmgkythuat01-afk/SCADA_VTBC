@@ -271,7 +271,7 @@ function saveMember_(u, p) {
     matches = all.filter((m) => m.email === useName),
     old = matches[0];
   if (matches.length > 1)
-    throw Error("Sheet Account có tên đăng nhập bị trùng.");
+    throw Error("Sheet TaiKhoan có tên đăng nhập bị trùng.");
   if (
     old &&
     old.role === "admin" &&

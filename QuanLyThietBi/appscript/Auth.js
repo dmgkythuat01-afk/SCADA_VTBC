@@ -1,4 +1,4 @@
-// Account headers: useName | passWord | role | name.
+// TaiKhoan: tenDangNhap | matKhau | chucVu | hoTen. Store maps internal keys.
 function authSecret_() {
   const p = props_();
   let secret = p.getProperty("AUTH_SECRET");
