@@ -8,7 +8,7 @@ Spec: ../specs/2026-11-08-mobile-service-design.md
 - [x] Add owner-only sample initializer and six role accounts; verify samples and schema preserve existing data.
 - [x] Test all backend regressions and desktop/mobile Chrome UI; independent review and fixes.
 - [x] Push source, initialize shared Sheets and deploy existing URLs with ?view=mobile at version 17.
-- [ ] Commit/push Git and provide login guidance.
+- [x] Commit/push Git and provide login guidance.
 
 Review focus: actor spoofing, cross-request photo access, concurrent drafts, duplicate confirmation, partial writes, schedule changed outside request, immutable prior reports, preservation of current login and existing data.
 
