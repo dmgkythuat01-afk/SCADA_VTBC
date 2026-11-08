@@ -218,19 +218,39 @@ function setupEquipmentApp() {
     credentials,
   };
 }
-function doGet() {
-  return HtmlService.createTemplateFromFile("Index")
+function doGet(e) {
+  const mobile = e && e.parameter && e.parameter.view === "mobile",
+    template = HtmlService.createTemplateFromFile(
+      mobile ? "MobileIndex" : "Index",
+    );
+  const requested = String((e && e.parameter && e.parameter.requestId) || "");
+  template.initialRequestId = /^[A-Za-z0-9_-]{1,100}$/.test(requested)
+    ? requested
+    : "";
+  return template
     .evaluate()
-    .setTitle("DMG Qu\u1ea3n l\u00fd thi\u1ebft b\u1ecb")
-    .addMetaTag("viewport", "width=device-width, initial-scale=1");
+    .setTitle(mobile ? "DMG Yêu cầu bảo trì" : "DMG Quản lý thiết bị")
+    .addMetaTag(
+      "viewport",
+      "width=device-width, initial-scale=1, viewport-fit=cover",
+    );
 }
 function equipmentApi(token, action, payload) {
   const u = identity_(token),
     p = payload || {};
+  if (
+    typeof mobileCapabilities_ === "function" &&
+    !mobileCapabilities_(u).technical
+  )
+    throw Error(
+      "Vai trò này sử dụng trang mobile để tạo và xác nhận phiếu yêu cầu.",
+    );
   if (action === "snapshot") {
     const lock = LockService.getScriptLock();
     lock.waitLock(30000);
     try {
+      if (typeof reconcileMobileRequests_ === "function")
+        reconcileMobileRequests_();
       reconcileSchedules_();
       return snapshot_(u);
     } finally {

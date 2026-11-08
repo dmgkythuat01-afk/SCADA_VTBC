@@ -22,6 +22,9 @@ function snapshot_(u) {
     user: u,
     today: today_(),
     assets: rows_("Assets"),
+    mobileRequests: rows_("Requests") || [],
+    mobileUrl:
+      typeof equipmentMobileUrl_ === "function" ? equipmentMobileUrl_() : "",
     managers: rows_("Managers"),
     schedules: rows_("Schedules"),
     jobs: rows_("Jobs"),

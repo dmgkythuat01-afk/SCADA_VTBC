@@ -1,6 +1,7 @@
 # DMG Quản lý thiết bị — Google Sheets + Apps Script
 
 App: https://script.google.com/macros/s/AKfycbwK1JwWhrazLtOZ7YnPZedvkS71KLvCWCQDY52fvmLVk4505FulJFF_ER7Cz1mkaYguJg/exec
+Mobile: https://script.google.com/macros/s/AKfycbxySBhZ2vOCKpWAgPOj8IlsIRCnH0HjkPxbzPr6pF5VsHuyL_RTDmJQfh4dKjCeVfRvKg/exec?view=mobile
 Sheet: https://docs.google.com/spreadsheets/d/1GyLKh_9gwPeAzTMuowR3OE8eYnSSnoMPMLnWcUYxpoI/edit
 Apps Script: https://script.google.com/d/1n2ecVQFAiRDNFKI6t3gXWxNBqCwtjlOWoploVOcluxowBSxSe_GY_o9T/edit
 
@@ -20,7 +21,7 @@ Chủ project có thể chạy `taoDuLieuMauThietBi` trong Apps Script để b�
 Đúng năm cột theo thứ tự: `tenDangNhap`, `matKhau`, `chucVu`, `hoTen`, `email`.
 - useName: tên đăng nhập; không phân biệt chữ hoa/thường, bỏ khoảng trắng đầu/cuối. Không được trùng.
 - passWord: mật khẩu; phân biệt hoa/thường. Hỗ trợ mật khẩu bạn điền trực tiếp trong sheet. Mật khẩu tạo từ app được lưu dưới dạng băm trong chính cột này.
-- role: chức vụ; `admin` (hoặc Quản trị/Quản trị viên) có quyền quản trị. Chức vụ khác dùng quyền kỹ thuật; `disabled` khóa tài khoản.
+- role: chức vụ; `admin` (hoặc Quản trị/Quản trị viên) có quyền quản trị. Mobile phân quyền theo sáu chức vụ bên dưới; `disabled` khóa tài khoản.
 - name: họ tên hiển thị trên giao diện và lịch sử.
 Không trả mật khẩu về trình duyệt. Phiên tối đa6h, đổi mật khẩu/khóa tài khoản sẽ vô hiệu phiên cũ. Thử sai5lần sẽ chờ15phút.
 Thêm/sửa tài khoản trong Cài đặt hoặc chỉnh TaiKhoan trực tiếp. Email nhận báo cáo cấu hình riêng trong Cài đặt, không bắt buộc tên đăng nhập phải là email.
@@ -59,3 +60,16 @@ Trong Hồ sơ thiết bị, thêm/sửa một máy và chọn người quản l
 Máy có sẵn trước nâng cấp được giữ nguyên, ban đầu hiện Chưa gán; chọn quản lý khi sửa máy. Máy mới phải chọn người quản lý.
 TaiKhoan có cột email cuối bảng, để trống được. Form tài khoản có trường email riêng. Email dùng làm thông tin liên hệ/chuẩn bị Google Workspace; đăng nhập vẫn là tenDangNhap + matKhau. Đổi email không đổi tên đăng nhập hay mật khẩu. Email nhập qua app được chuẩn hóa chữ thường và kiểm tra trùng giữa các tài khoản đang hoạt động.
 Chủ project có thể chạy capNhatCauTrucNguoiQuanLy để chỉ thêm các cột/bảng còn thiếu. Hàm đối chiếu các ô cũ trước/sau; không đổi dữ liệu hay mật khẩu. Mã JavaScript nội bộ vẫn dùng khóa username trong thuộc tính email từ các phiên bản cũ; email liên hệ được trả qua contactEmail, không dùng nó làm khóa đăng nhập hiện tại.
+
+## Mobile yêu cầu sửa chữa / bảo dưỡng
+Mở cùng link app với `?view=mobile`. Trang desktop có liên kết mở mobile. Dùng chung Sheets, tài khoản và thư mục ảnh Drive riêng tư.
+
+- `TruongCa`, `CongNhan`, `PhongCongNghe`: tạo yêu cầu theo xưởng → máy → bộ phận (bộ phận có thể bỏ trống), chọn người được giao, theo dõi phiếu của mình và xác nhận kết quả.
+- `KyThuat`, `CoKhi`, `TuDongHoa`: thấy tất cả phiếu gom theo xưởng. Bất kỳ tài khoản kỹ thuật nào cũng được nhận và xử lý, kể cả phiếu giao cho người khác. Báo cáo ghi người thực tế thực hiện từ tài khoản đăng nhập, nội dung, ngày hoàn thành và nhiều ảnh.
+- Chỉ người tạo phiếu được đồng ý hoặc yêu cầu làm lại; làm lại phải nhập lý do. Mỗi lần báo cáo và phản hồi giữ thành dòng riêng. Phiếu được đồng ý xuất hiện trong lịch sử máy trên desktop.
+- Liên kết lịch bảo dưỡng chỉ áp dụng cho yêu cầu bảo dưỡng bộ phận. Lịch mới tính từ ngày thực tế hoàn thành sau khi người tạo đồng ý. Nếu lịch đã được sửa riêng trong lúc xử lý, app giữ lịch đó và thông báo kiểm tra lại.
+- Menu dưới có 5 mục theo vai trò. Thông báo trong app cho báo cáo mới và yêu cầu làm lại. Ảnh hỗ trợ chọn nhiều ảnh hoặc mở camera bằng chức năng chụp ảnh của điện thoại; không dùng getUserMedia trong iframe Apps Script.
+
+Ba sheet mới: `PhieuYeuCau`, `BaoCaoKhacPhuc`, `XacNhanKhacPhuc`; tên cột tiếng Việt không dấu. NhatKyThongBao thêm `maPhieuYeuCau`, LichBaoDuong thêm `maPhieuYeuCauGanNhat`.
+
+Chủ project chạy `taoDuLieuMauMobile` để bổ sung cấu trúc và ví dụ còn thiếu, giữ nguyên dữ liệu/mật khẩu đã có. Bộ mẫu gồm 5 phiếu ở 5 trạng thái, 4 báo cáo, 2 phản hồi và 6 tài khoản: `mau.truongca`, `mau.congnhan`, `mau.pcn`, `mau.kythuat`, `mau.cokhi`, `mau.tudonghoa`. Mật khẩu ngẫu nhiên nằm ở `TaiKhoan.matKhau`; thay mật khẩu khi dùng thực tế. Mẫu có nhãn `[MẪU]`, không tạo ảnh giả hoặc gửi email.

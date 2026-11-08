@@ -1,0 +1,45 @@
+<script>
+  function mobileDesktopHistory(asset) {
+    const ids = new Set(descendants(asset.id)),
+      requests = (state.data.mobileRequests || []).filter((r) =>
+        ids.has(r.componentId || r.machineId),
+      );
+    if (!requests.length) return "";
+    const labels = {
+      new: "Mới tạo",
+      in_progress: "Đang xử lý",
+      awaiting_confirmation: "Chờ xác nhận",
+      rework: "Cần làm lại",
+      completed: "Hoàn thành",
+    };
+    return card(
+      "Phiếu yêu cầu từ mobile",
+      "Theo dõi yêu cầu và từng lần khắc phục trên trang mobile.",
+      '<div class="table-scroll"><table><thead><tr><th>YÊU CẦU</th><th>NGƯỜI TẠO</th><th>TRẠNG THÁI</th><th>THỰC TẾ XỬ LÝ</th><th></th></tr></thead><tbody>' +
+        requests
+          .sort((a, b) =>
+            String(b.createdAt).localeCompare(String(a.createdAt)),
+          )
+          .map(
+            (r) =>
+              "<tr><td>" +
+              esc(r.title) +
+              "</td><td>" +
+              esc(r.createdByName || r.createdBy) +
+              "</td><td>" +
+              esc(labels[r.status] || r.status) +
+              "</td><td>" +
+              esc(r.actualByName || "Chưa nhận") +
+              '</td><td><a target="_top" href="' +
+              esc(
+                (state.data.mobileUrl || "") +
+                  "&requestId=" +
+                  encodeURIComponent(r.id),
+              ) +
+              '">Mở phiếu →</a></td></tr>',
+          )
+          .join("") +
+        "</tbody></table></div>",
+    );
+  }
+</script>

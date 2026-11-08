@@ -432,6 +432,8 @@
           .map(jobCard)
           .join(""),
       );
+    if (typeof mobileDesktopHistory === "function")
+      html += mobileDesktopHistory(a);
     return html;
   }
   function renderCalendar() {

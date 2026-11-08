@@ -85,6 +85,8 @@ function manualReport_(u) {
   return sendReport_(true);
 }
 function sendReport_(manual) {
+  if (typeof reconcileMobileRequests_ === "function")
+    reconcileMobileRequests_();
   reconcileSchedules_();
   const r = reportData_(),
     config = settings_(),

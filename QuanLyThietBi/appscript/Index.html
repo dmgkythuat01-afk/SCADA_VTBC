@@ -35,6 +35,11 @@
         <p class="hint">
           Chỉ tài khoản được quản trị viên cấp quyền mới xem được dữ liệu.
         </p>
+        <p class="hint" style="text-align: center">
+          <a target="_top" href="<?= equipmentMobileUrl_() ?>"
+            >Mở trang mobile yêu cầu sửa chữa / bảo dưỡng →</a
+          >
+        </p>
       </div>
     </div>
     <div id="shell" hidden>
@@ -102,6 +107,8 @@
     <div id="toast" role="status" hidden></div>
 
     <?!= HtmlService.createHtmlOutputFromFile('Client').getContent(); ?> <?!=
-    HtmlService.createHtmlOutputFromFile('ManagersUi').getContent(); ?>
+    HtmlService.createHtmlOutputFromFile('ManagersUi').getContent(); ?> <?!=
+    HtmlService.createHtmlOutputFromFile('MobileDesktopHistory').getContent();
+    ?>
   </body>
 </html>
