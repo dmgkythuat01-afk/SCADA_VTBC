@@ -63,24 +63,15 @@ function reportHtml_(r) {
     section("Đến hạn trong 14 ngày tới", r.soon, false) +
     section("Công việc chưa hoàn thành", r.ongoing, true) +
     section("Hoàn thành trong 7 ngày qua", r.completed, true) +
-    '<p><a href="https://dmg-quanly-thietbi.web.app">Mở ứng dụng quản lý thiết bị</a></p></div>'
+    '<p><a href="' +
+    escape_(
+      settings_().appUrl ||
+        "https://script.google.com/macros/s/AKfycbwK1JwWhrazLtOZ7YnPZedvkS71KLvCWCQDY52fvmLVk4505FulJFF_ER7Cz1mkaYguJg/exec",
+    ) +
+    '">Mở ứng dụng quản lý thiết bị</a></p></div>'
   );
 }
-function registerDevice_(u, p) {
-  const token = required_(p.token, "mã thông báo", 4096);
-  if (token.length < 50) throw Error("Mã thông báo không hợp lệ.");
-  const old = rows_("Devices").find((d) => d.token === token);
-  write_(
-    "Devices",
-    Object.assign(old || { id: id_() }, {
-      email: u.email,
-      token,
-      updatedAt: now_(),
-    }),
-  );
-  return { success: true };
-}
-function scheduledEquipmentReport() {
+function scheduledEquipmentReport_() {
   const lock = LockService.getScriptLock();
   lock.waitLock(30000);
   try {
@@ -143,55 +134,11 @@ function sendReport_(manual) {
           r.overdue.length +
           " việc đến/quá hạn — " +
           r.today,
-        body: "Xem báo cáo: https://dmg-quanly-thietbi.web.app",
+        body:
+          "Xem báo cáo: " + (config.appUrl || ScriptApp.getService().getUrl()),
         htmlBody: reportHtml_(r),
       }),
     ),
   );
-  const activeEmails = rows_("Members")
-    .filter(enabled_)
-    .map((m) => String(m.email).toLowerCase());
-  rows_("Devices")
-    .filter((d) => activeEmails.includes(String(d.email).toLowerCase()))
-    .forEach((d) =>
-      send("push", d.id, () => {
-        const res = UrlFetchApp.fetch(
-          "https://fcm.googleapis.com/v1/projects/dmg-quanly-thietbi/messages:send",
-          {
-            method: "post",
-            contentType: "application/json",
-            headers: { Authorization: "Bearer " + ScriptApp.getOAuthToken() },
-            payload: JSON.stringify({
-              message: {
-                token: d.token,
-                notification: {
-                  title: "Lịch bảo dưỡng thiết bị",
-                  body:
-                    r.overdue.length +
-                    " việc đến/quá hạn; " +
-                    r.soon.length +
-                    " việc trong 14 ngày tới.",
-                },
-                webpush: {
-                  fcm_options: { link: "https://dmg-quanly-thietbi.web.app" },
-                  notification: {
-                    icon: "https://dmg-quanly-thietbi.web.app/icon.svg",
-                    tag: "equipment-report-" + r.today,
-                  },
-                },
-              },
-            }),
-            muteHttpExceptions: true,
-          },
-        );
-        if (res.getResponseCode() !== 200)
-          throw Error(
-            "FCM " +
-              res.getResponseCode() +
-              ": " +
-              res.getContentText().slice(0, 300),
-          );
-      }),
-    );
   return { success: failed.length === 0, sent: count, errors: failed };
 }

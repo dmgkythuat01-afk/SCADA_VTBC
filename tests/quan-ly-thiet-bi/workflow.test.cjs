@@ -42,6 +42,7 @@ function setup() {
     );
   Object.assign(c, {
     rows_: (name) => structuredClone(tables[name]),
+    members_: () => structuredClone(tables.Members),
     write_: (name, obj) => {
       const id = obj.id || obj.key || obj.email,
         i = tables[name].findIndex((x) => (x.id || x.key || x.email) === id);
@@ -52,6 +53,9 @@ function setup() {
     id_: () => String(++n),
     now_: () => "2026-11-15T09:00:00.000Z",
     today_: () => "2026-11-15",
+    ScriptApp: {
+      getService: () => ({ getUrl: () => "https://script.google.com/test" }),
+    },
     audit_: () => {},
   });
   return {
@@ -335,4 +339,21 @@ test("replaying original open after completion never creates a second job", () =
   a.equal(repeated.id, j.id);
   a.equal(s.tables.Jobs.length, 1);
   a.equal(repeated.status, "completed");
+});
+
+test("custom Account position survives safe snapshot without password exposure", () => {
+  const s = setup();
+  s.tables.Members[1].position = "Trưởng ca";
+  s.tables.Members[1].passWord = "secret";
+  const m = s.c
+    .snapshot_(s.admin)
+    .members.find((m) => m.email === s.tech.email);
+  a.equal(m.position, "Trưởng ca");
+  a.equal(m.passWord, undefined);
+  a.equal(m.authVersion, undefined);
+});
+test("scheduled reporting handler is private to Apps Script and not a login-page endpoint", () => {
+  const s = setup();
+  a.equal(typeof s.c.scheduledEquipmentReport, "undefined");
+  a.equal(typeof s.c.scheduledEquipmentReport_, "function");
 });

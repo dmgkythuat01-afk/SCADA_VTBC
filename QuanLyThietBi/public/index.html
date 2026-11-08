@@ -1,98 +1,42 @@
 <!doctype html>
 <html lang="vi">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <meta name="theme-color" content="#123e35" />
-    <title>DMG · Quản lý thiết bị</title>
-    <link rel="manifest" href="/manifest.webmanifest" />
-    <link rel="icon" href="/icon.svg" />
-    <link rel="stylesheet" href="/style.css" />
-  </head>
-  <body>
-    <div id="login" class="login">
-      <div class="login-card">
-        <span class="brand-mark">D</span
-        ><span class="eyebrow">DMG · EQUIPMENT</span>
-        <h1>Hiểu thiết bị.<br />Chủ động bảo dưỡng.</h1>
-        <p>
-          Hồ sơ máy, lịch bảo dưỡng và lịch sử sửa chữa — trong cùng một nơi.
-        </p>
-        <button id="signIn" class="primary">Đăng nhập bằng Google</button>
-        <p class="hint">
-          Chỉ tài khoản được quản trị viên cấp quyền mới xem được dữ liệu.
-        </p>
-      </div>
-    </div>
-    <div id="shell" hidden>
-      <aside>
-        <a class="brand" href="#dashboard"
-          ><span class="brand-mark">D</span
-          ><span>DMG Thiết bị<small>VẬN HÀNH & BẢO DƯỠNG</small></span></a
-        >
-        <nav>
-          <button data-page="dashboard" class="active">◷ Tổng quan</button
-          ><button data-page="assets">▦ Hồ sơ thiết bị</button
-          ><button data-page="calendar">▤ Lịch bảo dưỡng</button
-          ><button data-page="jobs">⚒ Công việc & lịch sử</button
-          ><button data-page="settings">⚙ Cài đặt</button>
-        </nav>
-        <div class="sidebar-bottom">
-          <span id="userName"></span
-          ><button id="signOut" class="ghost">Đăng xuất</button>
-        </div>
-      </aside>
-      <main>
-        <header>
-          <div>
-            <span class="eyebrow">QUẢN LÝ THIẾT BỊ</span>
-            <h1 id="pageTitle">Tổng quan vận hành</h1>
-          </div>
-          <div class="toolbar">
-            <span id="connection" class="pill">Đang kết nối</span
-            ><button id="enablePush">♧ Bật thông báo</button
-            ><button id="refresh">↻ Tải lại</button
-            ><button id="install" hidden>Cài ứng dụng</button>
-          </div>
-        </header>
-        <div id="alert" role="status" hidden></div>
-        <section id="content"></section>
-        <footer>
-          DMG · Hồ sơ rõ ràng, bảo dưỡng đúng hạn <span id="lastSync"></span>
-        </footer>
-      </main>
-    </div>
-    <dialog id="editor">
-      <form id="editorForm">
-        <div class="dialog-title">
-          <h2 id="editorTitle"></h2>
-          <button
-            type="button"
-            id="closeEditor"
-            class="ghost"
-            aria-label="Đóng"
-          >
-            ✕
-          </button>
-        </div>
-        <div id="editorFields"></div>
-        <p id="formError" class="error" role="alert"></p>
-        <div class="dialog-actions">
-          <button type="button" id="cancelEditor">Hủy</button
-          ><button type="submit" class="primary" id="saveEditor">Lưu</button>
-        </div>
-      </form>
-    </dialog>
-    <dialog id="photoViewer">
-      <button id="closePhoto" class="ghost">Đóng ✕</button
-      ><img id="fullPhoto" alt="Ảnh công việc" />
-    </dialog>
-    <div id="toast" role="status" hidden></div>
-    <iframe id="apiBridge" title="Kết nối dữ liệu" hidden></iframe>
-    <script src="https://www.gstatic.com/firebasejs/12.5.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/12.5.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/12.5.0/firebase-messaging-compat.js"></script>
-    <script src="/config.js"></script>
-    <script src="/app.js" defer></script>
-  </body>
+  <meta charset="utf-8" /><meta
+    name="viewport"
+    content="width=device-width,initial-scale=1"
+  /><title>DMG Quản lý thiết bị</title
+  ><style>
+    body {
+      font: 18px system-ui;
+      background: #f4f6f2;
+      color: #123e35;
+      max-width: 640px;
+      margin: 12vh auto;
+      padding: 24px;
+      line-height: 1.8;
+    }
+    a {
+      display: inline-block;
+      background: #176c52;
+      color: white;
+      padding: 12px 20px;
+      border-radius: 12px;
+      text-decoration: none;
+    }
+  </style>
+  <h1>DMG Quản lý thiết bị</h1>
+  <p>
+    Ứng dụng đã chuyển sang Google Apps Script. Dữ liệu lưu tại Google Sheets,
+    ảnh lưu Google Drive.
+  </p>
+  <a
+    href="https://script.google.com/macros/s/AKfycbwK1JwWhrazLtOZ7YnPZedvkS71KLvCWCQDY52fvmLVk4505FulJFF_ER7Cz1mkaYguJg/exec"
+    target="_top"
+    >Mở ứng dụng</a
+  >
+  <script>
+    if (navigator.serviceWorker)
+      navigator.serviceWorker
+        .getRegistrations()
+        .then((rs) => rs.forEach((r) => r.unregister()));
+  </script>
 </html>

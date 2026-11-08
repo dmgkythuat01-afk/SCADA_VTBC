@@ -46,8 +46,7 @@ const EQUIPMENT_SHEETS = {
     "revision",
     "completionRequestId",
   ],
-  Members: ["email", "name", "role", "active"],
-  Devices: ["id", "email", "token", "updatedAt"],
+  Account: ["useName", "passWord", "role", "name"],
   Notifications: [
     "id",
     "date",

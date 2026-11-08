@@ -24,10 +24,14 @@ function snapshot_(u) {
     assets: rows_("Assets"),
     schedules: rows_("Schedules"),
     jobs: rows_("Jobs"),
-    members: rows_("Members")
+    members: members_()
       .filter(enabled_)
-      .map((m) => ({ email: m.email, name: m.name, role: m.role })),
-    pushConfig: { vapidKey: settings_().vapidKey || "" },
+      .map((m) => ({
+        email: m.email,
+        name: m.name,
+        role: m.role,
+        position: m.position || m.role,
+      })),
     settings: u.role === "admin" ? settings_() : {},
     notifications: u.role === "admin" ? rows_("Notifications").slice(-40) : [],
   };
@@ -117,9 +121,7 @@ function validAssignee_(email) {
   const e = text_(email, 250).toLowerCase();
   if (
     e &&
-    !rows_("Members").some(
-      (m) => String(m.email).toLowerCase() === e && enabled_(m),
-    )
+    !members_().some((m) => String(m.email).toLowerCase() === e && enabled_(m))
   )
     throw Error("Người phụ trách không hợp lệ.");
   return e;
@@ -252,39 +254,42 @@ function saveSettings_(u, p) {
     .filter(Boolean);
   if (emails.some((e) => !/^\S+@\S+\.\S+$/.test(e)))
     throw Error("Email không hợp lệ.");
-  const key = text_(p.vapidKey, 200);
-  if (key && !/^[A-Za-z0-9_-]{87}$/.test(key))
-    throw Error("Khóa Web Push không hợp lệ. Chỉ dán public key.");
   setting_("reportEmails", emails.join(","));
-  if (p.vapidKey !== undefined) setting_("vapidKey", key);
   audit_(u, "saveSettings", "reportEmails");
   return settings_();
 }
 function saveMember_(u, p) {
   admin_(u);
-  const email = required_(p.email, "email", 250).toLowerCase();
-  if (
-    !/^\S+@\S+\.\S+$/.test(email) ||
-    !["admin", "technician"].includes(p.role)
-  )
-    throw Error("Thông tin tài khoản không hợp lệ.");
-  const all = rows_("Members"),
-    old = all.find((m) => m.email === email);
+  const useName = required_(
+      p.useName || p.email,
+      "tên đăng nhập",
+      100,
+    ).toLowerCase(),
+    position = required_(p.role, "chức vụ", 150);
+  if (/[\r\n]/.test(useName)) throw Error("Tên đăng nhập không hợp lệ.");
+  const all = members_(),
+    matches = all.filter((m) => m.email === useName),
+    old = matches[0];
+  if (matches.length > 1)
+    throw Error("Sheet Account có tên đăng nhập bị trùng.");
   if (
     old &&
     old.role === "admin" &&
-    (p.role !== "admin" || p.active === false) &&
+    (authRole_(position) !== "admin" || p.active === false) &&
     all.filter((m) => m.role === "admin" && enabled_(m)).length <= 1
   )
     throw Error("Phải giữ ít nhất một quản trị viên.");
-  write_(
-    "Members",
-    Object.assign(old || { email }, {
-      name: required_(p.name, "họ tên", 200),
-      role: p.role,
-      active: p.active !== false,
-    }),
-  );
-  audit_(u, "saveMember", email);
+  const account = {
+    _row: old && old._row,
+    useName,
+    passWord: (old && old.passWord) || "",
+    role: p.active === false ? "disabled" : position,
+    name: required_(p.name, "họ tên", 200),
+  };
+  if (p.password) setMemberPassword_(account, p.password);
+  if (!account.passWord)
+    throw Error("Thành viên mới cần mật khẩu tối thiểu 12 ký tự.");
+  write_("Account", account);
+  audit_(u, "saveAccount", useName);
   return { success: true };
 }
