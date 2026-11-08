@@ -1,0 +1,11 @@
+<!doctype html><meta charset="utf-8"><script>
+const APP_ORIGIN='https://dmg-quanly-thietbi.web.app';
+const CHANNEL=<?!= JSON.stringify(channel) ?>;
+window.addEventListener('message',event=>{
+ if(event.source!==window.top||event.origin!==APP_ORIGIN||!event.data||event.data.channel!==CHANNEL||event.data.type!=='equipment-request')return;
+ const {id,token,action,payload}=event.data;
+ if(typeof id!=='string'||id.length>100)return;
+ google.script.run.withSuccessHandler(result=>top.postMessage({type:'equipment-response',channel:CHANNEL,id,result},APP_ORIGIN)).withFailureHandler(error=>top.postMessage({type:'equipment-response',channel:CHANNEL,id,error:error.message||'Không thực hiện được.'},APP_ORIGIN)).equipmentApi(token,action,payload);
+});
+top.postMessage({type:'equipment-ready',channel:CHANNEL},APP_ORIGIN);
+</script>
