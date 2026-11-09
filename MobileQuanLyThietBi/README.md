@@ -10,7 +10,7 @@ Chủ project mở editor, chọn `capQuyenMobile` → Run → cấp quyền Goo
 
 Dùng chung file Sheets và tài khoản hiện có trong `TaiKhoan` với app quản trị. Không tự tạo tài khoản mẫu, bản sao danh mục hoặc trigger email. Các role TruongCa/CongNhan/PhongCongNghe tạo phiếu; KyThuat/CoKhi/TuDongHoa xem mọi phiếu và báo cáo; người tạo xác nhận hoặc yêu cầu làm lại. Người thực hiện được ghi theo tài khoản thực tế.
 
-Project này chứa Code.js và ba file MobileIndex/MobileStyles/MobileClient. Backend nghiệp vụ nằm trong các file `MobileWork*.js` của `QuanLyThietBi/admin/`, gọi qua thư viện EquipmentCore và ghim phiên bản 41 trong manifest. Script Properties, Cache và Lock tạo bên trong thư viện thuộc backend dùng chung, theo tài liệu Google: https://developers.google.com/apps-script/guides/libraries#resource_scoping . Hai giao diện dùng cùng khóa cập nhật. Khi nâng cấp backend, kiểm thử và tăng version thư viện trong manifest; không bật developmentMode trên production.
+Project này chứa Code.js và ba file MobileIndex/MobileStyles/MobileClient. Backend nghiệp vụ nằm trong các file `MobileWork*.js` của `QuanLyThietBi/admin/`, gọi qua thư viện EquipmentCore và ghim phiên bản 44 trong manifest. Script Properties, Cache và Lock tạo bên trong thư viện thuộc backend dùng chung, theo tài liệu Google: https://developers.google.com/apps-script/guides/libraries#resource_scoping . Hai giao diện dùng cùng khóa cập nhật. Khi nâng cấp backend, kiểm thử và tăng version thư viện trong manifest; không bật developmentMode trên production.
 
 ## Danh mục mới — 09/11/2026
 
@@ -23,3 +23,5 @@ Báo cáo bảo dưỡng thiết bị lấy chỉ tiêu và tiêu chuẩn hiện
 Chỉ người tạo phiếu được xác nhận. Khi đồng ý, hệ thống ghi đúng một dòng vào `LichSuBaoDuong` hoặc `LichSuSuaChua` của admin, gồm người thực tế thực hiện, kết quả kiểm tra và ảnh. Lịch bảo dưỡng tính từ ngày thực tế hoàn thành đã được chấp nhận; yêu cầu toàn máy không thay đổi lịch riêng của từng thiết bị. Từ chối giữ lịch sử báo cáo và yêu cầu kỹ thuật làm lại. Các bước gửi/xác nhận có chống gửi trùng và phục hồi đồng bộ nếu ghi bị gián đoạn.
 
 Triển khai từ thư mục này: `clasp push --force`, sau đó cập nhật deployment hiện có. Không chạy setupEquipmentApp hay tạo trigger email trong project mobile.
+
+Tối ưu hiệu năng: mỗi thao tác chỉ đọc mỗi bảng cần dùng một lần; dữ liệu đã lưu được cập nhật vào bộ nhớ của chính thao tác đó. Đăng nhập và các nút tạo/nhận/gửi/xác nhận trả luôn snapshot mới, tránh gọi tải toàn bộ lần thứ hai. Bộ nhớ này không dùng chung giữa các thao tác; mỗi thao tác vẫn đọc tài khoản và quyền mới từ Sheets. Phản hồi chậm của phiên đã đăng xuất bị bỏ qua.

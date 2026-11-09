@@ -2,7 +2,7 @@ function mobileWorkAppendAdminHistory_(request, report, review) {
   const name =
       request.type === "maintenance" ? "LichSuBaoDuong" : "LichSuSuaChua",
     id = "MOBILE_" + request.id,
-    existing = maintenanceRows_(name).find((h) => h.maLichSu === id);
+    existing = mobileWorkHistoryRows_(name).find((h) => h.maLichSu === id);
   if (existing) return existing;
   const source = mobileWorkParse_(report.criteriaSnapshot, []),
     actual = mobileWorkParse_(report.actualResults, []),
@@ -46,10 +46,12 @@ function mobileWorkAppendAdminHistory_(request, report, review) {
       maYeuCau: "MOBILE_ACCEPT_" + request.id,
       dauVanTay: adminHmac_(
         JSON.stringify([request.id, report.id, review.id]),
-        adminSecret_(),
+        mobileWorkSecret_(),
       ),
     };
   maintenanceWrite_(name, row);
+  mobileWorkGetContext_().grids.delete(name);
+  mobileWorkGetContext_().mappedRows.delete(name);
   mobileWorkGetContext_().catalog = null;
   return row;
 }
@@ -80,5 +82,9 @@ function mobileWorkProtectReference_(name, row) {
 function mobileWorkReconcileIfReady_() {
   if (!mobileWorkTable_("Requests", true)) return;
   mobileWorkResetContext_();
-  mobileWorkReconcile_();
+  try {
+    mobileWorkReconcile_();
+  } finally {
+    mobileWorkFlush_();
+  }
 }

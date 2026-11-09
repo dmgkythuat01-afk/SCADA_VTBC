@@ -548,8 +548,26 @@ function mobileWorkApi(token, action, payload) {
       markRead: mobileWorkMarkNotification_,
     };
     if (!actions[action]) throw Error("Thao tác không hợp lệ.");
-    return actions[action](u, payload || {});
+    const result = actions[action](u, payload || {});
+    if (
+      payload &&
+      payload._withSnapshot === true &&
+      [
+        "create",
+        "claim",
+        "startReport",
+        "submitReport",
+        "review",
+        "markRead",
+      ].includes(action)
+    )
+      return { result, snapshot: mobileWorkSnapshot_(u) };
+    return result;
   } finally {
-    lock.releaseLock();
+    try {
+      mobileWorkFlush_();
+    } finally {
+      lock.releaseLock();
+    }
   }
 }

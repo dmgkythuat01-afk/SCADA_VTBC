@@ -4,12 +4,12 @@ function mobileWorkCatalog_() {
   const assets = [],
     schedules = [],
     ids = new Set(),
-    criteria = readAdminRows_("DanhMucCanKiemTra"),
-    history = maintenanceHistories_(),
+    criteria = mobileWorkCatalogRows_("DanhMucCanKiemTra"),
+    history = mobileWorkHistories_(),
     today = maintenanceToday_(),
     byCriteria = new Map(),
     byHistory = new Map(),
-    secret = adminSecret_();
+    secret = mobileWorkSecret_();
   criteria.forEach((c) => {
     const key = maintenanceDeviceKey_(c);
     if (!byCriteria.has(key)) byCriteria.set(key, []);
@@ -34,7 +34,7 @@ function mobileWorkCatalog_() {
       ids.add(row.id);
       assets.push(row);
     };
-  readAdminRows_("DanhMucXuong").forEach((r) =>
+  mobileWorkCatalogRows_("DanhMucXuong").forEach((r) =>
     add({
       id: workshopId(r.tenXuong),
       type: "workshop",
@@ -43,7 +43,7 @@ function mobileWorkCatalog_() {
       active: true,
     }),
   );
-  readAdminRows_("DanhMucMay").forEach((r) => {
+  mobileWorkCatalogRows_("DanhMucMay").forEach((r) => {
     const parent = workshopId(r.tenXuong);
     if (!ids.has(parent)) return;
     add({
@@ -55,7 +55,7 @@ function mobileWorkCatalog_() {
       workshopName: r.tenXuong,
     });
   });
-  readAdminRows_("DanhMucThietBi").forEach((device) => {
+  mobileWorkCatalogRows_("DanhMucThietBi").forEach((device) => {
     const parent = machineId(device.tenXuong, device.tenMay);
     if (!ids.has(parent)) return;
     const key = maintenanceDeviceKey_(device),
@@ -125,7 +125,10 @@ function mobileWorkRefreshDraftCriteria_(draft, request) {
       thongSoTieuChuan: c.thongSoTieuChuan,
     })),
   );
-  draft.criteriaVersion = maintenanceCriteriaVersion_(source);
+  draft.criteriaVersion = maintenanceCriteriaVersion_(
+    source,
+    mobileWorkSecret_(),
+  );
   draft.checklist = JSON.stringify(
     source.map(
       (c) =>
@@ -141,6 +144,7 @@ function mobileWorkRefreshDraftCriteria_(draft, request) {
 function mobileWorkRefreshExistingDraft_(draft, request) {
   const version = maintenanceCriteriaVersion_(
     mobileWorkReportCriteria_(request),
+    mobileWorkSecret_(),
   );
   if (draft.criteriaVersion !== version) {
     mobileWorkRefreshDraftCriteria_(draft, request);
@@ -151,7 +155,10 @@ function mobileWorkRefreshExistingDraft_(draft, request) {
 }
 function mobileWorkValidateReportCriteria_(draft, request, p) {
   const source = mobileWorkReportCriteria_(request);
-  if (draft.criteriaVersion !== maintenanceCriteriaVersion_(source))
+  if (
+    draft.criteriaVersion !==
+    maintenanceCriteriaVersion_(source, mobileWorkSecret_())
+  )
     throw Error(
       "Chỉ tiêu kiểm tra đã thay đổi. Đóng và mở lại báo cáo để cập nhật.",
     );
@@ -179,6 +186,6 @@ function mobileWorkSubmissionFingerprint_(p) {
         ? p.actualResults.map((v) => mobileWorkText_(v, 2000))
         : [],
     ]),
-    adminSecret_(),
+    mobileWorkSecret_(),
   );
 }

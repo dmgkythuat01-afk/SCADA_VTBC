@@ -185,21 +185,19 @@ const MOBILE_WORK_SCHEMA = {
 function mobileWorkTable_(name, optional) {
   const spec = MOBILE_WORK_SCHEMA[name];
   if (!spec) throw Error("Bảng mobile không hợp lệ.");
-  const sheet = SpreadsheetApp.openById(ADMIN_SHEET_ID).getSheetByName(
-    spec.sheet,
-  );
+  const sheet = mobileWorkSheet_(spec.sheet, true);
   if (!sheet && !optional)
     throw Error(
       "Chưa khởi tạo dữ liệu mobile. Chủ project chạy khoiTaoMobileTheoDanhMuc.",
     );
   return sheet;
 }
-function mobileWorkHeaders_(name, sheet) {
+function mobileWorkHeaders_(name, sheet, rawHeaders) {
   const spec = MOBILE_WORK_SCHEMA[name],
-    headers = sheet
-      .getRange(1, 1, 1, sheet.getLastColumn())
-      .getValues()[0]
-      .map((v) => String(v).trim()),
+    headers = (
+      rawHeaders ||
+      sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0]
+    ).map((v) => String(v).trim()),
     map = {};
   spec.fields.forEach((field, i) => {
     const found = headers
@@ -214,12 +212,10 @@ function mobileWorkHeaders_(name, sheet) {
   return { headers, map };
 }
 function mobileWorkReadTable_(name) {
-  const sheet = mobileWorkTable_(name),
-    { map } = mobileWorkHeaders_(name, sheet);
-  if (sheet.getLastRow() < 2) return [];
-  return sheet
-    .getRange(2, 1, sheet.getLastRow() - 1, sheet.getLastColumn())
-    .getValues()
+  const grid = mobileWorkGrid_(MOBILE_WORK_SCHEMA[name].sheet),
+    { map } = mobileWorkHeaders_(name, grid.sheet, grid.values[0]);
+  return grid.values
+    .slice(1)
     .map((values, i) => {
       const row = { _row: i + 2 };
       Object.keys(map).forEach((field) => {
@@ -247,11 +243,12 @@ function mobileWorkReadTable_(name) {
     .filter((r) => r[MOBILE_WORK_SCHEMA[name].fields[0]]);
 }
 function mobileWorkPersist_(name, row) {
-  const sheet = mobileWorkTable_(name),
-    { headers, map } = mobileWorkHeaders_(name, sheet),
-    index = row._row || sheet.getLastRow() + 1,
-    values = row._row
-      ? sheet.getRange(index, 1, 1, headers.length).getValues()[0]
+  const grid = mobileWorkGrid_(MOBILE_WORK_SCHEMA[name].sheet),
+    sheet = grid.sheet,
+    { headers, map } = mobileWorkHeaders_(name, sheet, grid.values[0]),
+    index = row._row || grid.values.length + 1,
+    values = grid.values[index - 1]
+      ? grid.values[index - 1].slice()
       : headers.map(() => "");
   Object.keys(map).forEach((field) => {
     let value = String(row[field] == null ? "" : row[field]);
@@ -266,7 +263,8 @@ function mobileWorkPersist_(name, row) {
     .getRange(index, 1, 1, headers.length)
     .setNumberFormat("@")
     .setValues([values]);
-  SpreadsheetApp.flush();
+  grid.values[index - 1] = values;
+  mobileWorkGetContext_().dirty = true;
   row._row = index;
   return row;
 }
@@ -282,7 +280,14 @@ function mobileWorkRows_(name) {
 }
 function mobileWorkWrite_(name, row) {
   mobileWorkPersist_(name, row);
-  mobileWorkGetContext_().rows.delete(name);
+  const context = mobileWorkGetContext_();
+  if (context.rows.has(name)) {
+    const rows = context.rows.get(name),
+      i = rows.findIndex((r) => r.id === row.id),
+      copy = JSON.parse(JSON.stringify(row));
+    if (i < 0) rows.push(copy);
+    else rows[i] = copy;
+  }
   return row;
 }
 function mobileWorkSetup_() {

@@ -73,8 +73,29 @@
           [method](...args);
       });
     }
-    function api(action, payload = {}) {
-      return rpc("mobileApi", M.token, action, payload);
+    async function api(action, payload = {}) {
+      const combined = [
+        "create",
+        "claim",
+        "startReport",
+        "submitReport",
+        "review",
+        "markRead",
+      ].includes(action);
+      const requestToken = M.token;
+      const response = await rpc(
+        "mobileApi",
+        requestToken,
+        action,
+        combined ? { ...payload, _withSnapshot: true } : payload,
+      );
+      if (M.token !== requestToken)
+        throw Error("Phiên đăng nhập đã thay đổi. Bỏ qua kết quả cũ.");
+      if (combined && response.snapshot) {
+        M.nextSnapshot = { token: requestToken, data: response.snapshot };
+        return response.result;
+      }
+      return response;
     }
     function toast(text) {
       $("mobileToast").textContent = text;
@@ -179,7 +200,10 @@
       M.loading = true;
       $("mobileRefresh").disabled = true;
       try {
-        const data = await api("snapshot");
+        const prefetched = M.nextSnapshot;
+        M.nextSnapshot = null;
+        const data =
+          prefetched?.token === token ? prefetched.data : await api("snapshot");
         if (M.token !== token) return;
         M.data = data;
         M.mode = data.capabilities.admin
@@ -1308,6 +1332,7 @@
         "mobilePhotoDialog",
       ])
         $(id).close();
+      M.nextSnapshot = null;
       sessionStorage.removeItem("dmgMobileWorkSession");
       for (let i = sessionStorage.length - 1; i >= 0; i--) {
         const key = sessionStorage.key(i);
@@ -1344,6 +1369,9 @@
           $("mobilePassword").value,
         );
         M.token = r.token;
+        M.nextSnapshot = r.snapshot
+          ? { token: r.token, data: r.snapshot }
+          : null;
         sessionStorage.setItem("dmgMobileWorkSession", M.token);
         $("mobilePassword").value = "";
         await load();

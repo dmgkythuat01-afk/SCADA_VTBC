@@ -1,6 +1,15 @@
 let mobileWorkContext_ = null;
 function mobileWorkResetContext_() {
-  mobileWorkContext_ = { rows: new Map(), catalog: null, accounts: null };
+  mobileWorkContext_ = {
+    rows: new Map(),
+    catalog: null,
+    accounts: null,
+    members: null,
+    sheets: new Map(),
+    grids: new Map(),
+    mappedRows: new Map(),
+    dirty: false,
+  };
 }
 function mobileWorkGetContext_() {
   if (!mobileWorkContext_) mobileWorkResetContext_();
@@ -39,8 +48,10 @@ function mobileWorkCheckRevision_(row, input) {
 }
 function mobileWorkMembers_() {
   const context = mobileWorkGetContext_();
-  if (!context.accounts) context.accounts = readAdminRows_("TaiKhoan");
-  return context.accounts.map((row) => ({
+  if (context.members) return context.members;
+  if (!context.accounts) context.accounts = mobileWorkCatalogRows_("TaiKhoan");
+  const secret = mobileWorkSecret_();
+  context.members = context.accounts.map((row) => ({
     email: adminNorm_(row.tenDangNhap),
     useName: row.tenDangNhap,
     name: row.hoTen || row.tenDangNhap,
@@ -53,8 +64,12 @@ function mobileWorkMembers_() {
       !!row.matKhau &&
       !["disabled", "khóa", "ngừng hoạt động"].includes(adminNorm_(row.chucVu)),
     passWord: row.matKhau,
-    authVersion: adminAuthVersion_(row),
+    authVersion: adminHmac_(
+      JSON.stringify([row.tenDangNhap, row.matKhau, row.chucVu]),
+      secret,
+    ),
   }));
+  return context.members;
 }
 function mobileWorkSafeUser_(member) {
   return {
@@ -67,7 +82,7 @@ function mobileWorkSafeUser_(member) {
     contactEmail: member.contactEmail,
   };
 }
-function loginMobile(username, password) {
+function loginMobile(username, password, withSnapshot) {
   const lock = LockService.getScriptLock();
   lock.waitLock(30000);
   try {
@@ -104,9 +119,18 @@ function loginMobile(username, password) {
       JSON.stringify({ username: key, version: member.authVersion }),
       21600,
     );
-    return { token, user: mobileWorkSafeUser_(member) };
+    const result = { token, user: mobileWorkSafeUser_(member) };
+    if (withSnapshot === true) {
+      mobileWorkReconcile_();
+      result.snapshot = mobileWorkSnapshot_(result.user);
+    }
+    return result;
   } finally {
-    lock.releaseLock();
+    try {
+      mobileWorkFlush_();
+    } finally {
+      lock.releaseLock();
+    }
   }
 }
 function mobileWorkIdentity_(token) {

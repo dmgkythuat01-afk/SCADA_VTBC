@@ -17,7 +17,7 @@ function doGet(e) {
     );
 }
 function loginEquipment(username, password) {
-  return EquipmentCore.loginMobile(username, password);
+  return EquipmentCore.loginMobile(username, password, true);
 }
 function logoutEquipment(token) {
   return EquipmentCore.logoutMobile(token);

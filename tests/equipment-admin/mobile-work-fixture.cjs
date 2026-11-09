@@ -12,6 +12,7 @@ function setup() {
     "MaintenanceStore",
     "MaintenanceService",
     "MaintenanceReports",
+    "MobileWorkIO",
     "MobileWorkStore",
     "MobileWorkAuth",
     "MobileWorkCatalog",
@@ -92,6 +93,9 @@ function setup() {
       crypto.createHmac("sha256", k).update(String(v)).digest("hex"),
     adminSecret_: () => "secret",
     readAdminRows_: (n) => structuredClone(catalog[n] || []),
+    mobileWorkCatalogRows_: (n) => structuredClone(catalog[n] || []),
+    mobileWorkHistoryRows_: (n) => structuredClone(history[n] || []),
+    SpreadsheetApp: { flush() {} },
     maintenanceRows_: (n) => structuredClone(history[n] || []),
     maintenanceWrite_: (n, r) => {
       const i = history[n].findIndex((x) => x.maLichSu === r.maLichSu);

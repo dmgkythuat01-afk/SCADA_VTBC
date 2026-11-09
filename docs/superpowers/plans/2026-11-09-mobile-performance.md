@@ -1,0 +1,11 @@
+# Mobile performance fix
+
+User reported slow equipment mobile login and load/save buttons. Live read-only profile on the existing data measured996ms login +5962ms snapshot =6958ms backend execution. That path read signing configuration24times and performed two client RPCs. Each mutation also triggered a separate snapshot RPC; row writes discarded their table cache and forced rereads.
+
+The fix keeps a cache only for one locked operation: one spreadsheet handle, one grid read per used sheet, mapped catalogue/history rows, member identities and signing secret. Each next API call resets this context before checking current account/password/role. Writes update their cached grid and row objects; pending SpreadsheetApp writes flush before the shared lock releases on success or error. Accepted-history bridge invalidates history projections after its write. No cross-request account or catalogue cache, new sheet or sample data.
+
+Login optionally returns its initial authorized snapshot. Create, claim, open report, submit, review and mark-read optionally return their result and fresh snapshot in one response. UI consumes this snapshot immediately rather than issuing another RPC. Combined responses and queued snapshots are bound to the initiating session token; delayed results after logout cannot enter a new session.
+
+Verification: existing workflow and admin tests plus read-count, write-through, fresh external edits, permission revocation and delayed cross-session response tests. Chrome mobile flow checked private photo/rework/acceptance and maintenance criteria;11logins,3creates,2claims,3reports,3reviews needed zero standalone snapshot RPCs. Held a Claim response across logout/login; stale result was rejected and new account retained its own data. Read-only live after profile:3586ms for combined login +initial snapshot,3secret reads. Timing is one observed run and may vary with Google/network.
+
+Release:34Node tests passed. Shared backend/admin version44 and mobile version7 deployed on the existing URLs. All seven roles verified through the actual mobile wrapper/library44; request visibility still respects creator/technical roles. No business data written by diagnostics. Temporary profiling/verification deployments removed and canonical source restored.
