@@ -8,7 +8,7 @@ Mã hiện hành nằm trong `admin/`, là rootDir mới của clasp. Bộ `apps
 
 Cập nhật tiếp: nhóm Quản lý thiết bị đã được thêm bằng các file Maintenance* riêng (thông báo, lịch sử bảo dưỡng/sửa chữa, hồ sơ, ảnh và báo cáo email). Clasp đẩy các file hiện hành trong admin/. Cấu trúc và luồng Nhập dữ liệu tiếp tục được giữ.
 
-Menu Nhập dữ liệu quản lý sáu sheet hiện có: TaiKhoan, DanhMucBoPhan, DanhMucXuong, DanhMucMay, DanhMucThietBi, DanhMucCanKiemTra. Không tự tạo sheet/cột, dữ liệu mẫu hoặc trigger; dùng tài khoản admin hiện có. Mobile vẫn ghim backend20; thích nghi mobile với schema mới là công việc riêng.
+Menu Nhập dữ liệu quản lý sáu sheet hiện có: TaiKhoan, DanhMucBoPhan, DanhMucXuong, DanhMucMay, DanhMucThietBi, DanhMucCanKiemTra. Dùng tài khoản admin hiện có. Các file `MobileWork*.js` hiện hành đã thay backend mobile cũ, đọc trực tiếp các danh mục này, thêm bốn bảng phiếu riêng và đồng bộ kết quả đã xác nhận vào lịch sử bảo dưỡng/sửa chữa. Không tạo tài khoản mẫu hoặc đổi dữ liệu danh mục. Xem [mobile](../MobileQuanLyThietBi/README.md) để biết luồng và triển khai.
 
 ---
 

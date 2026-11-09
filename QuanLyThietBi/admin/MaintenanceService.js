@@ -301,6 +301,7 @@ function maintenanceApi(token, action, payload) {
   try {
     const user = requireAdminSession_(token),
       p = payload || {};
+    if (typeof mobileWorkReconcileIfReady_ === "function") mobileWorkReconcileIfReady_();
     if (action === "snapshot") return maintenanceSnapshot_(user);
     if (action === "saveHistory") {
       const record = maintenanceSaveHistory_(user, p);

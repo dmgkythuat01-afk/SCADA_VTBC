@@ -41,7 +41,7 @@
       assigned: "M9 4H4v17h16V4h-5M9 2h6v4H9zM8 13l3 3 5-6",
     };
     const M = {
-      token: sessionStorage.getItem("equipmentSession") || "",
+      token: sessionStorage.getItem("dmgMobileWorkSession") || "",
       data: null,
       page: $("mobileInitialRequest").value ? "detail" : "home",
       requestId: $("mobileInitialRequest").value,
@@ -558,8 +558,7 @@
       return M.data.assets.find((a) => a.id === id)?.name || "";
     }
     function machineWorkshop(machine) {
-      const area = M.data.assets.find((a) => a.id === machine.parentId);
-      return area?.parentId || "";
+      return machine.parentId || "";
     }
     function option(value, label, selected) {
       return (
@@ -585,7 +584,7 @@
           .filter((a) => a.type === "workshop" && enabled(a))
           .map((a) => option(a.id, a.name, d.workshopId))
           .join("") +
-        '</select></label><label>Máy<select name="machineId" id="mobileCreateMachine" required></select></label><label>Thiết bị / bộ phận <span class="m-optional">có thể để trống</span><select name="componentId" id="mobileCreateComponent"></select></label><p class="m-hint">Để trống bộ phận nếu yêu cầu sửa chữa hoặc bảo dưỡng cho cả máy.</p></div><div class="m-form-section"><h2><span class="m-step">02</span>Nội dung yêu cầu</h2><label>Loại yêu cầu<select name="type" id="mobileCreateType"><option value="repair">Sửa chữa</option><option value="maintenance">Bảo dưỡng</option></select></label><div id="mobileScheduleBox" hidden><label>Lịch bảo dưỡng liên quan <span class="m-optional">không bắt buộc</span><select name="scheduleId" id="mobileCreateSchedule"></select></label><p class="m-hint">Lịch được tính kỳ tiếp theo sau khi bạn đồng ý kết quả, dựa trên ngày kỹ thuật thực hiện.</p></div><label>Tiêu đề ngắn <span class="m-optional">không bắt buộc</span><input name="title" value="' +
+        '</select></label><label>Máy<select name="machineId" id="mobileCreateMachine" required></select></label><label>Thiết bị <span class="m-optional">có thể để trống</span><select name="componentId" id="mobileCreateComponent"></select></label><p class="m-hint">Để trống thiết bị nếu yêu cầu sửa chữa hoặc bảo dưỡng cho cả máy.</p></div><div class="m-form-section"><h2><span class="m-step">02</span>Nội dung yêu cầu</h2><label>Loại yêu cầu<select name="type" id="mobileCreateType"><option value="repair">Sửa chữa</option><option value="maintenance">Bảo dưỡng</option></select></label><div id="mobileScheduleBox" hidden><label>Lịch bảo dưỡng liên quan <span class="m-optional">không bắt buộc</span><select name="scheduleId" id="mobileCreateSchedule"></select></label><p class="m-hint">Lịch được tính kỳ tiếp theo sau khi bạn đồng ý kết quả, dựa trên ngày kỹ thuật thực hiện.</p></div><label>Tiêu đề ngắn <span class="m-optional">không bắt buộc</span><input name="title" value="' +
         esc(d.title || "") +
         '" maxlength="250" placeholder="Ví dụ: Động cơ có tiếng ồn bất thường"></label><label>Mô tả lỗi / yêu cầu chi tiết<textarea name="description" rows="5" required maxlength="12000" placeholder="Hiện tượng, thời điểm xảy ra, ảnh hưởng đến sản xuất…">' +
         esc(d.description || "") +
@@ -632,7 +631,7 @@
           (a) => a.type === "component" && enabled(a) && a.parentId === machine,
         );
       $("mobileCreateComponent").innerHTML =
-        '<option value="">Toàn máy / không chọn bộ phận</option>' +
+        '<option value="">Toàn máy / không chọn thiết bị</option>' +
         rows.map((a) => option(a.id, a.name, selected)).join("");
       $("mobileCreateComponent").disabled = !machine;
       fillSchedules(schedule);
@@ -715,6 +714,18 @@
         "</small><p>" +
         esc(d.content || "Báo cáo đang soạn, chưa gửi người yêu cầu.") +
         "</p>" +
+        parse(d.checklist)
+          .map(
+            (label, i) =>
+              '<div class="m-criterion"><b>' +
+              esc(label) +
+              "</b><p>Thực tế: " +
+              esc(parse(d.actualResults)[i] || "Chưa ghi") +
+              " · " +
+              (parse(d.checks)[i] ? "Đạt" : "Chưa xác nhận") +
+              "</p></div>",
+          )
+          .join("") +
         attachmentButtons(d) +
         (d.status === "draft" && d.createdBy === M.data.user.email
           ? button("report", "Tiếp tục báo cáo →", d.requestId, "m-link")
@@ -885,17 +896,23 @@
         '</div></div><p class="m-hint">Mỗi báo cáo được ghi rõ người thực tế thực hiện. Chỉ người tạo phiếu được đồng ý hoặc yêu cầu làm lại.</p>';
     }
     function draftCacheKey() {
-      return "mobileDraft:" + M.data.user.email + ":" + M.reportDraft.id;
+      return "mobileWorkDraft:" + M.data.user.email + ":" + M.reportDraft.id;
     }
     function cacheReportText() {
       if (!M.reportDraft) return;
       sessionStorage.setItem(
         draftCacheKey(),
         JSON.stringify({
+          criteriaVersion: M.reportDraft.criteriaVersion,
+          actualResults: Array.from(
+            $("mobileReportChecklist").querySelectorAll("[data-actual-result]"),
+          ).map((i) => i.value),
           content: $("mobileReportText").value,
           performedDate: $("mobilePerformedDate").value,
           checks: Array.from(
-            $("mobileReportChecklist").querySelectorAll("input"),
+            $("mobileReportChecklist").querySelectorAll(
+              'input[type="checkbox"]',
+            ),
           ).map((i) => i.checked),
         }),
       );
@@ -914,12 +931,16 @@
       });
       clearPending();
       M.reportDraft = d;
-      M.submitKey = sessionStorage.getItem("mobileSubmit:" + d.id) || uid();
-      sessionStorage.setItem("mobileSubmit:" + d.id, M.submitKey);
+      M.submitKey = sessionStorage.getItem("mobileWorkSubmit:" + d.id) || uid();
+      sessionStorage.setItem("mobileWorkSubmit:" + d.id, M.submitKey);
       await load(true);
       const cached = parse(sessionStorage.getItem(draftCacheKey()), null),
         text = cached?.content ?? d.content;
-      const checks = cached?.checks || parse(d.checks);
+      const sameCriteria = cached?.criteriaVersion === d.criteriaVersion;
+      const checks = sameCriteria ? cached.checks || [] : parse(d.checks);
+      const actualResults = sameCriteria
+        ? cached.actualResults || []
+        : parse(d.actualResults);
       $("mobileReportInfo").innerHTML =
         '<div class="m-performer"><small>NGƯỜI THỰC TẾ THỰC HIỆN</small><b>' +
         esc(M.data.user.name) +
@@ -938,11 +959,15 @@
       $("mobileReportChecklist").innerHTML = parse(d.checklist)
         .map(
           (label, i) =>
-            '<label class="m-check"><input type="checkbox" ' +
-            (checks[i] ? "checked" : "") +
-            ">" +
+            '<div class="m-criterion"><b>' +
             esc(label) +
-            "</label>",
+            '</b><input data-actual-result="' +
+            i +
+            '" value="' +
+            esc(actualResults[i] || "") +
+            '" maxlength="2000" placeholder="Kết quả kiểm tra thực tế"><label class="m-check"><input type="checkbox" ' +
+            (checks[i] ? "checked" : "") +
+            ">Đã kiểm tra — Đạt</label></div>",
         )
         .join("");
       $("mobileReportError").textContent = "";
@@ -1025,10 +1050,13 @@
       $("mobileReportError").textContent = "";
       cacheReportText();
       const body = {
+        actualResults: Array.from(
+          $("mobileReportChecklist").querySelectorAll("[data-actual-result]"),
+        ).map((i) => i.value),
         content: $("mobileReportText").value,
         performedDate: $("mobilePerformedDate").value,
         checks: Array.from(
-          $("mobileReportChecklist").querySelectorAll("input"),
+          $("mobileReportChecklist").querySelectorAll('input[type="checkbox"]'),
         ).map((i) => i.checked),
       };
       try {
@@ -1060,7 +1088,7 @@
         });
         if (submit) {
           sessionStorage.removeItem(draftCacheKey());
-          sessionStorage.removeItem("mobileSubmit:" + M.reportDraft.id);
+          sessionStorage.removeItem("mobileWorkSubmit:" + M.reportDraft.id);
           $("mobileReportDialog").close();
           M.reportDraft = null;
           M.page = "detail";
@@ -1274,12 +1302,19 @@
       M.status = "all";
       M.workshop = "all";
       M.query = "";
-      for (const id of ["mobileReportDialog", "mobileReviewDialog", "mobilePhotoDialog"])
+      for (const id of [
+        "mobileReportDialog",
+        "mobileReviewDialog",
+        "mobilePhotoDialog",
+      ])
         $(id).close();
-      sessionStorage.removeItem("equipmentSession");
+      sessionStorage.removeItem("dmgMobileWorkSession");
       for (let i = sessionStorage.length - 1; i >= 0; i--) {
         const key = sessionStorage.key(i);
-        if (key.startsWith("mobileDraft:") || key.startsWith("mobileSubmit:"))
+        if (
+          key.startsWith("mobileWorkDraft:") ||
+          key.startsWith("mobileWorkSubmit:")
+        )
           sessionStorage.removeItem(key);
       }
       $("mobileApp").hidden = true;
@@ -1309,7 +1344,7 @@
           $("mobilePassword").value,
         );
         M.token = r.token;
-        sessionStorage.setItem("equipmentSession", M.token);
+        sessionStorage.setItem("dmgMobileWorkSession", M.token);
         $("mobilePassword").value = "";
         await load();
       } catch (e) {

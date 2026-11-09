@@ -25,6 +25,8 @@ function adminChanged_(a, b, keys) {
   return keys.some((k) => String(a[k] || "") !== String(b[k] || ""));
 }
 function adminReference_(name, row) {
+  if (typeof mobileWorkProtectReference_ === "function")
+    mobileWorkProtectReference_(name, row);
   if (typeof maintenanceProtectReference_ === "function")
     maintenanceProtectReference_(name, row);
   let used = [];

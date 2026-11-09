@@ -137,6 +137,7 @@ function baoCaoBaoDuongDinhKy_() {
     const day = maintenanceDate_(maintenanceToday_()).getUTCDay();
     if (![1, 5].includes(day))
       return { skipped: true, reason: "not_report_day" };
+    if (typeof mobileWorkReconcileIfReady_ === "function") mobileWorkReconcileIfReady_();
     return maintenanceSendReport_();
   } finally {
     lock.releaseLock();
