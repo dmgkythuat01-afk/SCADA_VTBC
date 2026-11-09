@@ -132,7 +132,15 @@
       render();
     }
     function navigation() {
-      $("navigation").innerHTML = Object.entries(S.data.schema)
+      $("navigation").innerHTML = [
+        "TaiKhoan",
+        "DanhMucBoPhan",
+        "DanhMucXuong",
+        "DanhMucMay",
+        "DanhMucThietBi",
+        "DanhMucCanKiemTra",
+      ]
+        .map((key) => [key, S.data.schema[key]])
         .map(
           ([key, s]) =>
             '<button data-go="' +
@@ -266,8 +274,9 @@
       $("pageTitle").textContent = spec().label;
       $("breadcrumbLabel").textContent = spec().label;
       $("pageDescription").textContent = descriptions[S.table];
-      $("cardTitle").textContent =
-        "Danh mục " + spec().label.toLocaleLowerCase("vi");
+      $("cardTitle").textContent = spec().label.startsWith("Danh mục ")
+        ? spec().label
+        : "Danh mục " + spec().label.toLocaleLowerCase("vi");
       $("relationHint").textContent = hints[S.table];
       $("search").value = S.query;
       renderFilters();

@@ -16,7 +16,7 @@ const ADMIN_TABLES = {
     },
   },
   DanhMucBoPhan: {
-    label: "Bộ phận quản lý",
+    label: "Danh mục bộ phận",
     icon: "▥",
     key: ["maBoPhanQuanLy"],
     required: ["maBoPhanQuanLy", "tenBoPhanQuanLy"],
@@ -71,7 +71,7 @@ const ADMIN_TABLES = {
     },
   },
   DanhMucCanKiemTra: {
-    label: "Chỉ tiêu kiểm tra",
+    label: "Danh mục kiểm tra",
     icon: "☑",
     key: ["tenXuong", "tenMay", "maThietBi", "danhMucCanKiemTra"],
     required: ["tenXuong", "tenMay", "maThietBi", "danhMucCanKiemTra"],
