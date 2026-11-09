@@ -1,0 +1,137 @@
+<dialog id="maintenanceRecordDialog" class="m-record-dialog">
+  <form id="maintenanceRecordForm">
+    <div class="dialog-header">
+      <div>
+        <span class="mini-label">QUẢN LÝ THIẾT BỊ</span>
+        <h2 id="maintenanceRecordTitle"></h2>
+      </div>
+      <button type="button" class="close" data-m-action="closeRecord">×</button>
+    </div>
+    <fieldset id="maintenanceRecordFields">
+      <label
+        ><span>Xưởng <span class="required">*</span></span
+        ><select name="tenXuong" required></select></label
+      ><label
+        ><span>Máy <span class="required">*</span></span
+        ><select name="tenMay" required></select></label
+      ><label class="wide"
+        ><span>Thiết bị <span class="required">*</span></span
+        ><select name="deviceKey" required></select></label
+      ><label
+        ><span>Ngày thực hiện <span class="required">*</span></span
+        ><input name="ngayThucHien" type="date" required /></label
+      ><label
+        ><span>Người thực hiện <span class="required">*</span></span
+        ><select name="nguoiThucHien" required></select></label
+      ><label class="wide"
+        ><span>Trạng thái</span
+        ><select name="hoanThanh">
+          <option value="true">Hoàn thành</option>
+          <option value="false">
+            Chưa hoàn thành · cần xử lý tiếp
+          </option></select
+        ><span class="field-note"
+          >Chỉ bảo dưỡng đã hoàn thành mới cập nhật hạn tiếp theo.</span
+        ></label
+      ><label id="maintenanceFaultField" class="wide"
+        ><span>Mô tả lỗi <span class="required">*</span></span
+        ><textarea name="moTaLoi" maxlength="10000"></textarea></label
+      ><label class="wide"
+        ><span>Nội dung thực hiện <span class="required">*</span></span
+        ><textarea name="noiDung" required maxlength="10000"></textarea></label
+      ><label class="wide"
+        ><span>Kết quả <span class="required">*</span></span
+        ><textarea name="ketQua" required maxlength="10000"></textarea>
+      </label>
+      <div id="maintenanceChecklistBox" class="wide">
+        <h3>Chỉ tiêu kiểm tra</h3>
+        <div id="maintenanceChecklist"></div>
+      </div>
+      <div class="wide">
+        <h3>Ảnh thực hiện</h3>
+        <p class="field-note">
+          Tối đa 12 ảnh. Ảnh được thu nhỏ và lưu riêng tư trên Google Drive.
+        </p>
+        <div class="m-photo-actions">
+          <button type="button" data-m-action="gallery">
+            ＋ Chọn nhiều ảnh</button
+          ><button type="button" data-m-action="camera">▧ Chụp ảnh</button>
+        </div>
+        <input
+          id="maintenanceGallery"
+          type="file"
+          accept="image/*"
+          multiple
+          hidden
+        /><input
+          id="maintenanceCamera"
+          type="file"
+          accept="image/*"
+          capture="environment"
+          hidden
+        />
+        <div id="maintenancePhotoQueue" class="m-photos"></div>
+      </div>
+    </fieldset>
+    <p id="maintenanceRecordError" class="error m-form-error" role="alert"></p>
+    <p id="maintenanceProgress" class="form-hint"></p>
+    <div class="dialog-actions">
+      <button type="button" data-m-action="closeRecord">Hủy</button
+      ><button id="maintenanceSaveRecord" class="primary">Lưu lịch sử</button>
+    </div>
+  </form>
+</dialog>
+<dialog id="maintenanceDetailDialog" class="m-detail-dialog">
+  <div class="dialog-header">
+    <div>
+      <span class="mini-label">LỊCH SỬ THIẾT BỊ</span>
+      <h2>Chi tiết thực hiện</h2>
+    </div>
+    <button type="button" class="close" data-m-action="closeDetail">×</button>
+  </div>
+  <div id="maintenanceDetailBody" class="m-detail-body"></div>
+</dialog>
+<dialog id="maintenancePhotoDialog" class="m-image-dialog">
+  <button type="button" class="close" data-m-action="closePhoto">×</button
+  ><img id="maintenanceFullPhoto" alt="Ảnh thực hiện" />
+</dialog>
+<dialog id="maintenanceSettingsDialog">
+  <form id="maintenanceSettingsForm">
+    <div class="dialog-header">
+      <div>
+        <span class="mini-label">THÔNG BÁO BẢO DƯỠNG</span>
+        <h2>Cấu hình báo cáo email</h2>
+      </div>
+      <button type="button" class="close" data-m-action="closeSettings">
+        ×
+      </button>
+    </div>
+    <fieldset id="maintenanceSettingsFields">
+      <label class="wide"
+        >Email nhận báo cáo<textarea
+          name="emails"
+          placeholder="email1@congty.com, email2@congty.com"
+          maxlength="5000"
+        ></textarea></label
+      ><label class="wide m-checkbox"
+        ><input type="checkbox" name="enabled" /> Bật gửi báo cáo định kỳ</label
+      >
+      <p class="field-note wide">
+        Gửi vào sáng thứ Hai và thứ Sáu, khoảng 8–9 giờ Việt Nam. Báo cáo gồm
+        thiết bị quá hạn, đến hạn và trong 14 ngày tới. Lưu cấu hình không gửi
+        email ngay.
+      </p>
+    </fieldset>
+    <p
+      id="maintenanceSettingsError"
+      class="error m-form-error"
+      role="alert"
+    ></p>
+    <div class="dialog-actions">
+      <button type="button" data-m-action="closeSettings">Hủy</button
+      ><button id="maintenanceSaveSettings" class="primary">
+        Lưu cấu hình
+      </button>
+    </div>
+  </form>
+</dialog>

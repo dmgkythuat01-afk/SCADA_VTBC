@@ -1,0 +1,1421 @@
+<script>
+  window.DMGMaintenance = (() => {
+    const $ = (id) => document.getElementById(id),
+      esc = (v) =>
+        String(v ?? "").replace(
+          /[&<>"']/g,
+          (c) =>
+            ({
+              "&": "&amp;",
+              "<": "&lt;",
+              ">": "&gt;",
+              '"': "&quot;",
+              "'": "&#39;",
+            })[c],
+        ),
+      parse = (v, f = []) => {
+        try {
+          return JSON.parse(v || "");
+        } catch {
+          return f;
+        }
+      },
+      uid = () => crypto.randomUUID();
+    const M = {
+      active: false,
+      page: "alerts",
+      data: null,
+      owner: "",
+      loading: false,
+      busy: false,
+      filters: {},
+      query: "",
+      selected: "",
+      expanded: new Set(),
+      record: null,
+      photos: [],
+    };
+    const titles = {
+        alerts: "Thông báo bảo dưỡng",
+        history: "Theo dõi lịch sử bảo dưỡng",
+        repairs: "Theo dõi lịch sử sửa chữa",
+        profiles: "Hồ sơ thiết bị",
+      },
+      status = {
+        overdue: "Quá hạn",
+        today: "Đến hạn hôm nay",
+        upcoming: "Trong 14 ngày tới",
+        normal: "Chưa đến hạn",
+        unconfigured: "Chưa đủ thông tin",
+        inactive: "Ngừng sử dụng",
+      };
+    const date = (v) =>
+        /^\d{4}-\d{2}-\d{2}$/.test(String(v || ""))
+          ? String(v).split("-").reverse().join("/")
+          : String(v || ""),
+      norm = (v) =>
+        String(v || "")
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .replace(/[đĐ]/g, "d")
+          .toLowerCase(),
+      deviceLabel = (d) =>
+        d.maThietBi + (d.tenThietBi ? " · " + d.tenThietBi : ""),
+      badge = (label, cls) =>
+        '<span class="m-badge ' +
+        esc(cls || "") +
+        '">' +
+        esc(label) +
+        "</span>";
+    const button = (action, label, key = "", cls = "") =>
+      '<button type="button" class="' +
+      cls +
+      '" data-m-action="' +
+      action +
+      '" data-key="' +
+      esc(key) +
+      '">' +
+      label +
+      "</button>";
+    function api(action, p = {}) {
+      return new Promise((resolve, reject) =>
+        google.script.run
+          .withSuccessHandler(resolve)
+          .withFailureHandler((e) =>
+            reject(Error(e.message || "Không thực hiện được.")),
+          )
+          .maintenanceApi(Admin.state.token, action, p),
+      );
+    }
+    function error(e) {
+      $("pageError").textContent = e.message || String(e);
+      $("pageError").hidden = false;
+    }
+    function notify(text) {
+      $("toast").textContent = text;
+      $("toast").hidden = false;
+      setTimeout(() => ($("toast").hidden = true), 5000);
+    }
+    function showDataEntry() {
+      M.active = false;
+      $("maintenancePanel").hidden = true;
+      $("dataEntryPanel").hidden = false;
+      $("menuGroupLabel").textContent = "Nhập dữ liệu";
+      document
+        .querySelectorAll("[data-m-page]")
+        .forEach((b) => b.classList.remove("active"));
+      if (Admin.state.data && M.owner !== Admin.state.data.user.username) {
+        M.data = null;
+        M.owner = Admin.state.data.user.username;
+        M.selected = "";
+        M.expanded.clear();
+      }
+    }
+    function clearPhotos() {
+      M.photos.forEach((p) => URL.revokeObjectURL(p.preview));
+      M.photos = [];
+    }
+    function reset() {
+      clearPhotos();
+      M.active = false;
+      M.data = null;
+      M.record = null;
+      M.owner = "";
+      M.filters = {};
+      M.selected = "";
+      M.expanded.clear();
+      for (const id of [
+        "maintenanceRecordDialog",
+        "maintenanceDetailDialog",
+        "maintenancePhotoDialog",
+        "maintenanceSettingsDialog",
+      ])
+        $(id).close();
+      $("maintenancePanel").hidden = true;
+    }
+    async function load() {
+      if (M.loading || M.busy) return;
+      const token = Admin.state.token;
+      M.loading = true;
+      $("reload").disabled = true;
+      try {
+        const data = await api("snapshot");
+        if (token !== Admin.state.token) return;
+        M.data = data;
+        M.owner = data.user.username;
+        if (M.active) render();
+      } catch (e) {
+        if (token === Admin.state.token && M.active) error(e);
+      } finally {
+        M.loading = false;
+        $("reload").disabled = false;
+      }
+    }
+    function open(page, key) {
+      if (M.busy) return;
+      M.active = true;
+      M.page = page;
+      M.filters = {};
+      M.query = "";
+      if (key) {
+        M.selected = key;
+        if (page === "profiles") expandSelection();
+      }
+      $("dataEntryPanel").hidden = true;
+      $("maintenancePanel").hidden = false;
+      $("pageError").hidden = true;
+      setHeading();
+      if (M.data) render();
+      else
+        $("maintenancePanel").innerHTML =
+          '<div class="empty">Đang tải dữ liệu bảo dưỡng…</div>';
+      load();
+    }
+    function setHeading() {
+      $("menuGroupLabel").textContent = "Quản lý thiết bị";
+      $("pageTitle").textContent = titles[M.page];
+      $("breadcrumbLabel").textContent = titles[M.page];
+      $("pageDescription").textContent =
+        M.page === "alerts"
+          ? "Theo dõi hạn bảo dưỡng và kế hoạch trong 14 ngày tới."
+          : M.page === "profiles"
+            ? "Xưởng → Máy → Thiết bị · thông tin và lịch sử tập trung."
+            : "Tra cứu kết quả thực hiện và hình ảnh theo từng thiết bị.";
+      document
+        .querySelectorAll("#navigation button")
+        .forEach((b) => b.classList.remove("active"));
+      document
+        .querySelectorAll("[data-m-page]")
+        .forEach((b) =>
+          b.classList.toggle("active", b.dataset.mPage === M.page),
+        );
+    }
+    function render() {
+      if (!M.data || !M.active) return;
+      setHeading();
+      if (M.page === "alerts") renderAlerts();
+      else if (M.page === "profiles") renderProfiles();
+      else renderHistory();
+    }
+    function empty(title, detail = "") {
+      return (
+        '<div class="empty"><span class="empty-icon">◇</span><b>' +
+        esc(title) +
+        "</b>" +
+        esc(detail) +
+        "</div>"
+      );
+    }
+    function filterBase(rows, except) {
+      return rows.filter((r) =>
+        Object.entries(M.filters).every(
+          ([k, v]) =>
+            !v ||
+            k === except ||
+            k === "from" ||
+            k === "to" ||
+            (k === "trangThai" && v === "attention"
+              ? ["overdue", "today", "upcoming"].includes(r.trangThai)
+              : String(r[k] || "") === v),
+        ),
+      );
+    }
+    function searched(rows) {
+      return rows.filter(
+        (r) =>
+          !M.query ||
+          norm(
+            [
+              r.tenXuong,
+              r.tenMay,
+              r.maThietBi,
+              r.tenThietBi,
+              r.tenNguoiQuanLy,
+              r.tenNguoiThucHien,
+              r.noiDung,
+              r.ketQua,
+            ].join(" "),
+          ).includes(norm(M.query)),
+      );
+    }
+    function filteredDevices() {
+      const rows = filterBase(M.data.devices);
+      return searched(rows).sort(
+        (a, b) =>
+          (a.soNgayConLai ?? 999999) - (b.soNgayConLai ?? 999999) ||
+          deviceLabel(a).localeCompare(deviceLabel(b), "vi"),
+      );
+    }
+    function historyRows() {
+      return M.data.history.filter(
+        (h) => h.loai === (M.page === "repairs" ? "repair" : "maintenance"),
+      );
+    }
+    function filteredHistory() {
+      return searched(filterBase(historyRows()))
+        .filter(
+          (r) =>
+            (!M.filters.from || r.ngayThucHien >= M.filters.from) &&
+            (!M.filters.to || r.ngayThucHien <= M.filters.to),
+        )
+        .sort(
+          (a, b) =>
+            b.ngayThucHien.localeCompare(a.ngayThucHien) ||
+            String(b.thoiGianGhiNhan).localeCompare(String(a.thoiGianGhiNhan)),
+        );
+    }
+    function options(items, value, placeholder) {
+      return (
+        '<option value="">' +
+        esc(placeholder) +
+        "</option>" +
+        items
+          .map((item) => {
+            const v = Array.isArray(item) ? item[0] : item,
+              label = Array.isArray(item) ? item[1] : item;
+            return (
+              '<option value="' +
+              esc(v) +
+              '" ' +
+              (String(v) === String(value) ? "selected" : "") +
+              ">" +
+              esc(label) +
+              "</option>"
+            );
+          })
+          .join("")
+      );
+    }
+    function filtersHtml(rows, history) {
+      const labels = {
+          tenXuong: "Xưởng",
+          tenMay: "Máy",
+          maThietBi: "Mã thiết bị",
+          tenBoPhanQuanLy: "Bộ phận quản lý",
+          maNguoiQuanLy: "Người quản lý",
+          nguoiThucHien: "Người thực hiện",
+        },
+        keys = history
+          ? ["tenXuong", "tenMay", "maThietBi", "nguoiThucHien"]
+          : ["tenXuong", "tenMay", "tenBoPhanQuanLy", "maNguoiQuanLy"];
+      let html =
+        '<label class="m-query">Tìm kiếm<input data-m-query value="' +
+        esc(M.query) +
+        '" placeholder="Tên, mã thiết bị, nội dung…"></label>';
+      html += keys
+        .map((key) => {
+          const values = [
+            ...new Set(
+              filterBase(rows, key)
+                .map((r) => r[key])
+                .filter(Boolean),
+            ),
+          ].sort((a, b) => a.localeCompare(b, "vi"));
+          return (
+            "<label>" +
+            labels[key] +
+            '<select data-m-filter="' +
+            key +
+            '">' +
+            options(
+              values.map((v) => {
+                const record = rows.find((r) => r[key] === v);
+                return key === "maNguoiQuanLy"
+                  ? [v, record.tenNguoiQuanLy + " · " + v]
+                  : key === "nguoiThucHien"
+                    ? [v, record.tenNguoiThucHien + " · " + v]
+                    : v;
+              }),
+              M.filters[key],
+              "Tất cả",
+            ) +
+            "</select></label>"
+          );
+        })
+        .join("");
+      if (history)
+        html +=
+          '<label>Từ ngày<input type="date" data-m-filter="from" value="' +
+          esc(M.filters.from || "") +
+          '"></label><label>Đến ngày<input type="date" data-m-filter="to" value="' +
+          esc(M.filters.to || "") +
+          '"></label><label>Trạng thái<select data-m-filter="hoanThanh">' +
+          options(
+            [
+              ["true", "Hoàn thành"],
+              ["false", "Chưa hoàn thành"],
+            ],
+            M.filters.hoanThanh,
+            "Tất cả",
+          ) +
+          "</select></label>";
+      else
+        html +=
+          '<label>Trạng thái<select data-m-filter="trangThai">' +
+          options(
+            [
+              ["attention", "Cần theo dõi trong 14 ngày"],
+              ...Object.entries(status),
+            ],
+            M.filters.trangThai,
+            "Tất cả thiết bị",
+          ) +
+          "</select></label>";
+      return html + button("clearFilters", "Xóa lọc", "", "text-button");
+    }
+    function toolbar(title, text, actions) {
+      return (
+        '<div class="m-toolbar"><div><h2>' +
+        title +
+        "</h2><p>" +
+        text +
+        '</p></div><div class="m-buttons">' +
+        actions +
+        "</div></div>"
+      );
+    }
+    function renderAlerts() {
+      if (!Object.prototype.hasOwnProperty.call(M.filters, "trangThai"))
+        M.filters.trangThai = "attention";
+      const counts = { overdue: 0, today: 0, upcoming: 0, unconfigured: 0 };
+      M.data.devices.forEach((d) => {
+        if (counts[d.trangThai] !== undefined) counts[d.trangThai]++;
+      });
+      $("maintenancePanel").innerHTML =
+        '<div class="m-metrics">' +
+        Object.entries(counts)
+          .map(
+            ([key, n]) =>
+              '<button class="m-metric ' +
+              key +
+              '" data-m-action="status" data-key="' +
+              key +
+              '"><small>' +
+              status[key] +
+              "</small><b>" +
+              n +
+              "</b></button>",
+          )
+          .join("") +
+        "</div>" +
+        toolbar(
+          "Lịch bảo dưỡng thiết bị",
+          "Ngày kiểm tra: " + date(M.data.today),
+          button("settings", "⚙ Cấu hình email") +
+            button("export", "↓ Tải Excel") +
+            button("newMaintenance", "＋ Ghi nhận bảo dưỡng", "", "primary"),
+        ) +
+        '<div class="m-help">Hạn kế tiếp tính từ <b>ngày thực tế hoàn thành bảo dưỡng</b>. Chưa có lịch sử: tính từ ngày lắp đặt. Quá hạn giữ màu đỏ đến khi có lần bảo dưỡng hoàn thành; sửa chữa không đổi hạn.</div><section class="data-card"><div class="m-filters">' +
+        filtersHtml(M.data.devices, false) +
+        '</div><div id="maintenanceTable" class="m-table-wrap"></div></section>' +
+        renderReportLog();
+      renderAlertsTable();
+    }
+    function renderAlertsTable() {
+      const items = filteredDevices();
+      $("maintenanceTable").innerHTML = items.length
+        ? '<table class="m-alert-table"><thead><tr>' +
+          [
+            "Xưởng / Máy",
+            "Thiết bị",
+            "Người quản lý",
+            "Bảo dưỡng gần nhất",
+            "Chu kỳ",
+            "Hạn bảo dưỡng",
+            "Trạng thái",
+            "Thao tác",
+          ]
+            .map((t) => "<th>" + t + "</th>")
+            .join("") +
+          "</tr></thead><tbody>" +
+          items
+            .slice(0, 200)
+            .map(
+              (d) =>
+                '<tr class="' +
+                d.trangThai +
+                '"><td>' +
+                esc(d.tenXuong) +
+                '<br><span class="m-muted">' +
+                esc(d.tenMay) +
+                '</span></td><td><span class="m-device-code">' +
+                esc(d.maThietBi) +
+                "</span>" +
+                esc(d.tenThietBi || "") +
+                "</td><td>" +
+                esc(d.tenNguoiQuanLy || "Chưa gán") +
+                '<br><span class="m-muted">' +
+                esc(d.tenBoPhanQuanLy || "") +
+                "</span></td><td>" +
+                esc(date(d.ngayBaoDuongGanNhat) || "Chưa ghi nhận") +
+                "</td><td>" +
+                esc(d.soNgayCanBaoDuong || "—") +
+                " ngày</td><td>" +
+                esc(date(d.ngayDenHan) || "—") +
+                "</td><td>" +
+                badge(status[d.trangThai], d.trangThai) +
+                '<br><span class="m-muted">' +
+                esc(
+                  d.trangThai === "unconfigured"
+                    ? d.lyDo
+                    : d.soNgayConLai < 0
+                      ? "Trễ " + -d.soNgayConLai + " ngày"
+                      : d.soNgayConLai === 0
+                        ? "Cần thực hiện hôm nay"
+                        : d.soNgayConLai !== null
+                          ? "Còn " + d.soNgayConLai + " ngày"
+                          : "",
+                ) +
+                '</span></td><td class="m-actions">' +
+                button(
+                  "newMaintenance",
+                  "Bảo dưỡng",
+                  d.maHoSo,
+                  "m-small-button",
+                ) +
+                button("profile", "Hồ sơ", d.maHoSo, "m-small-button") +
+                "</td></tr>",
+            )
+            .join("") +
+          "</tbody></table><footer>Hiển thị " +
+          Math.min(200, items.length) +
+          " / " +
+          items.length +
+          " thiết bị · Excel xuất toàn bộ dữ liệu đã lọc</footer>"
+        : empty(
+            "Không có thiết bị phù hợp",
+            "Thay đổi bộ lọc để xem thiết bị hoặc cập nhật danh mục trong Nhập dữ liệu.",
+          );
+    }
+    function renderReportLog() {
+      return (
+        '<details class="data-card m-log"><summary>Nhật ký báo cáo email · thứ Hai và thứ Sáu</summary><ul>' +
+        (M.data.reports.length
+          ? M.data.reports
+              .slice(0, 8)
+              .map(
+                (r) =>
+                  "<li>" +
+                  badge(
+                    r.trangThai === "sent"
+                      ? "Đã gửi"
+                      : r.trangThai === "failed"
+                        ? "Gửi lỗi"
+                        : "Cần kiểm tra trạng thái gửi",
+                    r.trangThai,
+                  ) +
+                  " " +
+                  date(r.ngayBaoCao) +
+                  " · " +
+                  esc(r.nguoiNhan) +
+                  '<br><span class="m-muted">' +
+                  esc(
+                    r.noiDungLoi ||
+                      "Quá hạn: " +
+                        r.soQuaHan +
+                        " · Đến hạn: " +
+                        r.soDenHan +
+                        " · Sắp đến hạn: " +
+                        r.soSapDenHan,
+                  ) +
+                  "</span></li>",
+              )
+              .join("")
+          : "<li>Chưa gửi báo cáo. Lịch gửi khoảng 8–9 giờ Việt Nam, thứ Hai và thứ Sáu.</li>") +
+        "</ul></details>"
+      );
+    }
+    function renderHistory() {
+      const repair = M.page === "repairs";
+      $("maintenancePanel").innerHTML =
+        toolbar(
+          repair ? "Lịch sử sửa chữa" : "Lịch sử bảo dưỡng",
+          "Lưu nội dung, người thực hiện, kết quả kiểm tra và ảnh.",
+          button("export", "↓ Tải Excel") +
+            button(
+              repair ? "newRepair" : "newMaintenance",
+              repair ? "＋ Ghi nhận sửa chữa" : "＋ Ghi nhận bảo dưỡng",
+              "",
+              "primary",
+            ),
+        ) +
+        '<section class="data-card"><div class="m-filters">' +
+        filtersHtml(historyRows(), true) +
+        '</div><div id="maintenanceTable" class="m-table-wrap"></div></section><p class="m-readonly-notice">Lịch sử đã lưu được giữ nguyên để tra cứu. Bản ghi chưa hoàn thành không làm thay đổi hạn bảo dưỡng; ghi thêm lần hoàn thành sau khi xử lý xong.</p>';
+      renderHistoryTable();
+    }
+    function renderHistoryTable() {
+      const items = filteredHistory();
+      $("maintenanceTable").innerHTML = items.length
+        ? "<table><thead><tr>" +
+          [
+            "Ngày thực hiện",
+            "Xưởng / Máy",
+            "Thiết bị",
+            "Người thực hiện",
+            "Nội dung",
+            "Kết quả",
+            "Trạng thái",
+            "Thao tác",
+          ]
+            .map((t) => "<th>" + t + "</th>")
+            .join("") +
+          "</tr></thead><tbody>" +
+          items
+            .slice(0, 200)
+            .map(
+              (r) =>
+                "<tr><td>" +
+                date(r.ngayThucHien) +
+                "</td><td>" +
+                esc(r.tenXuong) +
+                '<br><span class="m-muted">' +
+                esc(r.tenMay) +
+                "</span></td><td><b>" +
+                esc(r.maThietBi) +
+                "</b><br>" +
+                esc(r.tenThietBi) +
+                "</td><td>" +
+                esc(r.tenNguoiThucHien) +
+                '<br><span class="m-muted">' +
+                esc(r.nguoiThucHien) +
+                '</span></td><td><span class="cell-text">' +
+                esc(r.noiDung) +
+                '</span></td><td><span class="cell-text">' +
+                esc(r.ketQua) +
+                "</span></td><td>" +
+                badge(
+                  r.hoanThanh === "true" ? "Hoàn thành" : "Chưa hoàn thành",
+                  r.hoanThanh === "true" ? "normal" : "pending",
+                ) +
+                "</td><td>" +
+                button("detail", "Chi tiết", r.maLichSu, "m-small-button") +
+                "</td></tr>",
+            )
+            .join("") +
+          "</tbody></table><footer>Hiển thị " +
+          Math.min(200, items.length) +
+          " / " +
+          items.length +
+          " bản ghi · Excel xuất toàn bộ dữ liệu đã lọc</footer>"
+        : empty(
+            "Chưa có lịch sử phù hợp",
+            "Ghi nhận lần thực hiện hoặc điều chỉnh bộ lọc.",
+          );
+    }
+    function treeKey(type, workshop, machine) {
+      return JSON.stringify([type, workshop, machine || ""]);
+    }
+    function expandSelection() {
+      const d = M.data?.devices.find((d) => d.maHoSo === M.selected);
+      if (d) {
+        M.expanded.add(treeKey("workshop", d.tenXuong));
+        M.expanded.add(treeKey("machine", d.tenXuong, d.tenMay));
+      }
+    }
+    function profileTree() {
+      const workshops = [
+        ...new Set([
+          ...(M.data.workshops || []),
+          ...M.data.devices.map((d) => d.tenXuong),
+        ]),
+      ].sort((a, b) => a.localeCompare(b, "vi"));
+      return (
+        workshops
+          .map((w) => {
+            const wk = treeKey("workshop", w),
+              open = M.expanded.has(wk);
+            return (
+              '<div><div class="m-tree-row">' +
+              button("toggleTree", open ? "−" : "+", wk, "m-tree-toggle") +
+              '<span class="m-tree-label"><b>▦ ' +
+              esc(w) +
+              "</b></span></div>" +
+              (open
+                ? '<div class="m-tree-children">' +
+                  [
+                    ...new Set([
+                      ...(M.data.machines || [])
+                        .filter((d) => d.tenXuong === w)
+                        .map((d) => d.tenMay),
+                      ...M.data.devices
+                        .filter((d) => d.tenXuong === w)
+                        .map((d) => d.tenMay),
+                    ]),
+                  ]
+                    .sort((a, b) => a.localeCompare(b, "vi"))
+                    .map((machine) => {
+                      const mk = treeKey("machine", w, machine),
+                        opened = M.expanded.has(mk);
+                      return (
+                        '<div class="m-tree-row">' +
+                        button(
+                          "toggleTree",
+                          opened ? "−" : "+",
+                          mk,
+                          "m-tree-toggle",
+                        ) +
+                        '<span class="m-tree-label">⚙ ' +
+                        esc(machine) +
+                        "</span></div>" +
+                        (opened
+                          ? '<div class="m-tree-children">' +
+                            M.data.devices
+                              .filter(
+                                (d) => d.tenXuong === w && d.tenMay === machine,
+                              )
+                              .map((d) =>
+                                button(
+                                  "selectProfile",
+                                  "◇ " + esc(deviceLabel(d)),
+                                  d.maHoSo,
+                                  "m-tree-label " +
+                                    (M.selected === d.maHoSo ? "selected" : ""),
+                                ),
+                              )
+                              .join("") +
+                            "</div>"
+                          : "")
+                      );
+                    })
+                    .join("") +
+                  "</div>"
+                : "") +
+              "</div>"
+            );
+          })
+          .join("") ||
+        empty("Chưa có thiết bị", "Thêm dữ liệu trong menu Nhập dữ liệu.")
+      );
+    }
+    function renderProfiles() {
+      const d = M.data.devices.find((d) => d.maHoSo === M.selected);
+      $("maintenancePanel").innerHTML =
+        '<div class="m-profile-layout"><section class="data-card"><div class="card-heading"><h2>Danh mục thiết bị</h2></div><div class="m-tree">' +
+        profileTree() +
+        "</div></section><div>" +
+        (d
+          ? profileDetail(d)
+          : '<section class="data-card">' +
+            empty(
+              "Chọn một thiết bị",
+              "Mở xưởng → máy để xem hồ sơ, lịch bảo dưỡng và lịch sử sửa chữa.",
+            ) +
+            "</section>") +
+        "</div></div>";
+    }
+    function profileDetail(d) {
+      const fields = [
+          ["Xưởng", d.tenXuong],
+          ["Máy", d.tenMay],
+          ["Thông số kỹ thuật", d.ThongSoKyThuat],
+          ["Công dụng", d.congDung],
+          ["Số lượng / đơn vị", [d.soLuong, d.donVi].filter(Boolean).join(" ")],
+          ["Ngày lắp đặt", date(d.ngayLapDat)],
+          [
+            "Người quản lý",
+            [d.tenNguoiQuanLy, d.maNguoiQuanLy].filter(Boolean).join(" · "),
+          ],
+          ["Bộ phận quản lý", d.tenBoPhanQuanLy],
+        ],
+        history = M.data.history.filter((h) => h.maHoSo === d.maHoSo);
+      return (
+        '<section class="data-card m-profile-card"><div class="m-toolbar"><div><h2>' +
+        esc(d.tenThietBi || d.maThietBi) +
+        "</h2><p>" +
+        esc(d.maThietBi) +
+        '</p></div><div class="m-buttons">' +
+        button("newMaintenance", "＋ Bảo dưỡng", d.maHoSo, "primary") +
+        button("newRepair", "＋ Sửa chữa", d.maHoSo) +
+        "</div></div>" +
+        badge(status[d.trangThai], d.trangThai) +
+        '<div class="m-info-grid">' +
+        fields
+          .map(
+            ([label, value]) =>
+              "<div><label>" +
+              label +
+              "</label><p>" +
+              esc(value || "Chưa cập nhật") +
+              "</p></div>",
+          )
+          .join("") +
+        '</div><div class="m-help"><b>Hạn bảo dưỡng: ' +
+        esc(date(d.ngayDenHan) || "Chưa xác định") +
+        "</b><br>" +
+        esc(
+          d.ngayDenHan
+            ? (d.nguonLich === "lichSu"
+                ? "Ngày hoàn thành gần nhất: " + date(d.ngayBaoDuongGanNhat)
+                : "Ngày lắp đặt: " + date(d.ngayLapDat)) +
+                " + " +
+                d.soNgayCanBaoDuong +
+                " ngày"
+            : d.lyDo,
+        ) +
+        '</div><h3 class="m-section-title">Chỉ tiêu kiểm tra</h3>' +
+        (d.criteria.length
+          ? '<div class="m-table-wrap"><table class="m-criteria-table"><tr><th>Chỉ tiêu</th><th>Thông số tiêu chuẩn</th></tr>' +
+            d.criteria
+              .map(
+                (c) =>
+                  "<tr><td>" +
+                  esc(c.danhMucCanKiemTra) +
+                  "</td><td>" +
+                  esc(c.thongSoTieuChuan) +
+                  "</td></tr>",
+              )
+              .join("") +
+            "</table></div>"
+          : '<p class="m-muted">Chưa khai báo chỉ tiêu kiểm tra cho thiết bị.</p>') +
+        '<h3 class="m-section-title">Lịch sử bảo dưỡng & sửa chữa</h3>' +
+        (history.length
+          ? '<div class="m-timeline">' +
+            history
+              .slice(0, 15)
+              .map(
+                (h) =>
+                  '<article><span class="m-muted">' +
+                  date(h.ngayThucHien) +
+                  " · " +
+                  esc(h.tenNguoiThucHien) +
+                  "</span><h4>" +
+                  esc(h.loai === "maintenance" ? "Bảo dưỡng" : "Sửa chữa") +
+                  " " +
+                  badge(
+                    h.hoanThanh === "true" ? "Hoàn thành" : "Chưa hoàn thành",
+                    h.hoanThanh === "true" ? "normal" : "pending",
+                  ) +
+                  "</h4><p>" +
+                  esc(h.ketQua) +
+                  "</p>" +
+                  button(
+                    "detail",
+                    "Xem chi tiết",
+                    h.maLichSu,
+                    "m-small-button",
+                  ) +
+                  "</article>",
+              )
+              .join("") +
+            "</div>"
+          : '<p class="m-muted">Chưa có lịch sử. Có thể ghi nhận lần bảo dưỡng gần nhất để tính đúng lịch tiếp theo.</p>') +
+        "</section>"
+      );
+    }
+    function formOptions(select, items, value, placeholder) {
+      select.innerHTML = options(items, value, placeholder);
+    }
+    function openRecord(type, key) {
+      if (!M.data) return;
+      clearPhotos();
+      M.record = {
+        type,
+        requestId: uid(),
+        deviceKey: key || "",
+        criteriaVersion: "",
+      };
+      const f = $("maintenanceRecordForm");
+      f.reset();
+      const device = M.data.devices.find((d) => d.maHoSo === key);
+      $("maintenanceRecordTitle").textContent =
+        type === "maintenance" ? "Ghi nhận bảo dưỡng" : "Ghi nhận sửa chữa";
+      $("maintenanceFaultField").hidden = type !== "repair";
+      f.elements.moTaLoi.required = type === "repair";
+      $("maintenanceChecklistBox").hidden = type !== "maintenance";
+      formOptions(
+        f.elements.tenXuong,
+        [...new Set(M.data.devices.map((d) => d.tenXuong))].sort(),
+        device?.tenXuong,
+        "— Chọn xưởng —",
+      );
+      fillMachines(device?.tenMay, key);
+      f.elements.ngayThucHien.value = M.data.today;
+      f.elements.ngayThucHien.max = M.data.today;
+      formOptions(
+        f.elements.nguoiThucHien,
+        M.data.people.map((p) => [p.username, p.hoTen + " · " + p.chucVu]),
+        M.data.people.some((p) => p.username === Admin.state.data.user.username)
+          ? Admin.state.data.user.username
+          : "",
+        "— Chọn người thực hiện —",
+      );
+      $("maintenanceRecordError").textContent = "";
+      $("maintenanceProgress").textContent = "";
+      renderPhotos();
+      $("maintenanceRecordDialog").showModal();
+    }
+    function fillMachines(value, key) {
+      const f = $("maintenanceRecordForm");
+      formOptions(
+        f.elements.tenMay,
+        [
+          ...new Set(
+            M.data.devices
+              .filter((d) => d.tenXuong === f.elements.tenXuong.value)
+              .map((d) => d.tenMay),
+          ),
+        ].sort(),
+        value,
+        "— Chọn máy —",
+      );
+      fillDevices(key);
+    }
+    function fillDevices(key) {
+      const f = $("maintenanceRecordForm");
+      formOptions(
+        f.elements.deviceKey,
+        M.data.devices
+          .filter(
+            (d) =>
+              d.tenXuong === f.elements.tenXuong.value &&
+              d.tenMay === f.elements.tenMay.value,
+          )
+          .map((d) => [d.maHoSo, deviceLabel(d)]),
+        key,
+        "— Chọn thiết bị —",
+      );
+      updateRecordDevice();
+    }
+    function updateRecordDevice() {
+      const f = $("maintenanceRecordForm"),
+        d = M.data.devices.find((d) => d.maHoSo === f.elements.deviceKey.value);
+      M.record.deviceKey = d?.maHoSo || "";
+      M.record.criteriaVersion = d?.criteriaVersion || "";
+      f.elements.ngayThucHien.min = d?.ngayLapDat || "";
+      $("maintenanceChecklist").innerHTML =
+        d && M.record.type === "maintenance"
+          ? d.criteria.length
+            ? d.criteria
+                .map(
+                  (c, i) =>
+                    '<div class="m-check-card"><h4>' +
+                    (i + 1) +
+                    ". " +
+                    esc(c.danhMucCanKiemTra) +
+                    "</h4><p>Tiêu chuẩn: " +
+                    esc(c.thongSoTieuChuan || "Chưa khai báo") +
+                    '</p><div class="m-check-fields"><label>Kết quả thực tế<input data-criterion-actual="' +
+                    i +
+                    '" maxlength="2000" placeholder="Nhập số đo / kết quả kiểm tra"></label><label>Kết luận<select data-criterion-result="' +
+                    i +
+                    '"><option value="">— Chọn —</option><option>Đạt</option><option>Không đạt</option></select></label></div></div>',
+                )
+                .join("")
+            : '<p class="m-muted">Thiết bị chưa có chỉ tiêu kiểm tra trong danh mục.</p>'
+          : '<p class="m-muted">Chọn thiết bị để xem chỉ tiêu kiểm tra.</p>';
+      updateRequiredChecks();
+    }
+    function updateRequiredChecks() {
+      const complete =
+        $("maintenanceRecordForm").elements.hoanThanh.value === "true";
+      $("maintenanceChecklist")
+        .querySelectorAll("input,select")
+        .forEach((i) => (i.required = complete));
+    }
+    function lockRecordDevice() {
+      const locked = M.photos.length > 0;
+      for (const name of ["tenXuong", "tenMay", "deviceKey"])
+        $("maintenanceRecordForm").elements[name].disabled = locked;
+    }
+    function addPhotos(files) {
+      if (!M.record || M.busy) return;
+      if (!M.record.deviceKey) {
+        notify("Chọn thiết bị trước khi thêm ảnh.");
+        return;
+      }
+      if (M.photos.length + files.length > 12) {
+        notify("Mỗi lần thực hiện tối đa 12 ảnh.");
+        return;
+      }
+      for (const file of files) {
+        if (!file.type.startsWith("image/") || file.size > 25 * 1024 * 1024) {
+          notify("Chỉ chọn ảnh dưới 25 MB trước khi thu nhỏ.");
+          continue;
+        }
+        M.photos.push({
+          file,
+          key: uid(),
+          preview: URL.createObjectURL(file),
+          meta: null,
+        });
+      }
+      renderPhotos();
+      lockRecordDevice();
+    }
+    function renderPhotos() {
+      $("maintenancePhotoQueue").innerHTML = M.photos
+        .map(
+          (p) =>
+            '<div class="m-photo-tile"><img src="' +
+            esc(p.preview) +
+            '" alt="Ảnh đã chọn"><button type="button" data-m-action="removePhoto" data-key="' +
+            p.key +
+            '" aria-label="Bỏ ảnh">×</button><small>' +
+            esc(p.meta ? "Đã tải lên" : "Chờ lưu") +
+            "</small></div>",
+        )
+        .join("");
+    }
+    async function jpeg(file) {
+      const url = URL.createObjectURL(file);
+      try {
+        const image = new Image();
+        image.src = url;
+        await image.decode();
+        const ratio = Math.min(1, 1600 / Math.max(image.width, image.height)),
+          canvas = document.createElement("canvas");
+        canvas.width = Math.max(1, Math.round(image.width * ratio));
+        canvas.height = Math.max(1, Math.round(image.height * ratio));
+        canvas
+          .getContext("2d")
+          .drawImage(image, 0, 0, canvas.width, canvas.height);
+        const result = canvas.toDataURL("image/jpeg", 0.8);
+        if (result.length > 4200000)
+          throw Error("Ảnh sau thu nhỏ vẫn quá lớn. Hãy chọn ảnh khác.");
+        return result;
+      } finally {
+        URL.revokeObjectURL(url);
+      }
+    }
+    async function saveRecord(e) {
+      e.preventDefault();
+      if (M.busy || !M.record) return;
+      const f = $("maintenanceRecordForm"),
+        checks = Array.from(
+          $("maintenanceChecklist").querySelectorAll("[data-criterion-actual]"),
+        ).map((input, i) => ({
+          ketQuaThucTe: input.value,
+          ketLuan: $("maintenanceChecklist").querySelector(
+            '[data-criterion-result="' + i + '"]',
+          ).value,
+        })),
+        complete = f.elements.hoanThanh.value === "true";
+      $("maintenanceRecordError").textContent = "";
+      if (
+        complete &&
+        checks.some((c) => !c.ketQuaThucTe.trim() || c.ketLuan !== "Đạt")
+      ) {
+        $("maintenanceRecordError").textContent =
+          "Cần nhập kết quả thực tế và xác nhận Đạt cho tất cả chỉ tiêu trước khi hoàn thành.";
+        return;
+      }
+      const body = {
+        requestId: M.record.requestId,
+        type: M.record.type,
+        deviceKey: M.record.deviceKey,
+        criteriaVersion: M.record.criteriaVersion,
+        ngayThucHien: f.elements.ngayThucHien.value,
+        hoanThanh: complete,
+        nguoiThucHien: f.elements.nguoiThucHien.value,
+        moTaLoi: f.elements.moTaLoi.value,
+        noiDung: f.elements.noiDung.value,
+        ketQua: f.elements.ketQua.value,
+        checks,
+        photoKeys: M.photos.map((p) => p.key),
+      };
+      M.busy = true;
+      $("maintenanceRecordFields").disabled = true;
+      $("maintenanceSaveRecord").disabled = true;
+      try {
+        let i = 0;
+        for (const photo of M.photos) {
+          i++;
+          if (photo.meta) continue;
+          $("maintenanceProgress").textContent =
+            "Đang lưu ảnh " + i + "/" + M.photos.length + "…";
+          photo.meta = await api("uploadPhoto", {
+            requestId: body.requestId,
+            type: body.type,
+            deviceKey: body.deviceKey,
+            uploadKey: photo.key,
+            name: photo.file.name,
+            dataUrl: await jpeg(photo.file),
+          });
+          renderPhotos();
+        }
+        $("maintenanceProgress").textContent = "Đang lưu lịch sử…";
+        const result = await api("saveHistory", body);
+        M.data = result.snapshot;
+        $("maintenanceRecordDialog").close();
+        clearPhotos();
+        M.record = null;
+        render();
+        notify(
+          "Đã ghi nhận " +
+            (complete ? "hoàn thành." : "lần thực hiện chưa hoàn thành."),
+        );
+      } catch (error) {
+        $("maintenanceRecordError").textContent = error.message;
+      } finally {
+        M.busy = false;
+        $("maintenanceRecordFields").disabled = false;
+        $("maintenanceSaveRecord").disabled = false;
+        lockRecordDevice();
+      }
+    }
+    function closeRecord() {
+      if (M.busy) return;
+      if (M.record && !confirm("Đóng form và bỏ thông tin chưa lưu?")) return;
+      clearPhotos();
+      M.record = null;
+      $("maintenanceRecordDialog").close();
+    }
+    function detail(id) {
+      const r = M.data.history.find((r) => r.maLichSu === id);
+      if (!r) return;
+      const checks = parse(r.chiTietKiemTra),
+        photos = parse(r.danhSachAnh);
+      $("maintenanceDetailBody").innerHTML =
+        badge(r.loai === "maintenance" ? "Bảo dưỡng" : "Sửa chữa") +
+        " " +
+        badge(
+          r.hoanThanh === "true" ? "Hoàn thành" : "Chưa hoàn thành",
+          r.hoanThanh === "true" ? "normal" : "pending",
+        ) +
+        "<h2>" +
+        esc(r.tenThietBi || r.maThietBi) +
+        '</h2><p class="m-subtitle">' +
+        esc(r.tenXuong + " → " + r.tenMay + " → " + r.maThietBi) +
+        '</p><div class="m-info-grid">' +
+        [
+          ["Ngày thực hiện", date(r.ngayThucHien)],
+          ["Người thực hiện", r.tenNguoiThucHien + " · " + r.nguoiThucHien],
+          ["Người ghi nhận", r.tenNguoiGhiNhan || r.nguoiGhiNhan],
+          ["Thời gian ghi nhận", r.thoiGianGhiNhan],
+        ]
+          .map(
+            ([label, value]) =>
+              "<div><label>" +
+              label +
+              "</label><p>" +
+              esc(value) +
+              "</p></div>",
+          )
+          .join("") +
+        "</div>" +
+        (r.moTaLoi
+          ? '<h3>Mô tả lỗi</h3><p class="m-detail-description">' +
+            esc(r.moTaLoi) +
+            "</p>"
+          : "") +
+        '<h3>Nội dung thực hiện</h3><p class="m-detail-description">' +
+        esc(r.noiDung) +
+        '</p><h3>Kết quả</h3><p class="m-detail-description">' +
+        esc(r.ketQua) +
+        "</p>" +
+        (checks.length
+          ? '<h3>Chi tiết kiểm tra</h3><div class="m-table-wrap"><table><tr><th>Chỉ tiêu</th><th>Tiêu chuẩn</th><th>Thực tế</th><th>Kết luận</th></tr>' +
+            checks
+              .map(
+                (c) =>
+                  "<tr><td>" +
+                  esc(c.chiTieu) +
+                  "</td><td>" +
+                  esc(c.tieuChuan) +
+                  "</td><td>" +
+                  esc(c.ketQuaThucTe) +
+                  "</td><td>" +
+                  esc(c.ketLuan || "Chưa kết luận") +
+                  "</td></tr>",
+              )
+              .join("") +
+            "</table></div>"
+          : "") +
+        '<h3>Ảnh thực hiện</h3><div class="m-buttons">' +
+        (photos.length
+          ? photos
+              .map(
+                (p, i) =>
+                  '<button type="button" data-m-action="viewPhoto" data-key="' +
+                  esc(p.id) +
+                  '" data-history="' +
+                  esc(r.maLichSu) +
+                  '">▧ Ảnh ' +
+                  (i + 1) +
+                  "</button>",
+              )
+              .join("")
+          : '<span class="m-muted">Không có ảnh đính kèm.</span>') +
+        "</div>";
+      $("maintenanceDetailDialog").showModal();
+    }
+    function openSettings() {
+      const f = $("maintenanceSettingsForm");
+      f.elements.emails.value = M.data.settings.emailNhanBaoCao || "";
+      f.elements.enabled.checked = M.data.settings.guiEmail === "true";
+      $("maintenanceSettingsError").textContent = "";
+      $("maintenanceSettingsDialog").showModal();
+    }
+    async function saveSettings(e) {
+      e.preventDefault();
+      if (M.busy) return;
+      const f = $("maintenanceSettingsForm"),
+        payload = {
+          emails: f.elements.emails.value,
+          enabled: f.elements.enabled.checked,
+          version: M.data.settingsVersion,
+        };
+      M.busy = true;
+      $("maintenanceSettingsFields").disabled = true;
+      $("maintenanceSaveSettings").disabled = true;
+      try {
+        M.data = await api("saveSettings", payload);
+        $("maintenanceSettingsDialog").close();
+        render();
+        notify("Đã lưu cấu hình email.");
+      } catch (error) {
+        $("maintenanceSettingsError").textContent = error.message;
+      } finally {
+        M.busy = false;
+        $("maintenanceSettingsFields").disabled = false;
+        $("maintenanceSaveSettings").disabled = false;
+      }
+    }
+    function exportRows() {
+      if (M.page === "alerts") {
+        const items = filteredDevices();
+        MaintenanceExcel.download(
+          "Lich_bao_duong_" + M.data.today,
+          [
+            "Xưởng",
+            "Máy",
+            "Mã thiết bị",
+            "Tên thiết bị",
+            "Người quản lý",
+            "Bộ phận",
+            "Chu kỳ (ngày)",
+            "Bảo dưỡng gần nhất",
+            "Hạn bảo dưỡng",
+            "Trạng thái",
+          ],
+          items.map((d) => [
+            d.tenXuong,
+            d.tenMay,
+            d.maThietBi,
+            d.tenThietBi,
+            d.tenNguoiQuanLy,
+            d.tenBoPhanQuanLy,
+            d.soNgayCanBaoDuong,
+            date(d.ngayBaoDuongGanNhat),
+            date(d.ngayDenHan),
+            status[d.trangThai],
+          ]),
+        );
+      } else {
+        const items = filteredHistory();
+        MaintenanceExcel.download(
+          (M.page === "repairs" ? "Lich_su_sua_chua_" : "Lich_su_bao_duong_") +
+            M.data.today,
+          [
+            "Ngày thực hiện",
+            "Xưởng",
+            "Máy",
+            "Mã thiết bị",
+            "Tên thiết bị",
+            "Người thực hiện",
+            "Tài khoản thực hiện",
+            "Trạng thái",
+            "Mô tả lỗi",
+            "Nội dung",
+            "Kết quả",
+            "Chi tiết kiểm tra",
+            "Ảnh (Drive riêng tư)",
+            "Người ghi nhận",
+            "Thời gian ghi nhận",
+          ],
+          items.map((r) => [
+            date(r.ngayThucHien),
+            r.tenXuong,
+            r.tenMay,
+            r.maThietBi,
+            r.tenThietBi,
+            r.tenNguoiThucHien,
+            r.nguoiThucHien,
+            r.hoanThanh === "true" ? "Hoàn thành" : "Chưa hoàn thành",
+            r.moTaLoi,
+            r.noiDung,
+            r.ketQua,
+            parse(r.chiTietKiemTra)
+              .map(
+                (c) =>
+                  c.chiTieu +
+                  " | " +
+                  c.tieuChuan +
+                  " | " +
+                  c.ketQuaThucTe +
+                  " | " +
+                  c.ketLuan,
+              )
+              .join("\n"),
+            parse(r.danhSachAnh)
+              .map((p) => "https://drive.google.com/file/d/" + p.id + "/view")
+              .join("\n"),
+            r.tenNguoiGhiNhan,
+            r.thoiGianGhiNhan,
+          ]),
+        );
+      }
+    }
+    async function action(name, key, target) {
+      if (name === "newMaintenance" || name === "newRepair") {
+        openRecord(name === "newMaintenance" ? "maintenance" : "repair", key);
+        return;
+      }
+      if (name === "profile") {
+        M.selected = key;
+        M.page = "profiles";
+        expandSelection();
+        render();
+        return;
+      }
+      if (name === "selectProfile") {
+        M.selected = key;
+        renderProfiles();
+        return;
+      }
+      if (name === "toggleTree") {
+        if (M.expanded.has(key)) M.expanded.delete(key);
+        else M.expanded.add(key);
+        renderProfiles();
+        return;
+      }
+      if (name === "status") {
+        M.filters.trangThai = key;
+        renderAlerts();
+        return;
+      }
+      if (name === "clearFilters") {
+        M.filters = {};
+        M.query = "";
+        if (M.page === "alerts") M.filters.trangThai = "";
+        render();
+        return;
+      }
+      if (name === "detail") {
+        detail(key);
+        return;
+      }
+      if (name === "closeDetail") {
+        $("maintenanceDetailDialog").close();
+        return;
+      }
+      if (name === "closeRecord") {
+        closeRecord();
+        return;
+      }
+      if (name === "gallery" || name === "camera") {
+        if (!M.record?.deviceKey) {
+          notify("Chọn thiết bị trước khi thêm ảnh.");
+          return;
+        }
+        $(
+          name === "gallery" ? "maintenanceGallery" : "maintenanceCamera",
+        ).click();
+        return;
+      }
+      if (name === "removePhoto") {
+        const i = M.photos.findIndex((p) => p.key === key);
+        if (i >= 0) {
+          URL.revokeObjectURL(M.photos[i].preview);
+          M.photos.splice(i, 1);
+        }
+        renderPhotos();
+        lockRecordDevice();
+        return;
+      }
+      if (name === "viewPhoto") {
+        notify("Đang tải ảnh…");
+        const result = await api("photo", {
+          historyId: target.dataset.history,
+          fileId: key,
+        });
+        $("maintenanceFullPhoto").src = result.dataUrl;
+        $("maintenancePhotoDialog").showModal();
+        return;
+      }
+      if (name === "closePhoto") {
+        $("maintenancePhotoDialog").close();
+        $("maintenanceFullPhoto").removeAttribute("src");
+        return;
+      }
+      if (name === "settings") {
+        openSettings();
+        return;
+      }
+      if (name === "closeSettings") {
+        $("maintenanceSettingsDialog").close();
+        return;
+      }
+      if (name === "export") {
+        exportRows();
+        return;
+      }
+    }
+    document.addEventListener("click", (e) => {
+      const nav = e.target.closest("[data-m-page]"),
+        target = e.target.closest("[data-m-action]");
+      if (M.busy) return;
+      if (nav) open(nav.dataset.mPage);
+      if (target) {
+        target.disabled = true;
+        Promise.resolve(
+          action(target.dataset.mAction, target.dataset.key, target),
+        )
+          .catch(error)
+          .finally(() => (target.disabled = false));
+      }
+    });
+    document.addEventListener("change", (e) => {
+      const key = e.target.dataset.mFilter;
+      if (!key || !M.active) return;
+      M.filters[key] = e.target.value;
+      if (key === "tenXuong") {
+        delete M.filters.tenMay;
+        delete M.filters.maThietBi;
+      }
+      if (key === "tenMay") delete M.filters.maThietBi;
+      render();
+    });
+    document.addEventListener("input", (e) => {
+      if (!e.target.hasAttribute("data-m-query")) return;
+      M.query = e.target.value;
+      if (M.page === "alerts") renderAlertsTable();
+      else renderHistoryTable();
+    });
+    $("maintenanceRecordForm").onchange = (e) => {
+      if (!M.record) return;
+      if (e.target.name === "tenXuong") fillMachines();
+      if (e.target.name === "tenMay") fillDevices();
+      if (e.target.name === "deviceKey") updateRecordDevice();
+      if (e.target.name === "hoanThanh") updateRequiredChecks();
+    };
+    $("maintenanceRecordForm").onsubmit = saveRecord;
+    $("maintenanceSettingsForm").onsubmit = saveSettings;
+    for (const id of ["maintenanceGallery", "maintenanceCamera"])
+      $(id).onchange = (e) => {
+        addPhotos(Array.from(e.target.files || []));
+        e.target.value = "";
+      };
+    $("maintenanceRecordDialog").addEventListener("cancel", (e) => {
+      e.preventDefault();
+      closeRecord();
+    });
+    $("maintenanceSettingsDialog").addEventListener("cancel", (e) => {
+      if (M.busy) e.preventDefault();
+    });
+    const originalReload = $("reload").onclick;
+    $("reload").onclick = () => (M.active ? load() : originalReload());
+    return {
+      state: M,
+      open,
+      load,
+      reset,
+      showDataEntry,
+      render,
+      openRecord,
+      api,
+      exportRows,
+    };
+  })();
+</script>

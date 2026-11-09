@@ -93,6 +93,7 @@
       $("pageError").hidden = false;
     }
     function showLogin() {
+      window.DMGMaintenance?.reset();
       S.token = "";
       S.data = null;
       S.editing = null;
@@ -275,6 +276,7 @@
       $("tableHint").textContent = "Danh mục dùng chung · " + spec().label;
     }
     function render() {
+      window.DMGMaintenance?.showDataEntry();
       navigation();
       $("pageTitle").textContent = spec().label;
       $("breadcrumbLabel").textContent = spec().label;

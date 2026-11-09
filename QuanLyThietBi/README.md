@@ -4,7 +4,9 @@
 
 App mới: https://script.google.com/macros/s/AKfycbys2ZTXnDl71K_HDVMf1lFGb1oEohD5CeI0N0H1s3qFBLE-0LLhqdinx7_dyYC9hgcs_Q/exec
 
-Mã hiện hành nằm trong `admin/`, là rootDir mới của clasp; chỉ bảy file tại đây được push. Bộ `appscript/` và hướng dẫn bên dưới là lịch sử, không khôi phục vào app mới. Chi tiết bản mới: [admin/README.md](admin/README.md).
+Mã hiện hành nằm trong `admin/`, là rootDir mới của clasp. Bộ `appscript/` và hướng dẫn bên dưới là lịch sử, không khôi phục vào app mới. Chi tiết bản mới: [admin/README.md](admin/README.md).
+
+Cập nhật tiếp: nhóm Quản lý thiết bị đã được thêm bằng các file Maintenance* riêng (thông báo, lịch sử bảo dưỡng/sửa chữa, hồ sơ, ảnh và báo cáo email). Clasp đẩy các file hiện hành trong admin/. Cấu trúc và luồng Nhập dữ liệu tiếp tục được giữ.
 
 Menu Nhập dữ liệu quản lý sáu sheet hiện có: TaiKhoan, DanhMucBoPhan, DanhMucXuong, DanhMucMay, DanhMucThietBi, DanhMucCanKiemTra. Không tự tạo sheet/cột, dữ liệu mẫu hoặc trigger; dùng tài khoản admin hiện có. Mobile vẫn ghim backend20; thích nghi mobile với schema mới là công việc riêng.
 
