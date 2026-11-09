@@ -31,6 +31,8 @@ const MOBILE_WORK_SCHEMA = {
       "deviceCode",
       "deviceName",
       "deviceKey",
+      "trangThaiPGDChatLuong",
+      "trangThaiPGDSanXuat",
     ],
     columns: [
       "maPhieuYeuCau",
@@ -62,6 +64,8 @@ const MOBILE_WORK_SCHEMA = {
       "maThietBi",
       "tenThietBi",
       "maHoSoThietBi",
+      "trangThaiPGDChatLuong",
+      "trangThaiPGDSanXuat",
     ],
   },
   ServiceReports: {

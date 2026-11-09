@@ -18,6 +18,7 @@ function setup() {
     "MobileWorkCatalog",
     "MobileWorkBridge",
     "MobileWorkWorkflow",
+    "MobileWorkApprovals",
     "MobileWorkPhotos",
   ])
     vm.runInContext(
@@ -33,6 +34,9 @@ function setup() {
       "CoKhi",
       "TuDongHoa",
       "admin",
+      "PGDChatLuong",
+      "PGDSanXuat",
+      "PGDCongNghe",
     ].map((role, i) => ({
       tenDangNhap: role.toLowerCase(),
       matKhau: "Test-password-2026",
@@ -208,7 +212,18 @@ function setup() {
       reason: decision === "reject" ? "Máy còn rung, kiểm tra lại" : "",
     });
   }
+  function approveBoth(r, d) {
+    for (const role of ["PGDChatLuong", "PGDSanXuat"])
+      api(login(role), "approve", {
+        requestId: r.id,
+        reportId: d.id,
+        decision: "accept",
+        reason: "Đồng ý",
+        reviewKey: role + d.id,
+      });
+  }
   return {
+    approveBoth,
     c,
     catalog,
     tables,

@@ -31,7 +31,7 @@ test("current TaiKhoan authenticates all roles without exposing passwords; curre
   s.catalog.TaiKhoan[1].matKhau = "changed";
   a.throws(() => s.api(token, "snapshot"), /hết hạn/);
 });
-test("any technician handles a request; rework preserved; only requester accepts; accepted history advances due once", () => {
+test("any technician handles a request; rework preserved; shift leader confirms and deputies approve; accepted history advances due once", () => {
   const s = setup(),
     requester = s.login("TruongCa"),
     other = s.login("CongNhan"),
@@ -44,7 +44,7 @@ test("any technician handles a request; rework preserved; only requester accepts
   let submitted = s.submit(tech, d, { actualBy: "spoofed" });
   a.equal(submitted.actualBy, "cokhi");
   a.equal(s.history.LichSuBaoDuong.length, 0);
-  a.throws(() => s.review(other, r, submitted), /người tạo/);
+  a.throws(() => s.review(other, r, submitted), /trưởng ca/);
   s.review(requester, r, submitted, "reject");
   a.equal(s.tables.Requests[0].status, "rework");
   a.equal(s.history.LichSuBaoDuong.length, 0);
@@ -52,6 +52,7 @@ test("any technician handles a request; rework preserved; only requester accepts
   submitted = s.submit(tech2, d2);
   s.review(requester, r, submitted);
   s.review(requester, r, submitted);
+  s.approveBoth(r, submitted);
   a.equal(s.tables.Requests[0].status, "completed");
   a.equal(s.history.LichSuBaoDuong.length, 1);
   a.equal(s.history.LichSuBaoDuong[0].nguoiThucHien, "tudonghoa");
@@ -74,7 +75,8 @@ test("machine-only and repair histories do not advance device maintenance; same 
   ]) {
     const r = s.create(u, type, device),
       d = s.submit(t, s.start(t, r));
-    s.review(u, r, d);
+    s.review(s.login("TruongCa"), r, d);
+    s.approveBoth(r, d);
   }
   a.equal(s.history.LichSuBaoDuong[0].maThietBi, "");
   a.equal(s.history.LichSuSuaChua.length, 1);
@@ -117,11 +119,12 @@ test("concurrent drafts first submission wins; changed replay rejects; intermitt
   s.submit(t, d);
   a.throws(() => s.submit(t2, d2), /thay đổi/);
   a.throws(() => s.submit(t, d, { content: "Changed" }), /nội dung khác/);
+  s.review(u, r, d);
   let blocked = true;
   s.failWrite(
     (n, row) => n === "Requests" && row.status === "completed" && blocked,
   );
-  a.throws(() => s.review(u, r, d), /simulated/);
+  a.throws(() => s.approveBoth(r, d), /simulated/);
   a.equal(s.history.LichSuBaoDuong.length, 1);
   blocked = false;
   s.api(u, "snapshot");
@@ -158,5 +161,6 @@ test("photos remain private for draft; upload replay deduplicates and submitted 
   s.submit(t, d);
   a.ok(s.api(u, "photo", { reportId: d.id, id: p.attachment.id }).dataUrl);
   s.review(u, r, d);
+  s.approveBoth(r, d);
   a.equal(JSON.parse(s.history.LichSuBaoDuong[0].danhSachAnh).length, 1);
 });

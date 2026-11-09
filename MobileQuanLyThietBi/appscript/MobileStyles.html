@@ -1126,4 +1126,61 @@
   .m-criterion .m-check {
     margin-top: 10px;
   }
+  .m-approval-panel {
+    margin: 16px 0;
+    padding: 18px;
+    background: #fff;
+    border: 1px solid #dce9e3;
+    border-radius: 20px;
+  }
+  .m-approval-panel h2 {
+    font-size: 19px;
+    margin: 0 0 8px;
+  }
+  .m-approval-grid {
+    display: grid;
+    gap: 12px;
+  }
+  .m-approval-status {
+    display: grid;
+    gap: 6px;
+    padding: 14px;
+    border: 1px solid #ecd6a8;
+    background: #fffaf0;
+    border-radius: 14px;
+  }
+  .m-approval-status b {
+    font-size: 16px;
+  }
+  .m-approval-status span {
+    font-weight: 700;
+    color: #8c610d;
+  }
+  .m-approval-status small {
+    color: #60766b;
+  }
+  .m-approval-status.approved {
+    background: #edf8f0;
+    border-color: #9ed4ad;
+  }
+  .m-approval-status.approved span {
+    color: #20633b;
+  }
+  .m-approval-status.rejected {
+    background: #fff1ee;
+    border-color: #edafa2;
+  }
+  .m-approval-status.rejected span {
+    color: #9c3023;
+  }
+  .m-badge.awaiting_pgd,
+  .m-badge.shift_confirmed {
+    background: #fff0cf;
+    color: #805308;
+  }
+  @media (min-width: 600px) {
+    .m-approval-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
 </style>

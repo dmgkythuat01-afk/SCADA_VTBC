@@ -100,7 +100,7 @@ function loginMobile(username, password, withSnapshot) {
     let allowed = false;
     if (member) {
       const c = mobileWorkCapabilities_(member);
-      allowed = c.technical || c.requester;
+      allowed = c.technical || c.requester || !!c.approver || c.viewer;
     }
     if (
       !member ||

@@ -24,7 +24,9 @@
     const STATUS = {
       new: "Mới tạo",
       in_progress: "Đang xử lý",
-      awaiting_confirmation: "Chờ xác nhận",
+      awaiting_confirmation: "Chờ trưởng ca xác nhận",
+      awaiting_pgd: "Chờ hai PGĐ phê duyệt",
+      shift_confirmed: "Trưởng ca đã xác nhận",
       rework: "Cần làm lại",
       completed: "Hoàn thành",
       draft: "Bản nháp",
@@ -80,6 +82,7 @@
         "startReport",
         "submitReport",
         "review",
+        "approve",
         "markRead",
       ].includes(action);
       const requestToken = M.token;
@@ -138,6 +141,9 @@
           truongca: "Trưởng ca",
           congnhan: "Công nhân",
           phongcongnghe: "Phòng Công nghệ",
+          pgdchatluong: "PGĐ Chất lượng",
+          pgdsanxuat: "PGĐ Sản xuất",
+          pgdcongnghe: "PGĐ Công nghệ",
           kythuat: "Kỹ thuật",
           cokhi: "Cơ khí",
           tudonghoa: "Tự động hóa",
@@ -187,11 +193,92 @@
         '<div class="m-empty"><b>' + esc(title) + "</b>" + esc(text) + "</div>"
       );
     }
+    function managerMode() {
+      return !!(M.data.capabilities.approver || M.data.capabilities.viewer);
+    }
+    function canConfirm(r) {
+      return (
+        M.data.capabilities.shiftLeader && r.status === "awaiting_confirmation"
+      );
+    }
+    function canApprove(r) {
+      const branch = M.data.capabilities.approver,
+        field = {
+          quality: "trangThaiPGDChatLuong",
+          production: "trangThaiPGDSanXuat",
+        }[branch];
+      return (
+        !!field && r.status === "awaiting_pgd" && r[field] === "Chờ phê duyệt"
+      );
+    }
     function pendingMine() {
-      return M.data.requests.filter(
-        (r) =>
-          r.createdBy === M.data.user.email &&
-          r.status === "awaiting_confirmation",
+      return M.data.requests.filter((r) =>
+        managerMode()
+          ? M.data.capabilities.viewer
+            ? r.status === "awaiting_pgd"
+            : canApprove(r)
+          : M.data.capabilities.shiftLeader
+            ? canConfirm(r)
+            : r.createdBy === M.data.user.email &&
+              ["awaiting_confirmation", "awaiting_pgd"].includes(r.status),
+      );
+    }
+    function reviewLabel(v) {
+      const actor = v.decision.startsWith("quality_")
+        ? "PGĐ Chất lượng"
+        : v.decision.startsWith("production_")
+          ? "PGĐ Sản xuất"
+          : "Xác nhận ban đầu";
+      return (
+        actor +
+        " · " +
+        (v.decision.endsWith("reject")
+          ? "Không đồng ý — yêu cầu làm lại"
+          : "Đã đồng ý")
+      );
+    }
+    function pgdStatusCards(r) {
+      return (
+        '<section class="m-approval-panel"><h2>Phê duyệt song song</h2><p class="m-hint">Hai PGĐ duyệt độc lập. Phiếu chỉ hoàn thành khi cả hai đồng ý.</p><div class="m-approval-grid">' +
+        [
+          ["quality", "PGĐ Chất lượng", "trangThaiPGDChatLuong"],
+          ["production", "PGĐ Sản xuất", "trangThaiPGDSanXuat"],
+        ]
+          .map(([branch, label, field]) => {
+            const sign = M.data.reviews.find(
+                (v) =>
+                  v.reportId === r.lastReportId &&
+                  v.decision.startsWith(branch + "_"),
+              ),
+              status =
+                r[field] ||
+                (r.status === "completed"
+                  ? "Theo luồng trước"
+                  : "Chưa đến bước");
+            return (
+              '<div class="m-approval-status ' +
+              (status === "Đã phê duyệt"
+                ? "approved"
+                : status === "Không phê duyệt"
+                  ? "rejected"
+                  : "") +
+              '"><b>' +
+              label +
+              "</b><span>" +
+              esc(status) +
+              "</span>" +
+              (sign
+                ? "<small>" +
+                  esc(sign.createdByName) +
+                  " · " +
+                  time(sign.createdAt) +
+                  "</small>"
+                : "") +
+              "</div>"
+            );
+          })
+          .join("") +
+        "</div></section>"
       );
     }
     async function load(quiet = false) {
@@ -239,21 +326,43 @@
       }
     }
     function nav() {
-      const items = technical()
+      const items = managerMode()
         ? [
             ["home", "Tổng quan", "home"],
             ["tickets", "Tất cả phiếu", "tickets"],
-            ["assigned", "Giao cho tôi", "assigned"],
-            ["results", "Kết quả", "check"],
+            [
+              "pending",
+              M.data.capabilities.approver ? "Chờ tôi duyệt" : "Chờ PGĐ duyệt",
+              "check",
+            ],
+            ["results", "Lịch sử duyệt", "assigned"],
             ["account", "Tài khoản", "person"],
           ]
-        : [
-            ["home", "Tổng quan", "home"],
-            ["tickets", "Phiếu của tôi", "tickets"],
-            ["create", "Tạo phiếu", "plus"],
-            ["pending", "Chờ xác nhận", "check"],
-            ["account", "Tài khoản", "person"],
-          ];
+        : technical()
+          ? [
+              ["home", "Tổng quan", "home"],
+              ["tickets", "Tất cả phiếu", "tickets"],
+              ["assigned", "Giao cho tôi", "assigned"],
+              ["results", "Kết quả", "check"],
+              ["account", "Tài khoản", "person"],
+            ]
+          : [
+              ["home", "Tổng quan", "home"],
+              [
+                "tickets",
+                M.data.capabilities.shiftLeader
+                  ? "Tất cả phiếu"
+                  : "Phiếu của tôi",
+                "tickets",
+              ],
+              ["create", "Tạo phiếu", "plus"],
+              [
+                "pending",
+                M.data.capabilities.shiftLeader ? "Chờ xác nhận" : "Theo dõi",
+                "check",
+              ],
+              ["account", "Tài khoản", "person"],
+            ];
       $("mobileNav").innerHTML = items
         .map(
           ([page, label, icon]) =>
@@ -341,14 +450,20 @@
         .filter((r) =>
           technical()
             ? ["new", "rework"].includes(r.status)
-            : r.status === "awaiting_confirmation",
+            : pendingMine().some((p) => p.id === r.id),
         )
         .sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt)))
         .slice(0, 4);
       const notices = M.data.notifications.slice().reverse().slice(0, 4);
       $("mobileContent").innerHTML =
         '<section class="m-hero"><span class="m-eyebrow">' +
-        esc(technical() ? "ĐỘI NGŨ KỸ THUẬT" : "VẬN HÀNH CHỦ ĐỘNG") +
+        esc(
+          managerMode()
+            ? "PHÊ DUYỆT & THEO DÕI"
+            : technical()
+              ? "ĐỘI NGŨ KỸ THUẬT"
+              : "VẬN HÀNH CHỦ ĐỘNG",
+        ) +
         "</span><h1>Chào " +
         esc(M.data.user.name) +
         " 👋</h1><p>" +
@@ -360,11 +475,20 @@
         "</p>" +
         button(
           "page",
-          technical() ? "Xem phiếu yêu cầu →" : "＋ Tạo yêu cầu mới",
-          technical() ? "tickets" : "create",
+          !M.data.capabilities.requester
+            ? "Xem phiếu yêu cầu →"
+            : "＋ Tạo yêu cầu mới",
+          !M.data.capabilities.requester ? "tickets" : "create",
         ) +
         '</section><div class="m-stats">' +
         counts
+          .concat([
+            [
+              "Chờ PGĐ duyệt",
+              rows.filter((r) => r.status === "awaiting_pgd").length,
+              "awaiting_pgd",
+            ],
+          ])
           .map(
             ([label, n, status]) =>
               '<button type="button" class="m-stat ' +
@@ -381,7 +505,15 @@
           )
           .join("") +
         '</div><div class="m-section-head"><h2>' +
-        esc(technical() ? "Cần ưu tiên xử lý" : "Đang chờ bạn xác nhận") +
+        esc(
+          technical()
+            ? "Cần ưu tiên xử lý"
+            : managerMode()
+              ? "Chờ phê duyệt PGĐ"
+              : M.data.capabilities.shiftLeader
+                ? "Đang chờ trưởng ca xác nhận"
+                : "Theo dõi xác nhận & phê duyệt",
+        ) +
         "</h2>" +
         button("page", "Xem tất cả →", technical() ? "tickets" : "pending") +
         "</div>" +
@@ -453,7 +585,9 @@
           ? "Giao cho tôi"
           : technical()
             ? "Tất cả phiếu yêu cầu"
-            : "Phiếu của tôi") +
+            : M.data.capabilities.shiftLeader || managerMode()
+              ? "Tất cả phiếu yêu cầu"
+              : "Phiếu của tôi") +
         '</h1><p class="m-subtitle">' +
         esc(
           technical()
@@ -481,6 +615,7 @@
           "new",
           "in_progress",
           "awaiting_confirmation",
+          "awaiting_pgd",
           "rework",
           "completed",
         ]
@@ -534,7 +669,17 @@
     function pending() {
       const rows = pendingMine();
       $("mobileContent").innerHTML =
-        '<h1 class="m-title">Chờ tôi xác nhận</h1><p class="m-subtitle">Kiểm tra nội dung và ảnh kết quả trước khi đồng ý hoặc yêu cầu khắc phục lại.</p>' +
+        '<h1 class="m-title">' +
+        (managerMode()
+          ? "Phê duyệt PGĐ"
+          : M.data.capabilities.shiftLeader
+            ? "Chờ trưởng ca xác nhận"
+            : "Theo dõi phê duyệt") +
+        '</h1><p class="m-subtitle">' +
+        (managerMode()
+          ? "Chất lượng và Sản xuất ký song song, không cần chờ nhau."
+          : "Kết quả được trưởng ca xác nhận trước khi chuyển đồng thời tới hai PGĐ.") +
+        "</p>" +
         (rows.length
           ? rows.map(ticketCard).join("")
           : empty(
@@ -543,6 +688,40 @@
             ));
     }
     function results() {
+      if (managerMode()) {
+        const reviews = M.data.reviews
+          .filter(
+            (v) =>
+              M.data.capabilities.viewer || v.createdBy === M.data.user.email,
+          )
+          .slice()
+          .sort((a, b) =>
+            String(b.createdAt).localeCompare(String(a.createdAt)),
+          );
+        $("mobileContent").innerHTML =
+          '<h1 class="m-title">Lịch sử phê duyệt</h1>' +
+          (reviews.length
+            ? reviews
+                .map(
+                  (v) =>
+                    '<article class="m-card"><div class="m-card-body"><b>' +
+                    esc(reviewLabel(v)) +
+                    "</b><p>" +
+                    esc(request(v.requestId)?.title || v.requestId) +
+                    "</p><p>" +
+                    esc(v.reason || "Đã kiểm tra kết quả") +
+                    "</p><small>" +
+                    esc(v.createdByName) +
+                    " · " +
+                    time(v.createdAt) +
+                    "</small>" +
+                    button("open", "Xem phiếu →", v.requestId, "m-link") +
+                    "</div></article>",
+                )
+                .join("")
+            : empty("Chưa có lịch sử phê duyệt"));
+        return;
+      }
       const reports = M.data.reports
         .filter((d) => d.createdBy === M.data.user.email)
         .sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));
@@ -758,13 +937,9 @@
           .map(
             (v) =>
               '<div class="m-review-note ' +
-              (v.decision === "reject" ? "rejected" : "") +
+              (v.decision.endsWith("reject") ? "rejected" : "") +
               '"><b>' +
-              esc(
-                v.decision === "accept"
-                  ? "✓ Đã đồng ý khắc phục"
-                  : "↻ Cần khắc phục lại",
-              ) +
+              esc(reviewLabel(v)) +
               "</b>" +
               esc(v.reason || "Đã kiểm tra và xác nhận kết quả.") +
               "<small>" +
@@ -793,9 +968,7 @@
       const canWork =
           M.data.capabilities.technical &&
           ["new", "in_progress", "rework"].includes(r.status),
-        canReview =
-          r.createdBy === M.data.user.email &&
-          r.status === "awaiting_confirmation";
+        canReview = canConfirm(r);
       const reports = M.data.reports
         .filter((d) => d.requestId === r.id)
         .sort((a, b) => Number(b.ordinal) - Number(a.ordinal));
@@ -836,6 +1009,12 @@
           )
           .join("") +
         "</div></div></div>" +
+        pgdStatusCards(r) +
+        (canApprove(r)
+          ? '<div class="m-action-bar">' +
+            button("review", "Kiểm tra & phê duyệt PGĐ", r.id, "m-primary") +
+            "</div>"
+          : "") +
         (canWork
           ? '<div class="m-action-bar">' +
             button(
@@ -854,9 +1033,7 @@
             "</div>"
           : "") +
         (r.status === "awaiting_confirmation" && !canReview
-          ? '<p class="m-hint">Kết quả đã gửi cho ' +
-            esc(r.createdByName) +
-            " kiểm tra và xác nhận.</p>"
+          ? '<p class="m-hint">Kết quả đang chờ trưởng ca kiểm tra, xác nhận trước khi trình hai PGĐ.</p>'
           : "") +
         '<div class="m-section-head"><h2>Lịch sử báo cáo & phản hồi</h2><span class="m-hint">' +
         reports.length +
@@ -883,7 +1060,14 @@
         [
           ["Tên đăng nhập", u.useName || u.email],
           ["Email", u.contactEmail || "Chưa cập nhật"],
-          ["Chế độ", technical() ? "Kỹ thuật" : "Người yêu cầu"],
+          [
+            "Chế độ",
+            managerMode()
+              ? "Phê duyệt / Theo dõi"
+              : technical()
+                ? "Kỹ thuật"
+                : "Người yêu cầu",
+          ],
         ]
           .map(
             ([label, value]) =>
@@ -917,7 +1101,7 @@
             '">Mở trang quản lý thiết bị trên máy tính →</a>'
           : "") +
         button("logout", "Đăng xuất", "", "m-danger") +
-        '</div></div><p class="m-hint">Mỗi báo cáo được ghi rõ người thực tế thực hiện. Chỉ người tạo phiếu được đồng ý hoặc yêu cầu làm lại.</p>';
+        '</div></div><p class="m-hint">Mỗi báo cáo được ghi rõ người thực tế thực hiện. Trưởng ca xác nhận kết quả, sau đó hai PGĐ phê duyệt song song.</p>';
     }
     function draftCacheKey() {
       return "mobileWorkDraft:" + M.data.user.email + ":" + M.reportDraft.id;
@@ -1146,7 +1330,24 @@
       const r = request(id),
         d = M.data.reports.find((d) => d.id === r?.lastReportId);
       if (!r || !d) return;
-      M.review = { request: r, report: d };
+      M.review = {
+        request: r,
+        report: d,
+        kind: canApprove(r) ? "pgd" : "shift",
+      };
+      if (M.review.kind === "pgd" ? !canApprove(r) : !canConfirm(r)) return;
+      $("mobileReviewStage").textContent =
+        M.review.kind === "pgd"
+          ? roleName(M.data.user.position) + " PHÊ DUYỆT"
+          : "TRƯỞNG CA XÁC NHẬN";
+      $("mobileReviewTitle").textContent =
+        M.review.kind === "pgd"
+          ? "Phê duyệt kết quả khắc phục"
+          : "Kết quả đã đạt chưa?";
+      $("mobileReviewAcceptHint").textContent =
+        M.review.kind === "pgd"
+          ? "Hoàn thành sau khi cả Chất lượng và Sản xuất đồng ý."
+          : "Gửi đồng thời cho PGĐ Chất lượng và PGĐ Sản xuất.";
       M.reviewKey = uid();
       $("mobileReviewInfo").innerHTML =
         '<div class="m-performer"><small>NGƯỜI THỰC HIỆN</small><b>' +
@@ -1173,7 +1374,7 @@
       $("mobileReviewError").textContent = "";
       try {
         const r = M.review.request,
-          result = await api("review", {
+          result = await api(M.review.kind === "pgd" ? "approve" : "review", {
             requestId: r.id,
             reportId: M.review.report.id,
             revision: r.revision,
@@ -1185,12 +1386,13 @@
         M.review = null;
         M.page = "detail";
         await load();
+        const fresh = request(r.id);
         toast(
-          result.decision === "accept"
-            ? String(result.calendarResult).startsWith("skipped")
-              ? "Đã xác nhận. Lịch bảo dưỡng đã thay đổi riêng, vui lòng kiểm tra lại."
-              : "Đã đồng ý khắc phục, phiếu hoàn thành."
-            : "Đã gửi yêu cầu khắc phục lại.",
+          result.decision.endsWith("reject")
+            ? "Đã chuyển lại kỹ thuật để khắc phục."
+            : fresh?.status === "completed"
+              ? "Đủ hai phê duyệt PGĐ — phiếu hoàn thành."
+              : "Đã ghi nhận. Phiếu đang chờ các phê duyệt còn lại.",
         );
       } catch (e) {
         $("mobileReviewError").textContent = e.message;

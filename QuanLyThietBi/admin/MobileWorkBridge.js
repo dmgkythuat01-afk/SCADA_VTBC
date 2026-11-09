@@ -1,4 +1,6 @@
 function mobileWorkAppendAdminHistory_(request, report, review) {
+  if (!mobileWorkPgdApproved_(request))
+    throw Error("Chưa đủ phê duyệt PGĐ Chất lượng và PGĐ Sản xuất.");
   const name =
       request.type === "maintenance" ? "LichSuBaoDuong" : "LichSuSuaChua",
     id = "MOBILE_" + request.id,

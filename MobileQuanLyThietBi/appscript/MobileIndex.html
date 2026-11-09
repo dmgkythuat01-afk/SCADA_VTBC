@@ -165,8 +165,10 @@
       <form id="mobileReviewForm">
         <header class="m-sheet-head">
           <div>
-            <span class="m-eyebrow">NGƯỜI YÊU CẦU XÁC NHẬN</span>
-            <h2>Kết quả đã đạt chưa?</h2>
+            <span class="m-eyebrow" id="mobileReviewStage"
+              >TRƯỞNG CA XÁC NHẬN</span
+            >
+            <h2 id="mobileReviewTitle">Kết quả đã đạt chưa?</h2>
           </div>
           <button
             type="button"
@@ -182,7 +184,9 @@
           <label class="m-choice"
             ><input name="decision" type="radio" value="accept" checked /><span
               ><b>Đồng ý, đã khắc phục</b
-              ><small>Hoàn tất phiếu yêu cầu.</small></span
+              ><small id="mobileReviewAcceptHint"
+                >Chuyển đồng thời cho hai PGĐ phê duyệt.</small
+              ></span
             ></label
           ><label class="m-choice"
             ><input name="decision" type="radio" value="reject" /><span

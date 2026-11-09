@@ -12,6 +12,9 @@ function mobileWorkCapabilities_(user) {
   const admin = user.role === "admin" || role === "admin";
   return {
     admin,
+    shiftLeader: role === "truongca",
+    approver: { pgdchatluong: "quality", pgdsanxuat: "production" }[role] || "",
+    viewer: role === "pgdcongnghe",
     requester:
       admin || ["truongca", "congnhan", "phongcongnghe"].includes(role),
     technical:
@@ -23,7 +26,7 @@ function mobileWorkCapabilities_(user) {
 }
 function mobileWorkRequireAccess_(u) {
   const caps = mobileWorkCapabilities_(u);
-  if (!caps.requester && !caps.technical)
+  if (!caps.requester && !caps.technical && !caps.approver && !caps.viewer)
     throw Error("Chức vụ này chưa được cấp quyền vào trang mobile.");
   return caps;
 }
@@ -33,7 +36,13 @@ function mobileWorkRequireTechnical_(u) {
 }
 function mobileWorkCanView_(u, r) {
   const caps = mobileWorkRequireAccess_(u);
-  return caps.technical || r.createdBy === u.email;
+  return (
+    caps.technical ||
+    caps.shiftLeader ||
+    caps.approver ||
+    caps.viewer ||
+    r.createdBy === u.email
+  );
 }
 function mobileWorkRequest_(id) {
   const r = mobileWorkRows_("Requests").find((r) => r.id === id);
@@ -191,6 +200,8 @@ function mobileWorkCreateRequest_(u, p) {
     createdAt: mobileWorkNow_(),
     createdDate: maintenanceToday_(),
     status: "new",
+    trangThaiPGDChatLuong: "",
+    trangThaiPGDSanXuat: "",
     actualBy: "",
     actualByName: "",
     lastReportId: "",
@@ -336,12 +347,7 @@ function mobileWorkSaveReportDraft_(u, p) {
 function mobileWorkApplySubmission_(d) {
   const r = mobileWorkRequest_(d.requestId);
   if (r.lastReportId === d.id && r.status === "awaiting_confirmation") {
-    mobileWorkNotify_(
-      "REQ_REPORT_" + d.id,
-      r.createdBy,
-      "Có kết quả chờ bạn xác nhận: " + r.title,
-      r.id,
-    );
+    mobileWorkNotifyShift_(r, d);
     return r;
   }
   if (
@@ -350,18 +356,15 @@ function mobileWorkApplySubmission_(d) {
   )
     throw Error("Phiếu đã thay đổi trước khi gửi báo cáo.");
   r.status = "awaiting_confirmation";
+  r.trangThaiPGDChatLuong = "";
+  r.trangThaiPGDSanXuat = "";
   r.lastReportId = d.id;
   r.actualBy = d.actualBy;
   r.actualByName = d.actualByName;
   r.updatedAt = d.submittedAt;
   r.revision = Number(r.revision) + 1;
   mobileWorkWrite_("Requests", r);
-  mobileWorkNotify_(
-    "REQ_REPORT_" + d.id,
-    r.createdBy,
-    "Có kết quả chờ bạn xác nhận: " + r.title,
-    r.id,
-  );
+  mobileWorkNotifyShift_(r, d);
   return r;
 }
 function mobileWorkSubmitReport_(u, p) {
@@ -417,50 +420,13 @@ function mobileWorkSubmitReport_(u, p) {
   return d;
 }
 function mobileWorkApplyReview_(review) {
-  const r = mobileWorkRequest_(review.requestId),
-    d = mobileWorkReport_(review.reportId);
-  if (r.lastReportId !== d.id)
-    throw Error("Báo cáo không còn là kết quả mới nhất của phiếu.");
-  if (review.decision === "accept") {
-    mobileWorkAppendAdminHistory_(r, d, review);
-    review.calendarResult = r.componentId ? "history_saved" : "machine_only";
-  }
-  const target = review.decision === "accept" ? "completed" : "rework";
-  if (d.status !== (review.decision === "accept" ? "accepted" : "rejected")) {
-    d.status = review.decision === "accept" ? "accepted" : "rejected";
-    d.revision = Number(d.revision) + 1;
-    mobileWorkWrite_("ServiceReports", d);
-  }
-  if (r.status !== target) {
-    if (r.status !== "awaiting_confirmation")
-      throw Error("Trạng thái phiếu đã thay đổi khi xác nhận.");
-    r.status = target;
-    r.actualBy = d.actualBy;
-    r.actualByName = d.actualByName;
-    r.completedDate = review.decision === "accept" ? d.performedDate : "";
-    r.confirmedAt = review.createdAt;
-    r.confirmedBy = review.createdBy;
-    r.updatedAt = review.createdAt;
-    r.revision = Number(r.revision) + 1;
-    mobileWorkWrite_("Requests", r);
-  }
-  mobileWorkNotify_(
-    "REQ_REVIEW_" + review.id,
-    d.actualBy,
-    review.decision === "accept"
-      ? "Người yêu cầu đã đồng ý kết quả: " + r.title
-      : "Cần khắc phục lại: " + r.title + " — " + review.reason,
-    r.id,
-  );
-  review.processed = true;
-  mobileWorkWrite_("ServiceReviews", review);
-  return review;
+  return mobileWorkApplyApprovalReview_(review);
 }
 function mobileWorkReviewReport_(u, p) {
   mobileWorkRequireAccess_(u);
   const r = mobileWorkRequest_(p.requestId);
-  if (r.createdBy !== u.email)
-    throw Error("Chỉ người tạo phiếu được xác nhận kết quả.");
+  if (!mobileWorkCanConfirm_(u, r))
+    throw Error("Chỉ trưởng ca được xác nhận kết quả trước khi trình hai PGĐ.");
   const key = mobileWorkRequired_(p.reviewKey, "mã xác nhận", 100),
     previous = mobileWorkRows_("ServiceReviews").find(
       (v) =>
@@ -544,6 +510,7 @@ function mobileWorkApi(token, action, payload) {
       uploadPhoto: mobileWorkUploadReportPhoto_,
       submitReport: mobileWorkSubmitReport_,
       review: mobileWorkReviewReport_,
+      approve: mobileWorkApprovePgd_,
       photo: mobileWorkReadReportPhoto_,
       markRead: mobileWorkMarkNotification_,
     };
@@ -558,6 +525,7 @@ function mobileWorkApi(token, action, payload) {
         "startReport",
         "submitReport",
         "review",
+        "approve",
         "markRead",
       ].includes(action)
     )

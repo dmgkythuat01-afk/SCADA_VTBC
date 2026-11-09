@@ -8,9 +8,9 @@ App: https://script.google.com/macros/s/AKfycbzMajCHwyZ8ohRElBG5SKeE0jbG6orEIHXO
 
 Chủ project mở editor, chọn `capQuyenMobile` → Run → cấp quyền Google lần đầu cho project mới. Hàm chỉ đọc tên file Sheets và thư mục Drive, không sửa dữ liệu. Nếu link app hiện Truy cập bị từ chối trước khi cấp quyền, hoàn tất bước này bằng tài khoản sở hữu project.
 
-Dùng chung file Sheets và tài khoản hiện có trong `TaiKhoan` với app quản trị. Không tự tạo tài khoản mẫu, bản sao danh mục hoặc trigger email. Các role TruongCa/CongNhan/PhongCongNghe tạo phiếu; KyThuat/CoKhi/TuDongHoa xem mọi phiếu và báo cáo; người tạo xác nhận hoặc yêu cầu làm lại. Người thực hiện được ghi theo tài khoản thực tế.
+Dùng chung file Sheets và tài khoản hiện có trong `TaiKhoan` với app quản trị. Không tự tạo tài khoản mẫu, bản sao danh mục hoặc trigger email. Các role TruongCa/CongNhan/PhongCongNghe tạo phiếu; KyThuat/CoKhi/TuDongHoa xem mọi phiếu và báo cáo; trưởng ca xác nhận rồi hai PGĐ duyệt song song. Người thực hiện được ghi theo tài khoản thực tế.
 
-Project này chứa Code.js và ba file MobileIndex/MobileStyles/MobileClient. Backend nghiệp vụ nằm trong các file `MobileWork*.js` của `QuanLyThietBi/admin/`, gọi qua thư viện EquipmentCore và ghim phiên bản 44 trong manifest. Script Properties, Cache và Lock tạo bên trong thư viện thuộc backend dùng chung, theo tài liệu Google: https://developers.google.com/apps-script/guides/libraries#resource_scoping . Hai giao diện dùng cùng khóa cập nhật. Khi nâng cấp backend, kiểm thử và tăng version thư viện trong manifest; không bật developmentMode trên production.
+Project này chứa Code.js và ba file MobileIndex/MobileStyles/MobileClient. Backend nghiệp vụ nằm trong các file `MobileWork*.js` của `QuanLyThietBi/admin/`, gọi qua thư viện EquipmentCore và ghim phiên bản 46 trong manifest. Script Properties, Cache và Lock tạo bên trong thư viện thuộc backend dùng chung, theo tài liệu Google: https://developers.google.com/apps-script/guides/libraries#resource_scoping . Hai giao diện dùng cùng khóa cập nhật. Khi nâng cấp backend, kiểm thử và tăng version thư viện trong manifest; không bật developmentMode trên production.
 
 ## Danh mục mới — 09/11/2026
 
@@ -20,7 +20,9 @@ Các bảng phiếu riêng: `PhieuYeuCau`, `BaoCaoKhacPhuc`, `XacNhanKhacPhuc`, 
 
 Báo cáo bảo dưỡng thiết bị lấy chỉ tiêu và tiêu chuẩn hiện tại từ `DanhMucCanKiemTra`; nhập kết quả thực tế, đánh dấu Đạt từng mục. Nếu tiêu chuẩn thay đổi lúc đang soạn, mở lại báo cáo để lấy bộ mới. Ảnh tối đa 12 ảnh/báo cáo, riêng tư trên Drive; hỗ trợ thư viện ảnh và camera gốc điện thoại.
 
-Chỉ người tạo phiếu được xác nhận. Khi đồng ý, hệ thống ghi đúng một dòng vào `LichSuBaoDuong` hoặc `LichSuSuaChua` của admin, gồm người thực tế thực hiện, kết quả kiểm tra và ảnh. Lịch bảo dưỡng tính từ ngày thực tế hoàn thành đã được chấp nhận; yêu cầu toàn máy không thay đổi lịch riêng của từng thiết bị. Từ chối giữ lịch sử báo cáo và yêu cầu kỹ thuật làm lại. Các bước gửi/xác nhận có chống gửi trùng và phục hồi đồng bộ nếu ghi bị gián đoạn.
+Kết quả do tài khoản `TruongCa` xác nhận; mọi trưởng ca đều được xác nhận phiếu. Sau khi đồng ý, hai nhánh `PGDChatLuong` và `PGDSanXuat` nhận phiếu chờ duyệt đồng thời. Mỗi người chỉ ký nhánh của mình, không cần chờ nhánh kia. `PGDCongNghe` được xem và theo dõi, không ký thay hai nhánh. Hai cột trên `PhieuYeuCau` là `trangThaiPGDChatLuong`, `trangThaiPGDSanXuat`.
+
+Chỉ khi cả hai PGĐ đồng ý, hệ thống mới ghi đúng một dòng vào `LichSuBaoDuong` hoặc `LichSuSuaChua` của admin, gồm người thực tế thực hiện, kết quả kiểm tra và ảnh. Lịch bảo dưỡng tính từ ngày thực tế hoàn thành đã được chấp nhận đủ các cấp; yêu cầu toàn máy không thay đổi lịch riêng của từng thiết bị. Một PGĐ từ chối sẽ chuyển về kỹ thuật làm lại; sau báo cáo mới và trưởng ca xác nhận lại, cả hai PGĐ duyệt lại từ đầu. Các chữ ký, người ký, thời gian và ý kiến giữ trong `XacNhanKhacPhuc`. Các bước gửi/xác nhận có chống gửi trùng và phục hồi đồng bộ nếu ghi bị gián đoạn. Phiếu đã hoàn thành theo luồng cũ được giữ nguyên.
 
 Triển khai từ thư mục này: `clasp push --force`, sau đó cập nhật deployment hiện có. Không chạy setupEquipmentApp hay tạo trigger email trong project mobile.
 
