@@ -174,6 +174,39 @@ test("passwords never leave snapshot; blank edit preserves password and last adm
     }),
   );
 });
+test("equipment batch validates every row before one write and rejects intra-batch duplicates", () => {
+  const { c, tables } = setup();
+  tables.DanhMucXuong.push({ _row: 2, tenXuong: "A" });
+  tables.DanhMucMay.push({ _row: 2, tenXuong: "A", tenMay: "M" });
+  const first = { tenXuong: "A", tenMay: "M", maThietBi: "T1", soLuong: "2" };
+  let writes = 0;
+  c.writeAdminBatch_ = (name, rows) => {
+    writes++;
+    rows.forEach((r) =>
+      tables[name].push({ ...r, _row: tables[name].length + 2 }),
+    );
+  };
+  assert.throws(() =>
+    c.saveAdminBatch_("DanhMucThietBi", [
+      first,
+      { ...first, maThietBi: "T2", soLuong: "-1" },
+    ]),
+  );
+  assert.equal(writes, 0);
+  assert.equal(tables.DanhMucThietBi.length, 0);
+  assert.throws(() =>
+    c.saveAdminBatch_("DanhMucThietBi", [
+      first,
+      { ...first, maThietBi: " t1 " },
+    ]),
+  );
+  assert.equal(writes, 0);
+  c.saveAdminBatch_("DanhMucThietBi", [first, { ...first, maThietBi: "T2" }]);
+  assert.equal(writes, 1);
+  assert.equal(tables.DanhMucThietBi.length, 2);
+  assert.throws(() => c.saveAdminBatch_("TaiKhoan", [first]));
+  assert.throws(() => c.saveAdminBatch_("DanhMucThietBi", []));
+});
 test("admin API requires active admin session and deduplicates repeated writes", () => {
   const { c, tables } = setup(),
     cache = new Map();
@@ -217,6 +250,29 @@ test("admin API requires active admin session and deduplicates repeated writes",
   assert.equal(tables.DanhMucXuong.length, 1);
   assert.throws(() =>
     c.adminApi(login.token, "save", { ...p, values: { tenXuong: "B" } }),
+  );
+  tables.DanhMucMay.push({ _row: 2, tenXuong: "A", tenMay: "M" });
+  let batchWrites = 0;
+  c.writeAdminBatch_ = (name, rows) => {
+    batchWrites++;
+    rows.forEach((r) =>
+      tables[name].push({ ...r, _row: tables[name].length + 2 }),
+    );
+  };
+  const batch = {
+    table: "DanhMucThietBi",
+    rows: [
+      { tenXuong: "A", tenMay: "M", maThietBi: "T1" },
+      { tenXuong: "A", tenMay: "M", maThietBi: "T2" },
+    ],
+    requestId: "batch",
+  };
+  c.adminApi(login.token, "saveBatch", batch);
+  c.adminApi(login.token, "saveBatch", batch);
+  assert.equal(batchWrites, 1);
+  assert.equal(tables.DanhMucThietBi.length, 2);
+  assert.throws(() =>
+    c.adminApi(login.token, "saveBatch", { ...batch, rows: [batch.rows[0]] }),
   );
   tables.TaiKhoan[0].chucVu = "KyThuat";
   assert.throws(() => c.adminApi(login.token, "snapshot", {}));

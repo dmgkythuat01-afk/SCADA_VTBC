@@ -133,14 +133,14 @@ function adminApi(token, action, payload) {
     const user = requireAdminSession_(token),
       p = payload || {};
     if (action === "snapshot") return adminSnapshot_(user);
-    if (!["save", "delete"].includes(action))
+    if (!["save", "delete", "saveBatch"].includes(action))
       throw Error("Thao tác không hợp lệ.");
     const receiptKey =
         "data-admin-write:" +
         adminHash_(user.username + ":" + adminText_(p.requestId, 100)),
       cache = CacheService.getScriptCache(),
       fingerprint = adminHash_(
-        JSON.stringify([action, p.table, p._row, p._version, p.values]),
+        JSON.stringify([action, p.table, p._row, p._version, p.values, p.rows]),
       );
     if (!p.requestId) throw Error("Thiếu mã thao tác.");
     const previous = cache.get(receiptKey);
@@ -149,6 +149,7 @@ function adminApi(token, action, payload) {
       return adminSnapshot_(user);
     }
     if (action === "save") saveAdminData_(p.table, p);
+    else if (action === "saveBatch") saveAdminBatch_(p.table, p.rows);
     else deleteAdminData_(p.table, p);
     cache.put(receiptKey, fingerprint, 21600);
     return adminSnapshot_(user);

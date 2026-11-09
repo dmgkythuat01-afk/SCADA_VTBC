@@ -21,6 +21,7 @@
       query: "",
       filters: {},
       editing: null,
+      queued: [],
       deleting: null,
       busy: false,
       loading: false,
@@ -95,6 +96,7 @@
       S.token = "";
       S.data = null;
       S.editing = null;
+      S.queued = [];
       S.deleting = null;
       S.filters = {};
       S.query = "";
@@ -359,13 +361,19 @@
     }
     function openEditor(row) {
       S.editing = row || null;
+      S.queued = [];
       S.requestId = uid();
+      $("editorForm").noValidate = equipmentBatchMode();
+      $("editor").classList.toggle("batch-mode", equipmentBatchMode());
+      $("equipmentBatch").hidden = !equipmentBatchMode();
+      $("save").disabled = false;
       $("editorTitle").textContent =
         (row ? "Sửa " : "Thêm ") + spec().label.toLocaleLowerCase("vi");
       $("formError").textContent = "";
       $("save").textContent = "Lưu thông tin";
       const fieldOrder = orderedColumns();
-      $("editorFields").innerHTML = fieldOrder.map((key) => [key, spec().columns[key]])
+      $("editorFields").innerHTML = fieldOrder
+        .map((key) => [key, spec().columns[key]])
         .map(([k, label]) => {
           const required = spec().required.includes(k),
             value = k === "matKhau" ? "" : row?.[k] || "";
@@ -401,9 +409,9 @@
                 ? 'min="1" max="36500" step="1"'
                 : k === "soLuong"
                   ? 'min="0" step="1"'
-                : k === "matKhau"
-                  ? 'minlength="8" maxlength="200" autocomplete="new-password"'
-                  : 'maxlength="500"',
+                  : k === "matKhau"
+                    ? 'minlength="8" maxlength="200" autocomplete="new-password"'
+                    : 'maxlength="500"',
           );
         })
         .join("");
@@ -415,7 +423,125 @@
           : S.table === "TaiKhoan"
             ? "Mã nhân viên dùng để chọn người quản lý thiết bị. Để trống mật khẩu khi sửa để giữ nguyên mật khẩu hiện tại."
             : hints[S.table];
+      if (equipmentBatchMode()) renderEquipmentBatch();
       $("editor").showModal();
+    }
+    function equipmentBatchMode() {
+      return S.table === "DanhMucThietBi" && !S.editing;
+    }
+    function equipmentFormValues() {
+      const values = Object.fromEntries(new FormData($("editorForm")));
+      const person = rows("TaiKhoan").find(
+        (a) => a.maNhanVien === values.maNguoiQuanLy,
+      );
+      values.tenNguoiQuanLy = person?.hoTen || "";
+      return values;
+    }
+    function addEquipmentToBatch() {
+      if (S.busy || !equipmentBatchMode()) return;
+      $("formError").textContent = "";
+      if (!$("editorForm").reportValidity()) return;
+      if (S.queued.length >= 100) {
+        $("formError").textContent =
+          "Mỗi lượt tối đa 100 thiết bị. Hãy lưu danh sách hiện tại trước.";
+        return;
+      }
+      const values = equipmentFormValues();
+      const key = (item) =>
+        JSON.stringify(
+          spec().key.map((k) =>
+            String(item[k] || "")
+              .trim()
+              .toLocaleLowerCase("vi"),
+          ),
+        );
+      if ([...rows(), ...S.queued].some((row) => key(row) === key(values))) {
+        $("formError").textContent =
+          "Thiết bị này đã có trong danh mục hoặc danh sách chờ lưu.";
+        return;
+      }
+      S.queued.push({ ...values });
+      S.requestId = uid();
+      renderEquipmentBatch();
+      toast("Đã thêm vào danh sách chờ lưu.");
+    }
+    function renderEquipmentBatch() {
+      const keys = orderedColumns();
+      $("batchCount").textContent = S.queued.length;
+      $("save").textContent =
+        "Lưu tất cả" + (S.queued.length ? " (" + S.queued.length + ")" : "");
+      $("save").disabled = S.queued.length === 0;
+      $("batchTable").innerHTML = S.queued.length
+        ? '<table><thead><tr><th class="number">STT</th>' +
+          keys.map((k) => "<th>" + esc(spec().columns[k]) + "</th>").join("") +
+          '<th class="row-actions">Thao tác</th></tr></thead><tbody>' +
+          S.queued
+            .map(
+              (row, index) =>
+                '<tr><td class="number">' +
+                (index + 1) +
+                "</td>" +
+                keys
+                  .map(
+                    (k) =>
+                      '<td><span class="cell-text">' +
+                      esc(
+                        k === "ThoiGianCapNhat"
+                          ? "Tự động khi lưu"
+                          : formatCell(k, row[k] || "") || "—",
+                      ) +
+                      "</span></td>",
+                  )
+                  .join("") +
+                '<td class="row-actions"><button type="button" data-remove-queued="' +
+                index +
+                '">Bỏ dòng</button></td></tr>',
+            )
+            .join("") +
+          "</tbody></table>"
+        : '<div class="batch-empty">Chưa có thiết bị chờ lưu. Nhập thông tin phía trên rồi bấm “Thêm vào danh sách”.</div>';
+    }
+    function closeEditor() {
+      if (S.busy) return;
+      if (
+        S.queued.length &&
+        !confirm("Danh sách chưa được lưu. Bạn muốn bỏ danh sách và đóng?")
+      )
+        return;
+      S.queued = [];
+      $("editor").close();
+    }
+    async function saveEquipmentBatch() {
+      if (!S.queued.length) {
+        $("formError").textContent =
+          "Hãy thêm thiết bị vào danh sách trước khi lưu.";
+        return;
+      }
+      const count = S.queued.length;
+      S.busy = true;
+      $("editorFields").disabled = true;
+      $("save").disabled = true;
+      $("addToBatch").disabled = true;
+      $("formError").textContent = "";
+      $("save").textContent = "Đang lưu " + count + " thiết bị…";
+      try {
+        S.data = await api("saveBatch", {
+          table: S.table,
+          rows: S.queued,
+          requestId: S.requestId,
+        });
+        S.queued = [];
+        $("editor").close();
+        showData();
+        toast("Đã lưu " + count + " thiết bị.");
+      } catch (error) {
+        $("formError").textContent = error.message;
+      } finally {
+        S.busy = false;
+        $("editorFields").disabled = false;
+        $("addToBatch").disabled = false;
+        renderEquipmentBatch();
+      }
     }
     function setOptions(name, items, value) {
       const input = $("editorForm").elements[name];
@@ -526,6 +652,7 @@
     async function save(e) {
       e.preventDefault();
       if (S.busy) return;
+      if (equipmentBatchMode()) return saveEquipmentBatch();
       const values = Object.fromEntries(new FormData($("editorForm")));
       if (S.table === "DanhMucThietBi") {
         const person = rows("TaiKhoan").find(
@@ -601,7 +728,16 @@
         openEditor(rows().find((r) => r._row === Number(edit.dataset.edit)));
       if (del)
         openDelete(rows().find((r) => r._row === Number(del.dataset.delete)));
-      if (close) $(close.dataset.close).close();
+      if (close) {
+        if (close.dataset.close === "editor") closeEditor();
+        else $(close.dataset.close).close();
+      }
+      const remove = e.target.closest("[data-remove-queued]");
+      if (remove) {
+        S.queued.splice(Number(remove.dataset.removeQueued), 1);
+        S.requestId = uid();
+        renderEquipmentBatch();
+      }
     });
     $("filterFields").addEventListener("change", (e) => {
       const key = e.target.dataset.filter;
@@ -630,10 +766,14 @@
     $("reload").onclick = load;
     $("editorForm").onchange = editorChange;
     $("editorForm").onsubmit = save;
+    $("addToBatch").onclick = addEquipmentToBatch;
     $("deleteForm").onsubmit = remove;
     for (const id of ["editor", "deleteDialog"])
       $(id).addEventListener("cancel", (e) => {
-        if (S.busy) e.preventDefault();
+        if (id === "editor") {
+          e.preventDefault();
+          closeEditor();
+        } else if (S.busy) e.preventDefault();
       });
     $("loginForm").onsubmit = async (e) => {
       e.preventDefault();

@@ -8,6 +8,8 @@ Nhập tài khoản và mã nhân viên, bộ phận quản lý, xưởng → m�
 
 Tìm kiếm/lọc tại trình duyệt; xóa lọc không tải lại server. Nút Tải lại lấy thay đổi mới nhất từ Sheets. Sau Lưu/Xóa, bảng và combobox cập nhật từ snapshot mới.
 
+Khi thêm thiết bị: nhập thông tin → Thêm vào danh sách → sửa các ô cần thiết để nhập thiết bị tiếp theo. Các ô phía trên được giữ nguyên; bảng chờ lưu phía dưới có nút Bỏ dòng. Lưu tất cả chỉ lưu các dòng đã đưa vào danh sách (tối đa100/lượt), không tự thêm nội dung đang chỉnh ở phía trên. Cả danh sách được kiểm tra trước khi ghi một lượt; nếu lỗi, danh sách vẫn được giữ. Sửa thiết bị đã có vẫn lưu từng dòng như trước.
+
 Đổi tên/xóa mục đang được tham chiếu sẽ bị chặn kèm số dòng liên quan, không tự xóa dây chuyền. Dòng bị thay đổi đồng thời cần tải lại trước khi lưu. Chu kỳ bảo dưỡng là số ngày nguyên dương; thời gian cập nhật do server điền.
 
 Đăng nhập với tenDangNhap/matKhau và chucVu=admin (cũng nhận Quản trị/Quản trị viên), không tự tạo tài khoản hoặc thay mật khẩu khi triển khai. Tên đăng nhập không phân biệt hoa/thường. Mật khẩu không được trả về trình duyệt; khi sửa, để trống để giữ nguyên. Mật khẩu mới băm định dạng $eq$1$ tương thích cơ chế cũ; hỗ trợ mật khẩu nhập trực tiếp trong Sheets. Giữ nguyên AUTH_SECRET của project. Phiên6h, thử sai5lần chờ15phút; không được xóa/hạ quyền admin cuối cùng.

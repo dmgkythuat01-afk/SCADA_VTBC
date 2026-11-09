@@ -133,6 +133,19 @@
         <fieldset id="editorFields"></fieldset>
         <p id="formHint" class="form-hint"></p>
         <p id="formError" class="error" role="alert"></p>
+        <section id="equipmentBatch" class="equipment-batch" hidden>
+          <div class="batch-heading">
+            <div>
+              <h3>Danh sách chờ lưu <span id="batchCount">0</span></h3>
+              <p>
+                Giữ nguyên các ô phía trên để nhập tiếp. Chỉ những dòng trong
+                danh sách này được lưu.
+              </p>
+            </div>
+            <button id="addToBatch" type="button">＋ Thêm vào danh sách</button>
+          </div>
+          <div id="batchTable" class="batch-table"></div>
+        </section>
         <div class="dialog-actions">
           <button type="button" data-close="editor">Hủy</button
           ><button id="save" class="primary">Lưu thông tin</button>

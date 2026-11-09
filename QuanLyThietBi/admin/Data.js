@@ -71,7 +71,7 @@ function protectLastAdmin_(old, next) {
   )
     throw Error("Phải giữ ít nhất một tài khoản quản trị.");
 }
-function saveAdminData_(name, p) {
+function prepareAdminData_(name, p, read = readAdminRows_) {
   const spec = adminSpec_(name),
     old = currentAdminRow_(name, p),
     values = p.values || {},
@@ -96,7 +96,7 @@ function saveAdminData_(name, p) {
     if (!row[k])
       throw Error("Vui lòng nhập " + spec.columns[k].toLowerCase() + ".");
   });
-  const all = readAdminRows_(name);
+  const all = read(name);
   if (
     all.some(
       (r) =>
@@ -147,7 +147,7 @@ function saveAdminData_(name, p) {
   )
     adminReference_(name, old);
   if (["DanhMucMay", "DanhMucThietBi", "DanhMucCanKiemTra"].includes(name)) {
-    const matches = readAdminRows_("DanhMucXuong").filter(
+    const matches = read("DanhMucXuong").filter(
       (r) => adminNorm_(r.tenXuong) === adminNorm_(row.tenXuong),
     );
     if (matches.length !== 1)
@@ -155,7 +155,7 @@ function saveAdminData_(name, p) {
     row.tenXuong = matches[0].tenXuong;
   }
   if (["DanhMucThietBi", "DanhMucCanKiemTra"].includes(name)) {
-    const matches = readAdminRows_("DanhMucMay").filter((r) =>
+    const matches = read("DanhMucMay").filter((r) =>
       adminSame_(r, row, ["tenXuong", "tenMay"]),
     );
     if (matches.length !== 1)
@@ -163,7 +163,10 @@ function saveAdminData_(name, p) {
     row.tenMay = matches[0].tenMay;
   }
   if (name === "DanhMucThietBi") {
-    if (row.soLuong && (!/^\d+$/.test(row.soLuong) || !Number.isSafeInteger(Number(row.soLuong))))
+    if (
+      row.soLuong &&
+      (!/^\d+$/.test(row.soLuong) || !Number.isSafeInteger(Number(row.soLuong)))
+    )
       throw Error("Số lượng phải là số nguyên không âm.");
     if (row.ngayLapDat) adminDate_(row.ngayLapDat);
     if (
@@ -174,7 +177,7 @@ function saveAdminData_(name, p) {
     )
       throw Error("Chu kỳ bảo dưỡng phải là số ngày nguyên dương.");
     if (row.maNguoiQuanLy) {
-      const matches = readAdminRows_("TaiKhoan").filter(
+      const matches = read("TaiKhoan").filter(
         (r) =>
           r.maNhanVien &&
           adminNorm_(r.maNhanVien) === adminNorm_(row.maNguoiQuanLy),
@@ -189,7 +192,7 @@ function saveAdminData_(name, p) {
       row.tenNguoiQuanLy = "";
     }
     if (row.tenBoPhanQuanLy) {
-      const matches = readAdminRows_("DanhMucBoPhan").filter(
+      const matches = read("DanhMucBoPhan").filter(
         (r) =>
           adminNorm_(r.tenBoPhanQuanLy) === adminNorm_(row.tenBoPhanQuanLy),
       );
@@ -200,15 +203,42 @@ function saveAdminData_(name, p) {
     row.ThoiGianCapNhat = adminNow_();
   }
   if (name === "DanhMucCanKiemTra") {
-    const matches = readAdminRows_("DanhMucThietBi").filter((r) =>
+    const matches = read("DanhMucThietBi").filter((r) =>
       adminSame_(r, row, ["tenXuong", "tenMay", "maThietBi"]),
     );
     if (matches.length !== 1)
       throw Error("Thiết bị không thuộc xưởng/máy đã chọn.");
     row.maThietBi = matches[0].maThietBi;
   }
-  writeAdminRow_(name, row, old && old._row);
   return row;
+}
+function saveAdminData_(name, p) {
+  const row = prepareAdminData_(name, p);
+  writeAdminRow_(name, row, p._row ? Number(p._row) : undefined);
+  return row;
+}
+function saveAdminBatch_(name, values) {
+  if (name !== "DanhMucThietBi")
+    throw Error("Chỉ hỗ trợ thêm danh sách thiết bị.");
+  if (!Array.isArray(values) || values.length < 1 || values.length > 100)
+    throw Error("Danh sách cần có từ 1 đến 100 thiết bị.");
+  const tables = {},
+    prepared = [];
+  const read = (table) =>
+    tables[table] || (tables[table] = readAdminRows_(table));
+  values.forEach((item, index) => {
+    try {
+      if (!item || typeof item !== "object" || Array.isArray(item))
+        throw Error("Dữ liệu không hợp lệ.");
+      const row = prepareAdminData_(name, { values: item }, read);
+      prepared.push(row);
+      read(name).push({ ...row, _row: -(index + 1) });
+    } catch (error) {
+      throw Error("Dòng " + (index + 1) + ": " + error.message);
+    }
+  });
+  writeAdminBatch_(name, prepared);
+  return { success: true, count: prepared.length };
 }
 function deleteAdminData_(name, p) {
   const old = currentAdminRow_(name, p);

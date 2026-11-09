@@ -137,7 +137,9 @@ function readAdminRows_(name, columnOrders) {
   const sheet = adminSheet_(name),
     { headers, map } = adminHeader_(name, sheet);
   if (columnOrders)
-    columnOrders[name] = headers.filter((key) => Object.prototype.hasOwnProperty.call(map, key));
+    columnOrders[name] = headers.filter((key) =>
+      Object.prototype.hasOwnProperty.call(map, key),
+    );
   if (sheet.getLastRow() < 2) return [];
   return sheet
     .getRange(2, 1, sheet.getLastRow() - 1, sheet.getLastColumn())
@@ -190,6 +192,27 @@ function deleteAdminRow_(name, index) {
   adminSheet_(name).deleteRow(index);
   SpreadsheetApp.flush();
 }
+function writeAdminBatch_(name, rows) {
+  const sheet = adminSheet_(name),
+    { headers, map } = adminHeader_(name, sheet);
+  const start = Math.max(2, sheet.getLastRow() + 1);
+  const matrix = rows.map((row) => {
+    const values = headers.map(() => "");
+    Object.keys(map).forEach((key) => {
+      let value = row[key] === undefined ? "" : String(row[key]);
+      if (/^[=+\-@]/.test(value)) value = "'" + value;
+      values[map[key]] = value;
+    });
+    return values;
+  });
+  const needed = start + matrix.length - 1 - sheet.getMaxRows();
+  if (needed > 0) sheet.insertRowsAfter(sheet.getMaxRows(), needed);
+  sheet
+    .getRange(start, 1, matrix.length, headers.length)
+    .setNumberFormat("@")
+    .setValues(matrix);
+  SpreadsheetApp.flush();
+}
 function adminRowVersion_(name, row) {
   return adminHmac_(
     JSON.stringify([
@@ -212,12 +235,24 @@ function publicAdminRow_(name, row) {
 function equipmentColumnOrder_() {
   const name = "DanhMucThietBi";
   const { headers, map } = adminHeader_(name, adminSheet_(name));
-  return headers.filter((key) => Object.prototype.hasOwnProperty.call(map, key));
+  return headers.filter((key) =>
+    Object.prototype.hasOwnProperty.call(map, key),
+  );
 }
 function adminSnapshot_(user) {
-  const tables = {}, columnOrders = {};
+  const tables = {},
+    columnOrders = {};
   Object.keys(ADMIN_TABLES).forEach(
-    (n) => (tables[n] = readAdminRows_(n, columnOrders).map((r) => publicAdminRow_(n, r))),
+    (n) =>
+      (tables[n] = readAdminRows_(n, columnOrders).map((r) =>
+        publicAdminRow_(n, r),
+      )),
   );
-  return { user, tables, schema: ADMIN_TABLES, columnOrders, updatedAt: adminNow_() };
+  return {
+    user,
+    tables,
+    schema: ADMIN_TABLES,
+    columnOrders,
+    updatedAt: adminNow_(),
+  };
 }
