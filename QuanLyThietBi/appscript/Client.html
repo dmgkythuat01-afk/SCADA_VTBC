@@ -314,23 +314,36 @@
       ) +
       "</div>";
   }
+  const expandedAssets = new Set();
+  function revealAssetParents(id) {
+    const visited = new Set();
+    let current = state.data.assets.find(a => a.id === id);
+    while (current?.parentId && !visited.has(current.parentId)) {
+      visited.add(current.parentId);
+      expandedAssets.add(current.parentId);
+      current = state.data.assets.find(a => a.id === current.parentId);
+    }
+  }
   function tree(parentId = "") {
     return assets()
       .filter((a) => String(a.parentId || "") === parentId)
-      .map(
-        (a) =>
-          '<div class="tree-node"><button data-action="selectAsset" data-id="' +
+      .map((a) => {
+        const hasChildren = assets().some(c => c.parentId === a.id),
+          open = expandedAssets.has(a.id);
+        return '<div class="tree-node"><div class="tree-row">' +
+          (hasChildren ? '<button class="tree-toggle" data-action="toggleAsset" data-id="' + esc(a.id) +
+            '" aria-expanded="' + open + '" aria-label="' + esc((open ? "Thu gọn " : "Mở rộng ") + a.name) + '">' +
+            (open ? '−' : '+') + '</button>' : '<span class="tree-spacer"></span>') +
+          '<button class="tree-label ' + (state.assetId === a.id ? "selected" : "") + '" data-action="selectAsset" data-id="' +
           esc(a.id) +
-          '" class="' +
-          (state.assetId === a.id ? "selected" : "") +
           '">' +
           { workshop: "▦", area: "▧", machine: "⚙", component: "◇" }[a.type] +
           " " +
           esc(a.name) +
-          '</button><div class="tree-children">' +
-          tree(a.id) +
-          "</div></div>",
-      )
+          '</button></div>' +
+          (hasChildren && open ? '<div class="tree-children">' + tree(a.id) + '</div>' : '') +
+          '</div>';
+      })
       .join("");
   }
   function renderAssets() {
@@ -827,7 +840,16 @@
     );
   }
   async function execute(cmd, id, target) {
+    if (cmd === "toggleAsset") {
+      if (expandedAssets.has(id)) expandedAssets.delete(id);
+      else expandedAssets.add(id);
+      const panel = document.querySelector('.tree-panel'), y = panel?.scrollTop || 0;
+      renderAssets();
+      document.querySelector('.tree-panel').scrollTop = y;
+      return;
+    }
     if (cmd === "selectAsset") {
+      revealAssetParents(id);
       state.assetId = id;
       state.page = "assets";
       render();
