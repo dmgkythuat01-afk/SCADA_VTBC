@@ -178,7 +178,7 @@ test("equipment batch validates every row before one write and rejects intra-bat
   const { c, tables } = setup();
   tables.DanhMucXuong.push({ _row: 2, tenXuong: "A" });
   tables.DanhMucMay.push({ _row: 2, tenXuong: "A", tenMay: "M" });
-  const first = { tenXuong: "A", tenMay: "M", maThietBi: "T1", soLuong: "2" };
+  const first = { tenXuong: "A", tenMay: "M", maThietBi: "T1", tenThietBi: "Động cơ", donVi: "cái", soLuong: "2" };
   let writes = 0;
   c.writeAdminBatch_ = (name, rows) => {
     writes++;
@@ -204,6 +204,12 @@ test("equipment batch validates every row before one write and rejects intra-bat
   c.saveAdminBatch_("DanhMucThietBi", [first, { ...first, maThietBi: "T2" }]);
   assert.equal(writes, 1);
   assert.equal(tables.DanhMucThietBi.length, 2);
+  assert.equal(tables.DanhMucThietBi[0].tenThietBi, "Động cơ");
+  assert.equal(tables.DanhMucThietBi[0].donVi, "cái");
+  const saved = c.publicAdminRow_("DanhMucThietBi", tables.DanhMucThietBi[0]);
+  c.saveAdminData_("DanhMucThietBi", {...saved, values:{tenThietBi:"Động cơ chính"}});
+  assert.equal(tables.DanhMucThietBi[0].tenThietBi, "Động cơ chính");
+  assert.equal(tables.DanhMucThietBi[0].donVi, "cái");
   assert.throws(() => c.saveAdminBatch_("TaiKhoan", [first]));
   assert.throws(() => c.saveAdminBatch_("DanhMucThietBi", []));
 });
