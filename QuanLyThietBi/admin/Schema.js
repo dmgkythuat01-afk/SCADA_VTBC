@@ -133,9 +133,11 @@ function adminHeader_(name, sheet) {
   });
   return { headers, map };
 }
-function readAdminRows_(name) {
+function readAdminRows_(name, columnOrders) {
   const sheet = adminSheet_(name),
-    { map } = adminHeader_(name, sheet);
+    { headers, map } = adminHeader_(name, sheet);
+  if (columnOrders)
+    columnOrders[name] = headers.filter((key) => Object.prototype.hasOwnProperty.call(map, key));
   if (sheet.getLastRow() < 2) return [];
   return sheet
     .getRange(2, 1, sheet.getLastRow() - 1, sheet.getLastColumn())
@@ -213,9 +215,9 @@ function equipmentColumnOrder_() {
   return headers.filter((key) => Object.prototype.hasOwnProperty.call(map, key));
 }
 function adminSnapshot_(user) {
-  const tables = {};
+  const tables = {}, columnOrders = {};
   Object.keys(ADMIN_TABLES).forEach(
-    (n) => (tables[n] = readAdminRows_(n).map((r) => publicAdminRow_(n, r))),
+    (n) => (tables[n] = readAdminRows_(n, columnOrders).map((r) => publicAdminRow_(n, r))),
   );
-  return { user, tables, schema: ADMIN_TABLES, equipmentColumnOrder: equipmentColumnOrder_(), updatedAt: adminNow_() };
+  return { user, tables, schema: ADMIN_TABLES, columnOrders, updatedAt: adminNow_() };
 }

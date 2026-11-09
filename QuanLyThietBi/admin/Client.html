@@ -216,9 +216,12 @@
         );
       return value;
     }
+    function orderedColumns() {
+      return S.data.columnOrders?.[S.table] || Object.keys(spec().columns);
+    }
     function renderTable() {
       const display = filtered(),
-        keys = Object.keys(spec().columns);
+        keys = orderedColumns();
       $("rowCount").textContent =
         "Hiển thị " + display.length + " / " + rows().length + " dòng dữ liệu";
       $("tableRegion").innerHTML = display.length
@@ -361,9 +364,7 @@
         (row ? "Sửa " : "Thêm ") + spec().label.toLocaleLowerCase("vi");
       $("formError").textContent = "";
       $("save").textContent = "Lưu thông tin";
-      const fieldOrder = S.table === "DanhMucThietBi"
-        ? S.data.equipmentColumnOrder || Object.keys(spec().columns)
-        : Object.keys(spec().columns);
+      const fieldOrder = orderedColumns();
       $("editorFields").innerHTML = fieldOrder.map((key) => [key, spec().columns[key]])
         .map(([k, label]) => {
           const required = spec().required.includes(k),

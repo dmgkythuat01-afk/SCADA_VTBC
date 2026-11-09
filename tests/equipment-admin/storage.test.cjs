@@ -1,4 +1,12 @@
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
+test('all six menus receive physical header order even when sheets have no data rows',()=>{
+ const c={};vm.createContext(c);vm.runInContext(fs.readFileSync('QuanLyThietBi/admin/Schema.js','utf8'),c);
+ const schemas=vm.runInContext('ADMIN_TABLES',c);
+ c.adminNow_=()=>'';
+ c.adminSheet_=name=>{const headers=Object.keys(schemas[name].columns).reverse();return{getLastRow:()=>1,getLastColumn:()=>headers.length,getRange:()=>({getValues:()=>[headers]})};};
+ const snapshot=c.adminSnapshot_({name:'Admin'});
+ for(const name of Object.keys(schemas))assert.deepEqual(Array.from(snapshot.columnOrders[name]),Object.keys(schemas[name].columns).reverse());
+});
 test('equipment popup order follows physical sheet headers, including quantity at the end',()=>{
  const c={};vm.createContext(c);vm.runInContext(fs.readFileSync('QuanLyThietBi/admin/Schema.js','utf8'),c);
  const keys=Array.from(vm.runInContext('Object.keys(ADMIN_TABLES.DanhMucThietBi.columns)',c)).filter(k=>k!=='soLuong');keys.push('soLuong');
