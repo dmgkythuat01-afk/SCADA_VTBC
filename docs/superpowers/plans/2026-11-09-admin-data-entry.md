@@ -1,0 +1,13 @@
+# Admin data-entry rebuild
+
+Read-only export verified exact six user-owned sheets and headers on 2026-11-09. TaiKhoan has8 records (employee IDs currently blank), DanhMucBoPhan3, remaining four sheets empty. Preserve all workbook cells until the user explicitly uses CRUD.
+
+Build fresh admin source in QuanLyThietBi/admin; point clasp rootDir there, keep historic appscript code out of pushes. Vietnamese labels map exact sheet headers including ThongSoKyThuat/ThoiGianCapNhat. Sidebar Nhập dữ liệu → Tài khoản/Bộ phận quản lý/Xưởng/Máy/Thiết bị/Chỉ tiêu kiểm tra. Desktop table, local search/filter, add/edit modal, delete confirmation. Optional search-assisted dropdowns with dependent workshop/machine/equipment, synchronized employee ID/name and department choices from live sheets.
+
+Backend: admin-only username/password auth preserving existing plaintext and old hashed passwords; no password returned to browser. Header-driven reads/writes, date normalization, optimistic row digest and script lock. Unique natural keys, relation validation, block referenced parent renames/deletes, prevent last-admin removal, formula injection protection. No extra sheets/headers/triggers/samples. New maintenance interval positive integer; optional calendar date. Check criterion key=(workshop,machine,equipment,criterion).
+
+Tests: auth/CRUD/references/duplicates/stale rows/extra column and password preservation; Chrome mobile/desktop layout, dependent dropdowns and local filters; safe read-only live verification and deploy new admin URL; Git push. Mobile remains pinned to historical backend20 and outside this rebuild; its legacy workflow needs separate future adaptation to the user's redesigned sheets.
+
+Completed: deployed new admin web app AKfycbys2ZTXnDl71K_HDVMf1lFGb1oEohD5CeI0N0H1s3qFBLE-0LLhqdinx7_dyYC9hgcs_Q at24. Local Chrome verified all6menus, full create/edit/delete flow, cascading selectors, manager ID/name pairing, blocked parent deletion, password privacy, local filter clearing without RPC and phone layout. Review caught blank status being defaulted on edit; fixed and browser regression passed.
+
+Latest live read authenticated the current existing admin entirely server-side, verified the session and all6sheet schemas, then logged out; no password left the application and no Sheet writes were performed. Current live counts: TaiKhoan7, DanhMucBoPhan3, remaining four0. Initial export contained old sample accounts; current live data has user-created accounts, so old demo.admin login was correctly rejected. Temporary read-only diagnostic removed and canonical source restored. No samples, headers, triggers or account passwords changed by this implementation.

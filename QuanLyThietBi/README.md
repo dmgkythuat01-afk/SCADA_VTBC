@@ -1,5 +1,17 @@
 # DMG Quản lý thiết bị — Google Sheets + Apps Script
 
+## Phiên bản admin hiện tại — Nhập dữ liệu (09/11/2026)
+
+App mới: https://script.google.com/macros/s/AKfycbys2ZTXnDl71K_HDVMf1lFGb1oEohD5CeI0N0H1s3qFBLE-0LLhqdinx7_dyYC9hgcs_Q/exec
+
+Mã hiện hành nằm trong `admin/`, là rootDir mới của clasp; chỉ bảy file tại đây được push. Bộ `appscript/` và hướng dẫn bên dưới là lịch sử, không khôi phục vào app mới. Chi tiết bản mới: [admin/README.md](admin/README.md).
+
+Menu Nhập dữ liệu quản lý sáu sheet hiện có: TaiKhoan, DanhMucBoPhan, DanhMucXuong, DanhMucMay, DanhMucThietBi, DanhMucCanKiemTra. Không tự tạo sheet/cột, dữ liệu mẫu hoặc trigger; dùng tài khoản admin hiện có. Mobile vẫn ghim backend20; thích nghi mobile với schema mới là công việc riêng.
+
+---
+
+## Tài liệu lịch sử phiên bản cũ
+
 App: https://script.google.com/macros/s/AKfycbwK1JwWhrazLtOZ7YnPZedvkS71KLvCWCQDY52fvmLVk4505FulJFF_ER7Cz1mkaYguJg/exec
 Mobile (project riêng): https://script.google.com/macros/s/AKfycbzMajCHwyZ8ohRElBG5SKeE0jbG6orEIHXOUBh_bF611yGq8zLDgCZK-UrsBj8gPQQUhA/exec
 Sheet: https://docs.google.com/spreadsheets/d/1GyLKh_9gwPeAzTMuowR3OE8eYnSSnoMPMLnWcUYxpoI/edit

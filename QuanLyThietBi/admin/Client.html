@@ -1,0 +1,663 @@
+<script>
+  const Admin = (() => {
+    const $ = (id) => document.getElementById(id),
+      esc = (v) =>
+        String(v ?? "").replace(
+          /[&<>"']/g,
+          (c) =>
+            ({
+              "&": "&amp;",
+              "<": "&lt;",
+              ">": "&gt;",
+              '"': "&quot;",
+              "'": "&#39;",
+            })[c],
+        ),
+      uid = () => crypto.randomUUID();
+    const S = {
+      token: sessionStorage.getItem("dmgAdminDataSession") || "",
+      data: null,
+      table: "TaiKhoan",
+      query: "",
+      filters: {},
+      editing: null,
+      deleting: null,
+      busy: false,
+      loading: false,
+      requestId: "",
+    };
+    const descriptions = {
+      TaiKhoan: "Tài khoản đăng nhập và thông tin nhân viên.",
+      DanhMucBoPhan: "Các phòng ban và bộ phận quản lý trong công ty.",
+      DanhMucXuong: "Danh sách xưởng dùng để liên kết máy và thiết bị.",
+      DanhMucMay: "Danh sách máy được phân theo từng xưởng.",
+      DanhMucThietBi: "Thông tin thiết bị, người quản lý và chu kỳ bảo dưỡng.",
+      DanhMucCanKiemTra:
+        "Các chỉ tiêu và thông số tiêu chuẩn của từng thiết bị.",
+    };
+    const hints = {
+      TaiKhoan:
+        "Điền mã nhân viên để tài khoản xuất hiện trong lựa chọn người quản lý thiết bị. Mật khẩu không hiển thị trên bảng.",
+      DanhMucBoPhan: "Tên bộ phận quản lý được dùng trong danh mục thiết bị.",
+      DanhMucXuong:
+        "Thêm xưởng trước, sau đó vào danh mục Máy để tạo máy thuộc xưởng.",
+      DanhMucMay: "Tên xưởng được chọn từ danh mục Xưởng hiện có.",
+      DanhMucThietBi:
+        "Chọn xưởng → máy; mã và tên người quản lý lấy từ danh mục Tài khoản. Chu kỳ bảo dưỡng tính theo số ngày.",
+      DanhMucCanKiemTra:
+        "Chọn xưởng → máy → mã thiết bị để nhập các chỉ tiêu kiểm tra tương ứng.",
+    };
+    const norm = (v) =>
+      String(v ?? "")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/đ/g, "d")
+        .replace(/Đ/g, "D")
+        .toLowerCase();
+    const spec = () => S.data.schema[S.table],
+      rows = (n) => S.data.tables[n || S.table] || [],
+      option = (value, label, selected) =>
+        '<option value="' +
+        esc(value) +
+        '" ' +
+        (String(selected) === String(value) ? "selected" : "") +
+        ">" +
+        esc(label) +
+        "</option>";
+    function rpc(method, ...args) {
+      return new Promise((resolve, reject) =>
+        google.script.run
+          .withSuccessHandler(resolve)
+          .withFailureHandler((e) =>
+            reject(Error(e.message || "Không thực hiện được.")),
+          )
+          [method](...args),
+      );
+    }
+    function api(action, p = {}) {
+      return rpc("adminApi", S.token, action, p);
+    }
+    function toast(text) {
+      $("toast").textContent = text;
+      $("toast").hidden = false;
+      setTimeout(() => ($("toast").hidden = true), 5000);
+    }
+    function pageError(e) {
+      if (/phiên đăng nhập/i.test(e.message)) {
+        showLogin();
+        $("loginError").textContent = e.message;
+        return;
+      }
+      $("pageError").textContent = e.message;
+      $("pageError").hidden = false;
+    }
+    function showLogin() {
+      S.token = "";
+      S.data = null;
+      S.editing = null;
+      S.deleting = null;
+      S.filters = {};
+      S.query = "";
+      S.loading = false;
+      sessionStorage.removeItem("dmgAdminDataSession");
+      $("editor").close();
+      $("deleteDialog").close();
+      $("app").hidden = true;
+      $("login").hidden = false;
+    }
+    async function load() {
+      if (S.loading || S.busy) return;
+      const token = S.token;
+      S.loading = true;
+      $("reload").disabled = true;
+      try {
+        const data = await api("snapshot");
+        if (token !== S.token) return;
+        S.data = data;
+        showData();
+      } catch (e) {
+        if (token === S.token) pageError(e);
+      } finally {
+        if (token === S.token) {
+          S.loading = false;
+          $("reload").disabled = false;
+        }
+      }
+    }
+    function showData() {
+      $("login").hidden = true;
+      $("app").hidden = false;
+      $("currentUser").textContent = S.data.user.name || S.data.user.username;
+      $("pageError").hidden = true;
+      render();
+    }
+    function navigation() {
+      $("navigation").innerHTML = Object.entries(S.data.schema)
+        .map(
+          ([key, s]) =>
+            '<button data-go="' +
+            key +
+            '" class="' +
+            (key === S.table ? "active" : "") +
+            '"><span class="nav-icon">' +
+            s.icon +
+            "</span>" +
+            esc(s.label) +
+            "<small>" +
+            rows(key).length +
+            "</small></button>",
+        )
+        .join("");
+    }
+    function filterRows(except) {
+      return rows().filter((r) =>
+        Object.entries(S.filters).every(
+          ([key, value]) => key === except || !value || r[key] === value,
+        ),
+      );
+    }
+    function filtered() {
+      return filterRows().filter(
+        (r) =>
+          !S.query ||
+          Object.keys(spec().columns)
+            .filter((k) => k !== "matKhau")
+            .some((k) => norm(r[k]).includes(norm(S.query))),
+      );
+    }
+    function filterLabel(key, value) {
+      if (key === "maNguoiQuanLy") {
+        const a = rows("TaiKhoan").find((a) => a.maNhanVien === value);
+        return value + (a ? " · " + a.hoTen : "");
+      }
+      return value;
+    }
+    function renderFilters() {
+      $("filterFields").innerHTML = spec()
+        .filters.map((k) => {
+          const options = [
+            ...new Set(
+              filterRows(k)
+                .map((r) => r[k])
+                .filter(Boolean),
+            ),
+          ].sort((a, b) => a.localeCompare(b, "vi"));
+          if (S.filters[k] && !options.includes(S.filters[k]))
+            options.unshift(S.filters[k]);
+          return (
+            '<select data-filter="' +
+            k +
+            '" aria-label="Lọc ' +
+            esc(spec().columns[k]) +
+            '">' +
+            option("", "Tất cả · " + spec().columns[k], S.filters[k] || "") +
+            options
+              .map((v) => option(v, filterLabel(k, v), S.filters[k]))
+              .join("") +
+            "</select>"
+          );
+        })
+        .join("");
+    }
+    function formatCell(key, value) {
+      if (key === "ngayLapDat" && /^\d{4}-\d{2}-\d{2}$/.test(value))
+        return value.split("-").reverse().join("/");
+      if (key === "ThoiGianCapNhat" && /^\d{4}-\d{2}-\d{2}/.test(value))
+        return (
+          value.slice(0, 10).split("-").reverse().join("/") + value.slice(10)
+        );
+      return value;
+    }
+    function renderTable() {
+      const display = filtered(),
+        keys = Object.keys(spec().columns);
+      $("rowCount").textContent =
+        "Hiển thị " + display.length + " / " + rows().length + " dòng dữ liệu";
+      $("tableRegion").innerHTML = display.length
+        ? '<table><thead><tr><th class="number">STT</th>' +
+          keys.map((k) => "<th>" + esc(spec().columns[k]) + "</th>").join("") +
+          '<th class="row-actions">Thao tác</th></tr></thead><tbody>' +
+          display
+            .map(
+              (r, i) =>
+                '<tr><td class="number">' +
+                (i + 1) +
+                "</td>" +
+                keys
+                  .map((k) => {
+                    const v =
+                      k === "matKhau"
+                        ? r._hasPassword
+                          ? "••••••••"
+                          : "Chưa đặt"
+                        : formatCell(k, r[k] || "");
+                    return (
+                      '<td><span class="cell-text" title="' +
+                      esc(k === "matKhau" ? "Mật khẩu được bảo mật" : v) +
+                      '">' +
+                      esc(v || "—") +
+                      "</span></td>"
+                    );
+                  })
+                  .join("") +
+                '<td class="row-actions"><button data-edit="' +
+                r._row +
+                '">Sửa</button><button data-delete="' +
+                r._row +
+                '">Xóa</button></td></tr>',
+            )
+            .join("") +
+          "</tbody></table>"
+        : '<div class="empty"><span class="empty-icon">▤</span><b>' +
+          (rows().length
+            ? "Không tìm thấy dữ liệu phù hợp"
+            : "Danh mục chưa có dữ liệu") +
+          "</b>" +
+          (rows().length
+            ? "Thử thay đổi bộ lọc hoặc nội dung tìm kiếm."
+            : "Chọn “Thêm mới” để nhập dòng đầu tiên.") +
+          "</div>";
+      $("syncTime").textContent =
+        "Cập nhật: " + formatCell("ThoiGianCapNhat", S.data.updatedAt);
+      $("tableHint").textContent = "Danh mục dùng chung · " + spec().label;
+    }
+    function render() {
+      navigation();
+      $("pageTitle").textContent = spec().label;
+      $("breadcrumbLabel").textContent = spec().label;
+      $("pageDescription").textContent = descriptions[S.table];
+      $("cardTitle").textContent =
+        "Danh mục " + spec().label.toLocaleLowerCase("vi");
+      $("relationHint").textContent = hints[S.table];
+      $("search").value = S.query;
+      renderFilters();
+      renderTable();
+    }
+    function go(name) {
+      if (S.busy) return;
+      S.table = name;
+      S.query = "";
+      S.filters = {};
+      $("pageError").hidden = true;
+      render();
+    }
+    function field(k, label, type, value, required, extra = "") {
+      return (
+        '<label class="' +
+        ([
+          "ThongSoKyThuat",
+          "congDung",
+          "danhMucCanKiemTra",
+          "thongSoTieuChuan",
+        ].includes(k)
+          ? "wide"
+          : "") +
+        '"><span>' +
+        esc(label) +
+        (required ? '<span class="required">*</span>' : "") +
+        "</span>" +
+        (type === "textarea"
+          ? '<textarea name="' +
+            k +
+            '" ' +
+            (required ? "required" : "") +
+            ' maxlength="10000">' +
+            esc(value) +
+            "</textarea>"
+          : '<input name="' +
+            k +
+            '" type="' +
+            type +
+            '" value="' +
+            esc(value) +
+            '" ' +
+            (required ? "required" : "") +
+            " " +
+            extra +
+            ">") +
+        "</label>"
+      );
+    }
+    function selectField(k, label, required) {
+      return (
+        "<label><span>" +
+        esc(label) +
+        (required ? '<span class="required">*</span>' : "") +
+        '</span><select name="' +
+        k +
+        '" ' +
+        (required ? "required" : "") +
+        "></select></label>"
+      );
+    }
+    function isRelation(k) {
+      return (
+        ([
+          "tenXuong",
+          "tenMay",
+          "maNguoiQuanLy",
+          "tenNguoiQuanLy",
+          "tenBoPhanQuanLy",
+        ].includes(k) &&
+          S.table !== "DanhMucXuong" &&
+          !(S.table === "DanhMucMay" && k === "tenMay") &&
+          !(S.table === "DanhMucBoPhan" && k === "tenBoPhanQuanLy")) ||
+        (S.table === "DanhMucCanKiemTra" && k === "maThietBi")
+      );
+    }
+    function openEditor(row) {
+      S.editing = row || null;
+      S.requestId = uid();
+      $("editorTitle").textContent =
+        (row ? "Sửa " : "Thêm ") + spec().label.toLocaleLowerCase("vi");
+      $("formError").textContent = "";
+      $("save").textContent = "Lưu thông tin";
+      $("editorFields").innerHTML = Object.entries(spec().columns)
+        .map(([k, label]) => {
+          const required = spec().required.includes(k),
+            value = k === "matKhau" ? "" : row?.[k] || "";
+          if (isRelation(k) || ["chucVu", "dangSuDung"].includes(k))
+            return selectField(k, label, required);
+          const type = [
+            "ThongSoKyThuat",
+            "congDung",
+            "danhMucCanKiemTra",
+            "thongSoTieuChuan",
+          ].includes(k)
+            ? "textarea"
+            : k === "matKhau"
+              ? "password"
+              : k === "email"
+                ? "email"
+                : k === "ngayLapDat"
+                  ? "date"
+                  : k === "soNgayCanBaoDuong"
+                    ? "number"
+                    : "text";
+          return field(
+            k,
+            k === "matKhau" && row
+              ? "Mật khẩu mới (để trống để giữ nguyên)"
+              : label,
+            type,
+            value,
+            required || (k === "matKhau" && !row),
+            k === "ThoiGianCapNhat"
+              ? 'readonly placeholder="Tự động khi lưu"'
+              : k === "soNgayCanBaoDuong"
+                ? 'min="1" max="36500" step="1"'
+                : k === "matKhau"
+                  ? 'minlength="8" maxlength="200" autocomplete="new-password"'
+                  : 'maxlength="500"',
+          );
+        })
+        .join("");
+      setFormOptions(row || {});
+      $("formHint").textContent =
+        S.table === "DanhMucThietBi" &&
+        !rows("TaiKhoan").some((a) => a.maNhanVien)
+          ? "Chưa có mã nhân viên. Điền mã nhân viên trong mục Tài khoản để chọn người quản lý."
+          : S.table === "TaiKhoan"
+            ? "Mã nhân viên dùng để chọn người quản lý thiết bị. Để trống mật khẩu khi sửa để giữ nguyên mật khẩu hiện tại."
+            : hints[S.table];
+      $("editor").showModal();
+    }
+    function setOptions(name, items, value) {
+      const input = $("editorForm").elements[name];
+      if (!input || input.tagName !== "SELECT") return;
+      const pairs = items.map((v) => (Array.isArray(v) ? v : [v, v])),
+        unique = [...new Map(pairs.map((p) => [String(p[0]), p])).values()];
+      if (value && !unique.some((p) => String(p[0]) === String(value)))
+        unique.push([value, value + " (không còn trong danh mục)"]);
+      input.innerHTML =
+        option(
+          "",
+          "— Chọn " + spec().columns[name].toLowerCase() + " —",
+          value,
+        ) + unique.map(([v, label]) => option(v, label, value)).join("");
+    }
+    function setFormOptions(values) {
+      const f = $("editorForm");
+      if (isRelation("tenXuong"))
+        setOptions(
+          "tenXuong",
+          rows("DanhMucXuong").map((r) => r.tenXuong),
+          values.tenXuong,
+        );
+      if (isRelation("tenMay"))
+        setOptions(
+          "tenMay",
+          rows("DanhMucMay")
+            .filter((r) => r.tenXuong === f.elements.tenXuong?.value)
+            .map((r) => r.tenMay),
+          values.tenMay,
+        );
+      if (S.table === "DanhMucCanKiemTra")
+        setOptions(
+          "maThietBi",
+          rows("DanhMucThietBi")
+            .filter(
+              (r) =>
+                r.tenXuong === f.elements.tenXuong.value &&
+                r.tenMay === f.elements.tenMay.value,
+            )
+            .map((r) => r.maThietBi),
+          values.maThietBi,
+        );
+      if (S.table === "DanhMucThietBi") {
+        const people = rows("TaiKhoan").filter((a) => a.maNhanVien);
+        setOptions(
+          "maNguoiQuanLy",
+          people.map((a) => [a.maNhanVien, a.maNhanVien + " · " + a.hoTen]),
+          values.maNguoiQuanLy,
+        );
+        setOptions(
+          "tenNguoiQuanLy",
+          people.map((a) => [a.maNhanVien, a.hoTen + " · " + a.maNhanVien]),
+          values.maNguoiQuanLy,
+        );
+        setOptions(
+          "tenBoPhanQuanLy",
+          rows("DanhMucBoPhan").map((r) => r.tenBoPhanQuanLy),
+          values.tenBoPhanQuanLy,
+        );
+      }
+      if (f.elements.chucVu)
+        setOptions(
+          "chucVu",
+          [
+            ...rows("TaiKhoan").map((r) => r.chucVu),
+            "admin",
+            "TruongCa",
+            "CongNhan",
+            "PhongCongNghe",
+            "KyThuat",
+            "CoKhi",
+            "TuDongHoa",
+            "disabled",
+          ],
+          values.chucVu,
+        );
+      if (f.elements.dangSuDung)
+        setOptions(
+          "dangSuDung",
+          [
+            ...rows("DanhMucThietBi")
+              .map((r) => r.dangSuDung)
+              .filter(Boolean),
+            "Có",
+            "Không",
+          ],
+          values.dangSuDung === undefined ? "Có" : values.dangSuDung,
+        );
+    }
+    function editorChange(e) {
+      const name = e.target.name,
+        f = $("editorForm"),
+        v = Object.fromEntries(new FormData(f));
+      if (name === "tenXuong") {
+        v.tenMay = "";
+        v.maThietBi = "";
+        setFormOptions(v);
+      } else if (name === "tenMay") {
+        v.maThietBi = "";
+        setFormOptions(v);
+      } else if (name === "maNguoiQuanLy" || name === "tenNguoiQuanLy") {
+        const id = e.target.value;
+        f.elements.maNguoiQuanLy.value = id;
+        f.elements.tenNguoiQuanLy.value = id;
+      }
+    }
+    async function save(e) {
+      e.preventDefault();
+      if (S.busy) return;
+      const values = Object.fromEntries(new FormData($("editorForm")));
+      if (S.table === "DanhMucThietBi") {
+        const person = rows("TaiKhoan").find(
+          (a) => a.maNhanVien === values.maNguoiQuanLy,
+        );
+        values.tenNguoiQuanLy = person?.hoTen || "";
+      }
+      S.busy = true;
+      $("editorFields").disabled = true;
+      $("save").disabled = true;
+      $("formError").textContent = "";
+      try {
+        const data = await api("save", {
+          table: S.table,
+          values,
+          _row: S.editing?._row,
+          _version: S.editing?._version,
+          requestId: S.requestId,
+        });
+        S.data = data;
+        $("editor").close();
+        showData();
+        toast("Đã lưu thông tin.");
+      } catch (e) {
+        $("formError").textContent = e.message;
+      } finally {
+        S.busy = false;
+        $("editorFields").disabled = false;
+        $("save").disabled = false;
+      }
+    }
+    function openDelete(row) {
+      S.deleting = row;
+      S.requestId = uid();
+      $("deleteDescription").textContent =
+        "Bạn đang xóa: " +
+        spec()
+          .key.map((k) => row[k])
+          .join(" · ");
+      $("deleteError").textContent = "";
+      $("deleteDialog").showModal();
+    }
+    async function remove(e) {
+      e.preventDefault();
+      if (S.busy) return;
+      S.busy = true;
+      $("confirmDelete").disabled = true;
+      try {
+        S.data = await api("delete", {
+          table: S.table,
+          _row: S.deleting._row,
+          _version: S.deleting._version,
+          requestId: S.requestId,
+        });
+        $("deleteDialog").close();
+        showData();
+        toast("Đã xóa dòng dữ liệu.");
+      } catch (e) {
+        $("deleteError").textContent = e.message;
+      } finally {
+        S.busy = false;
+        $("confirmDelete").disabled = false;
+      }
+    }
+    document.addEventListener("click", (e) => {
+      const goButton = e.target.closest("[data-go]"),
+        edit = e.target.closest("[data-edit]"),
+        del = e.target.closest("[data-delete]"),
+        close = e.target.closest("[data-close]");
+      if (S.busy) return;
+      if (goButton) go(goButton.dataset.go);
+      if (edit)
+        openEditor(rows().find((r) => r._row === Number(edit.dataset.edit)));
+      if (del)
+        openDelete(rows().find((r) => r._row === Number(del.dataset.delete)));
+      if (close) $(close.dataset.close).close();
+    });
+    $("filterFields").addEventListener("change", (e) => {
+      const key = e.target.dataset.filter;
+      if (!key) return;
+      S.filters[key] = e.target.value;
+      if (key === "tenXuong") {
+        delete S.filters.tenMay;
+        delete S.filters.maThietBi;
+      }
+      if (key === "tenMay") delete S.filters.maThietBi;
+      renderFilters();
+      renderTable();
+    });
+    $("search").oninput = (e) => {
+      S.query = e.target.value;
+      renderTable();
+    };
+    $("clearFilters").onclick = () => {
+      S.query = "";
+      S.filters = {};
+      $("search").value = "";
+      renderFilters();
+      renderTable();
+    };
+    $("add").onclick = () => openEditor();
+    $("reload").onclick = load;
+    $("editorForm").onchange = editorChange;
+    $("editorForm").onsubmit = save;
+    $("deleteForm").onsubmit = remove;
+    for (const id of ["editor", "deleteDialog"])
+      $(id).addEventListener("cancel", (e) => {
+        if (S.busy) e.preventDefault();
+      });
+    $("loginForm").onsubmit = async (e) => {
+      e.preventDefault();
+      $("loginButton").disabled = true;
+      $("loginError").textContent = "";
+      try {
+        const r = await rpc(
+          "loginAdmin",
+          $("username").value,
+          $("password").value,
+        );
+        S.token = r.token;
+        sessionStorage.setItem("dmgAdminDataSession", r.token);
+        $("password").value = "";
+        await load();
+      } catch (e) {
+        $("loginError").textContent = e.message;
+      } finally {
+        $("loginButton").disabled = false;
+      }
+    };
+    $("showPassword").onclick = () => {
+      const show = $("password").type === "password";
+      $("password").type = show ? "text" : "password";
+      $("showPassword").textContent = show ? "Ẩn" : "Hiện";
+    };
+    $("logout").onclick = async () => {
+      const token = S.token;
+      showLogin();
+      try {
+        await rpc("logoutAdmin", token);
+      } catch {}
+    };
+    window.addEventListener("offline", () =>
+      pageError(
+        Error("Đang mất kết nối. Vui lòng kết nối mạng trước khi lưu."),
+      ),
+    );
+    if (S.token) load();
+    return { state: S, go, load, render, openEditor, filtered, api };
+  })();
+</script>

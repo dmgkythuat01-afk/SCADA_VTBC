@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <base target="_top" />
+    <?!= HtmlService.createHtmlOutputFromFile('Styles').getContent(); ?>
+  </head>
+  <body>
+    <section id="login" class="login">
+      <div class="login-art">
+        <span class="brand-mark">D</span>
+        <p class="eyebrow">DMG · QUẢN TRỊ NỘI BỘ</p>
+        <h1>Dữ liệu rõ ràng.<br />Quản lý thuận tiện.</h1>
+        <p>
+          Tập trung danh mục xưởng, máy, thiết bị và chỉ tiêu kiểm tra trong một
+          nơi.
+        </p>
+        <div class="art-grid">
+          <span>01<br /><b>Con người</b></span
+          ><span>02<br /><b>Thiết bị</b></span
+          ><span>03<br /><b>Tiêu chuẩn</b></span>
+        </div>
+      </div>
+      <form id="loginForm" class="login-form">
+        <span class="mini-label">QUẢN LÝ THIẾT BỊ</span>
+        <h2>Chào mừng trở lại</h2>
+        <p>Đăng nhập bằng tài khoản quản trị trong danh mục Tài khoản.</p>
+        <label
+          >Tên đăng nhập<input
+            id="username"
+            autocomplete="username"
+            required /></label
+        ><label
+          >Mật khẩu<span class="password-wrap"
+            ><input
+              id="password"
+              type="password"
+              autocomplete="current-password"
+              required
+            /><button id="showPassword" type="button">Hiện</button></span
+          ></label
+        >
+        <p id="loginError" class="error" role="alert"></p>
+        <button class="primary full" id="loginButton">Đăng nhập →</button>
+      </form>
+    </section>
+    <div id="app" hidden>
+      <aside class="sidebar">
+        <div class="brand">
+          <span class="brand-mark">D</span>
+          <div><b>DMG</b><small>QUẢN LÝ THIẾT BỊ</small></div>
+        </div>
+        <span class="sidebar-label">KHÔNG GIAN QUẢN TRỊ</span>
+        <details open class="nav-group">
+          <summary>▤ <b>Nhập dữ liệu</b><span>⌄</span></summary>
+          <nav id="navigation" aria-label="Danh mục nhập dữ liệu"></nav>
+        </details>
+        <div class="sidebar-bottom">
+          <span class="connection-dot"></span> Dữ liệu Google Sheets
+          <div id="currentUser"></div>
+          <button id="logout">Đăng xuất ↗</button>
+        </div>
+      </aside>
+      <main>
+        <header>
+          <div>
+            <div class="breadcrumb">
+              Nhập dữ liệu <span>/</span> <span id="breadcrumbLabel"></span>
+            </div>
+            <h1 id="pageTitle"></h1>
+            <p id="pageDescription">Quản lý và cập nhật danh mục dùng chung.</p>
+          </div>
+          <div class="header-actions">
+            <button id="reload">↻ Tải lại</button
+            ><a
+              class="sheet-link"
+              href="https://docs.google.com/spreadsheets/d/1GyLKh_9gwPeAzTMuowR3OE8eYnSSnoMPMLnWcUYxpoI/edit"
+              target="_blank"
+              rel="noopener"
+              >Mở Sheets ↗</a
+            >
+          </div>
+        </header>
+        <div id="pageError" class="error-banner" hidden role="alert"></div>
+        <section class="data-card">
+          <div class="card-heading">
+            <div>
+              <h2 id="cardTitle"></h2>
+              <p id="rowCount"></p>
+            </div>
+            <button id="add" class="primary">＋ Thêm mới</button>
+          </div>
+          <div class="filters">
+            <label class="search-box"
+              ><span>⌕</span
+              ><input
+                id="search"
+                type="search"
+                placeholder="Nhập nội dung tìm kiếm…"
+                aria-label="Tìm kiếm trong danh mục"
+            /></label>
+            <div id="filterFields"></div>
+            <button id="clearFilters" class="text-button">Xóa lọc</button>
+          </div>
+          <div
+            id="tableRegion"
+            class="table-region"
+            tabindex="0"
+            aria-label="Bảng dữ liệu"
+          ></div>
+          <footer>
+            <span id="syncTime"></span><span id="tableHint"></span>
+          </footer>
+        </section>
+        <p id="relationHint" class="relation-hint"></p>
+      </main>
+    </div>
+    <dialog id="editor">
+      <form id="editorForm">
+        <div class="dialog-header">
+          <div>
+            <span class="mini-label">NHẬP DỮ LIỆU</span>
+            <h2 id="editorTitle"></h2>
+          </div>
+          <button
+            type="button"
+            data-close="editor"
+            class="close"
+            aria-label="Đóng"
+          >
+            ×
+          </button>
+        </div>
+        <fieldset id="editorFields"></fieldset>
+        <p id="formHint" class="form-hint"></p>
+        <p id="formError" class="error" role="alert"></p>
+        <div class="dialog-actions">
+          <button type="button" data-close="editor">Hủy</button
+          ><button id="save" class="primary">Lưu thông tin</button>
+        </div>
+      </form>
+    </dialog>
+    <dialog id="deleteDialog" class="delete-dialog">
+      <form id="deleteForm">
+        <span class="delete-icon">⌫</span>
+        <h2>Xóa thông tin?</h2>
+        <p id="deleteDescription"></p>
+        <p class="form-hint">
+          Dòng này sẽ được xóa khỏi danh mục trên Google Sheets.
+        </p>
+        <p id="deleteError" class="error" role="alert"></p>
+        <div class="dialog-actions">
+          <button type="button" data-close="deleteDialog">Giữ lại</button
+          ><button id="confirmDelete" class="danger">Xóa dòng</button>
+        </div>
+      </form>
+    </dialog>
+    <div id="toast" class="toast" hidden role="status"></div>
+    <?!= HtmlService.createHtmlOutputFromFile('Client').getContent(); ?>
+  </body>
+</html>
