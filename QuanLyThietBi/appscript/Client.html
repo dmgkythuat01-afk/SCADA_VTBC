@@ -381,8 +381,12 @@
           : "") +
         '</div></div><div class="data-grid"><div><label>ỨNG DỤNG / CÔNG DỤNG</label><p>' +
         esc(a.purpose || "Chưa cập nhật") +
-        "</p></div><div><label>CHI TIẾT / THÔNG SỐ</label><p>" +
+        "</p></div><div><label>THÔNG SỐ KỸ THUẬT</label><p>" +
         esc(a.details || "Chưa cập nhật") +
+        "</p></div><div><label>BỘ PHẬN QUẢN LÝ</label><p>" +
+        esc(a.managingDepartment || "Chưa cập nhật") +
+        "</p></div><div><label>NGÀY LẮP ĐẶT</label><p>" +
+        esc(a.installationDate ? day(a.installationDate) : "Chưa cập nhật") +
         "</p></div></div>" +
         machineManagerSummary(a) +
         (parse(a.checklist).length
@@ -676,8 +680,10 @@
       field("Tên " + TYPES[type], "name", a?.name, "text", true) +
         field("Mã nhận diện", "code", a?.code) +
         (type === "machine" ? machineManagerField(a?.managerId || "") : "") +
+        field("Bộ phận quản lý", "managingDepartment", a?.managingDepartment) +
+        field("Ngày lắp đặt", "installationDate", a?.installationDate?.slice(0, 10), "date") +
         area("Ứng dụng / dùng để làm gì", "purpose", a?.purpose) +
-        area("Thông số, model, hãng, chi tiết", "details", a?.details) +
+        area("Thông số kỹ thuật", "details", a?.details) +
         area(
           "Checklist kiểm tra — mỗi dòng một mục",
           "checklist",

@@ -13,6 +13,8 @@ const EQUIPMENT_SHEETS = {
     "updatedBy",
     "revision",
     "managerId",
+    "managingDepartment",
+    "installationDate",
   ],
   Schedules: [
     "id",
@@ -151,13 +153,15 @@ const EQUIPMENT_STORAGE = {
       "tenDanhMuc",
       "maThietBi",
       "congDung",
-      "chiTiet",
+      "thongSoKyThuat",
       "danhSachKiemTra",
       "dangSuDung",
       "thoiGianCapNhat",
       "nguoiCapNhat",
       "phienBan",
       "maNguoiQuanLy",
+      "boPhanQuanLy",
+      "ngayLapDat",
     ],
   },
   Schedules: {
@@ -353,7 +357,8 @@ function equipmentColumnMap_(name, headers) {
   fields.forEach((field, i) => {
     const indexes = [];
     headers.forEach((h, j) => {
-      if (String(h).trim() === field || String(h).trim() === labels[i])
+      if (String(h).trim() === field || String(h).trim() === labels[i] ||
+          (name === "Assets" && field === "details" && String(h).trim() === "chiTiet"))
         indexes.push(j);
     });
     if (indexes.length > 1)
@@ -400,7 +405,11 @@ function rows_(name) {
       const out = { _row: i + 2 };
       keys.forEach((key) => {
         const v = map[key] < 0 ? "" : row[map[key]];
-        out[key] = v instanceof Date ? v.toISOString() : v;
+        out[key] = v instanceof Date
+          ? name === "Assets" && key === "installationDate"
+            ? Utilities.formatDate(v, "Asia/Ho_Chi_Minh", "yyyy-MM-dd")
+            : v.toISOString()
+          : v;
       });
       return out;
     })

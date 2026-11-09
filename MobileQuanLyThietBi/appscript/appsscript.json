@@ -1,6 +1,6 @@
 {
   "timeZone": "Asia/Ho_Chi_Minh",
-  "dependencies": {"libraries": [{"userSymbol":"EquipmentCore","libraryId":"1n2ecVQFAiRDNFKI6t3gXWxNBqCwtjlOWoploVOcluxowBSxSe_GY_o9T","version":"17","developmentMode":false}]},
+  "dependencies": {"libraries": [{"userSymbol":"EquipmentCore","libraryId":"1n2ecVQFAiRDNFKI6t3gXWxNBqCwtjlOWoploVOcluxowBSxSe_GY_o9T","version":"20","developmentMode":false}]},
   "exceptionLogging": "STACKDRIVER",
   "runtimeVersion": "V8",
   "oauthScopes": ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"],

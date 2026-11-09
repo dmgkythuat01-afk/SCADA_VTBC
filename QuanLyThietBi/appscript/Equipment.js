@@ -56,6 +56,10 @@ function saveAsset_(u, p) {
       throw Error("Vị trí cha không hợp lệ.");
   }
   const active = p.active !== false;
+  const installationDate = p.installationDate === undefined
+    ? (old && old.installationDate) || ""
+    : text_(p.installationDate);
+  if (installationDate) validDate_(installationDate);
   if (!active) {
     if (
       rows_("Assets").some(
@@ -78,6 +82,10 @@ function saveAsset_(u, p) {
     code: text_(p.code, 100),
     purpose: text_(p.purpose),
     details: text_(p.details, 8000),
+    managingDepartment: p.managingDepartment === undefined
+      ? (old && old.managingDepartment) || ""
+      : text_(p.managingDepartment, 250),
+    installationDate,
     checklist: JSON.stringify(
       (p.checklist || [])
         .map((x) => text_(x, 300))

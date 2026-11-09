@@ -99,3 +99,16 @@ test("ambiguous old/new sheets or duplicate header aliases fail without writing"
   ]);
   a.throws(() => d.rows_("Account"));
 });
+test("asset technical specifications support old/new column names and preserve added fields", () => {
+  for (const header of ["chiTiet", "thongSoKyThuat"]) {
+    const data = [["maDinhDanh", header, "boPhanQuanLy", "ngayLapDat", "cotRieng"], ["M1", "220V", "Cơ khí", "2026-11-09", "KEEP"]];
+    const c = setup([sheet("DanhMucThietBi", data)]);
+    const r = c.rows_("Assets")[0];
+    a.equal(r.details, "220V");a.equal(r.managingDepartment,"Cơ khí");a.equal(r.installationDate,"2026-11-09");
+    c.write_("Assets", {...r, details:"380V"});
+    a.equal(data[1][1],"380V");a.equal(data[1][4],"KEEP");
+    a.equal(data[0].filter(h=>["chiTiet","thongSoKyThuat"].includes(h)).length,1);
+  }
+  const c=setup([sheet("DanhMucThietBi",[["maDinhDanh","chiTiet","thongSoKyThuat"],["M1","old","new"]])]);
+  a.throws(()=>c.rows_("Assets"));
+});

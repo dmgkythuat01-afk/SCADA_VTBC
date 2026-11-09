@@ -45,7 +45,7 @@ Cập nhật deployment: `clasp deploy -i AKfycbwK1JwWhrazLtOZ7YnPZedvkS71KLvCWC
 Google vẫn cần chủ project cấp quyền một lần. Gửi email thật/ghi ảnh thật chỉ được xác nhận sau bước khởi tạo; kiểm thử tự động không ghi dữ liệu mẫu vào Sheets.
 
 ## Tên sheet và cột tiếng Việt không dấu
-- DanhMucThietBi: maDinhDanh, loaiDanhMuc, maCapTren, tenDanhMuc, maThietBi, congDung, chiTiet, danhSachKiemTra, dangSuDung, thoiGianCapNhat, nguoiCapNhat, phienBan, maNguoiQuanLy.
+- DanhMucThietBi: maDinhDanh, loaiDanhMuc, maCapTren, tenDanhMuc, maThietBi, congDung, thongSoKyThuat, danhSachKiemTra, dangSuDung, thoiGianCapNhat, nguoiCapNhat, phienBan, maNguoiQuanLy, boPhanQuanLy, ngayLapDat.
 - LichBaoDuong: maLich, maBoPhan, tenCongViec, chuKy, donViChuKy, ngayDenHan, nguoiPhuTrach, danhSachKiemTra, dangApDung, thoiGianCapNhat, phienBan.
 - CongViec: maCongViec, maBoPhan, maLich, loaiCongViec, tieuDe, moTa, nguoiPhuTrach, trangThai, thoiGianTao, nguoiTao, ngayHoanThanh, thoiGianHoanThanh, nguoiHoanThanh, ketQua, danhSachAnh, maYeuCau, phienBan, maYeuCauHoanThanh.
 - TaiKhoan: tenDangNhap, matKhau, chucVu, hoTen, email.
@@ -55,6 +55,8 @@ Google vẫn cần chủ project cấp quyền một lần. Gửi email thật/g
 Code ánh xạ theo tiêu đề cột, hỗ trợ tên cũ trong thời gian chuyển đổi. Tên thuộc tính JavaScript nội bộ không phải tên cột vật lý. Hàm chủ project `doiTenSheetVaCotTiengViet` kiểm tra trước khi đổi, sao lưu metadata tên cũ và đối chiếu digest các dòng dữ liệu; không đổi nội dung, ID hay mật khẩu. Chuyển đổi đã thực hiện trên file hiện tại.
 
 ## Người quản lý máy và email tài khoản
+
+Hồ sơ danh mục có thêm Bộ phận quản lý và Ngày lắp đặt (để trống được), hiển thị trong form thêm/sửa và phần xem chi tiết. Cột chiTiet đổi thành thongSoKyThuat, nhãn giao diện Thông số kỹ thuật. Code vẫn đọc được cột chiTiet cũ, nhưng không cho tồn tại đồng thời hai cột gây nhập nhằng. Hàm chủ project capNhatThongTinThietBi đổi tên header và thêm cột còn thiếu, đối chiếu giữ nguyên dữ liệu các dòng.
 Menu Người quản lý cho thêm/sửa họ tên, chức vụ, email, điện thoại và trạng thái. Dữ liệu nằm ở sheet NguoiQuanLy: maNguoiQuanLy, hoTen, email, soDienThoai, chucVu, dangSuDung, thoiGianCapNhat, phienBan.
 Trong Hồ sơ thiết bị, thêm/sửa một máy và chọn người quản lý. DanhMucThietBi có thêm cột maNguoiQuanLy cuối bảng; các bộ phận hiển thị người quản lý của máy cha. Danh mục người quản lý độc lập với tài khoản đăng nhập. Chỉ admin được sửa; người đã gán cho máy đang sử dụng cần được thay người phụ trách trước khi ngừng sử dụng.
 Máy có sẵn trước nâng cấp được giữ nguyên, ban đầu hiện Chưa gán; chọn quản lý khi sửa máy. Máy mới phải chọn người quản lý.

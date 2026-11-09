@@ -136,3 +136,13 @@ test("account contact email persists separately from username and safe snapshot"
     }),
   );
 });
+test("asset department and installation date save, survive older clients and allow clearing",()=>{
+ const s=setup();
+ const asset=s.c.saveAsset_(s.admin,{type:"workshop",name:"Xưởng",managingDepartment:" Cơ khí ",installationDate:"2026-11-09",details:"380V"});
+ a.equal(asset.managingDepartment,"Cơ khí");a.equal(asset.installationDate,"2026-11-09");
+ const edited=s.c.saveAsset_(s.admin,{id:asset.id,revision:asset.revision,name:"Xưởng mới",details:"220V"});
+ a.equal(edited.managingDepartment,"Cơ khí");a.equal(edited.installationDate,"2026-11-09");
+ a.throws(()=>s.c.saveAsset_(s.admin,{...edited,checklist:[],installationDate:"2026-02-30"}));
+ const cleared=s.c.saveAsset_(s.admin,{...edited,checklist:[],managingDepartment:"",installationDate:""});
+ a.equal(cleared.managingDepartment,"");a.equal(cleared.installationDate,"");
+});
