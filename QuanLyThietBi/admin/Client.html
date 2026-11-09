@@ -361,7 +361,10 @@
         (row ? "Sửa " : "Thêm ") + spec().label.toLocaleLowerCase("vi");
       $("formError").textContent = "";
       $("save").textContent = "Lưu thông tin";
-      $("editorFields").innerHTML = Object.entries(spec().columns)
+      const fieldOrder = S.table === "DanhMucThietBi"
+        ? S.data.equipmentColumnOrder || Object.keys(spec().columns)
+        : Object.keys(spec().columns);
+      $("editorFields").innerHTML = fieldOrder.map((key) => [key, spec().columns[key]])
         .map(([k, label]) => {
           const required = spec().required.includes(k),
             value = k === "matKhau" ? "" : row?.[k] || "";

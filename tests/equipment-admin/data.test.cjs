@@ -22,6 +22,7 @@ function setup() {
     ].map((k) => [k, []]),
   );
   Object.assign(c, {
+    equipmentColumnOrder_: () => [],
     adminSecret_: () => "fixture-secret",
     adminHmac_: (s, k) =>
       crypto.createHmac("sha256", k).update(String(s)).digest("hex"),

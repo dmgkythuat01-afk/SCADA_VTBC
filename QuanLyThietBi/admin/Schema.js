@@ -207,10 +207,15 @@ function publicAdminRow_(name, row) {
   }
   return r;
 }
+function equipmentColumnOrder_() {
+  const name = "DanhMucThietBi";
+  const { headers, map } = adminHeader_(name, adminSheet_(name));
+  return headers.filter((key) => Object.prototype.hasOwnProperty.call(map, key));
+}
 function adminSnapshot_(user) {
   const tables = {};
   Object.keys(ADMIN_TABLES).forEach(
     (n) => (tables[n] = readAdminRows_(n).map((r) => publicAdminRow_(n, r))),
   );
-  return { user, tables, schema: ADMIN_TABLES, updatedAt: adminNow_() };
+  return { user, tables, schema: ADMIN_TABLES, equipmentColumnOrder: equipmentColumnOrder_(), updatedAt: adminNow_() };
 }

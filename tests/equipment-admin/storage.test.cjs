@@ -1,4 +1,10 @@
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
+test('equipment popup order follows physical sheet headers, including quantity at the end',()=>{
+ const c={};vm.createContext(c);vm.runInContext(fs.readFileSync('QuanLyThietBi/admin/Schema.js','utf8'),c);
+ const keys=Array.from(vm.runInContext('Object.keys(ADMIN_TABLES.DanhMucThietBi.columns)',c)).filter(k=>k!=='soLuong');keys.push('soLuong');
+ c.adminSheet_=()=>({getLastColumn:()=>keys.length,getRange:()=>({getValues:()=>[keys]})});
+ assert.deepEqual(Array.from(c.equipmentColumnOrder_()),keys);
+});
 test('header-driven real storage adapter reads reordered account cells and preserves extra columns',()=>{
  const data=[['hoTen','matKhau','maNhanVien','tenDangNhap','email','chucVu','cotRieng'],['An','secret','NV1','demo.admin','','admin','KEEP']],c={};vm.createContext(c);vm.runInContext(fs.readFileSync('QuanLyThietBi/admin/Schema.js','utf8'),c);
  const sheet={getLastRow:()=>data.length,getLastColumn:()=>data[0].length,getRange:(r,col,n=1,width=1)=>({getValues:()=>Array.from({length:n},(_,i)=>Array.from({length:width},(_,j)=>data[r-1+i]?.[col-1+j]??'')),setNumberFormat(){return this;},setValues(values){for(let i=0;i<values.length;i++){data[r-1+i]??=[];for(let j=0;j<values[i].length;j++)data[r-1+i][col-1+j]=values[i][j];}return this;}})};
