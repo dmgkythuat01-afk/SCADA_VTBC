@@ -15,6 +15,7 @@ function setup() {
     "MobileWorkIO",
     "MobileWorkStore",
     "MobileWorkAuth",
+    "MobileWorkPassword",
     "MobileWorkCatalog",
     "MobileWorkBridge",
     "MobileWorkWorkflow",

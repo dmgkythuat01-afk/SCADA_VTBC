@@ -500,6 +500,11 @@ function mobileWorkApi(token, action, payload) {
     mobileWorkResetContext_();
     const u = mobileWorkIdentity_(token);
     mobileWorkRequireAccess_(u);
+    if (action === "changePassword") {
+      const result = mobileWorkChangePassword_(u, payload || {});
+      logoutMobile(token);
+      return result;
+    }
     mobileWorkReconcile_();
     const actions = {
       snapshot: mobileWorkSnapshot_,

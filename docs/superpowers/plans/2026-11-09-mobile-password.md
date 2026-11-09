@@ -1,0 +1,5 @@
+# Mobile account password change
+
+Add current/new/confirm password form under Mobile Tài khoản. Backend authenticates the current token and current password; target is always the logged-in account, never a submitted username. Enforce existing8–200character policy and confirmation; store the existing salted HMAC format in the single matKhau cell resolved by live headers. Preserve all other fields/roles. Limit incorrect-current-password attempts5per15minutes. Password-derived authentication versions invalidate existing mobile/admin sessions; remove the current token and return to login. No business-table reconciliation/snapshot on this account-only action, and no changes to real passwords during testing.
+
+Verified42Node tests and local Chrome mobile flow: mismatched confirmation, incorrect current password, successful change, cleared session and login using new password. All10roles and already-hashed passwords covered. Header-aware storage test confirms a single credential cell write. Backend47/mobile12 deployed on existing URLs; no real credential changed during verification.

@@ -10,7 +10,7 @@ Chủ project mở editor, chọn `capQuyenMobile` → Run → cấp quyền Goo
 
 Dùng chung file Sheets và tài khoản hiện có trong `TaiKhoan` với app quản trị. Không tự tạo tài khoản mẫu, bản sao danh mục hoặc trigger email. Các role TruongCa/CongNhan/PhongCongNghe tạo phiếu; KyThuat/CoKhi/TuDongHoa xem mọi phiếu và báo cáo; trưởng ca xác nhận rồi hai PGĐ duyệt song song. Người thực hiện được ghi theo tài khoản thực tế.
 
-Project này chứa Code.js và ba file MobileIndex/MobileStyles/MobileClient. Backend nghiệp vụ nằm trong các file `MobileWork*.js` của `QuanLyThietBi/admin/`, gọi qua thư viện EquipmentCore và ghim phiên bản 46 trong manifest. Script Properties, Cache và Lock tạo bên trong thư viện thuộc backend dùng chung, theo tài liệu Google: https://developers.google.com/apps-script/guides/libraries#resource_scoping . Hai giao diện dùng cùng khóa cập nhật. Khi nâng cấp backend, kiểm thử và tăng version thư viện trong manifest; không bật developmentMode trên production.
+Project này chứa Code.js và ba file MobileIndex/MobileStyles/MobileClient. Backend nghiệp vụ nằm trong các file `MobileWork*.js` của `QuanLyThietBi/admin/`, gọi qua thư viện EquipmentCore và ghim phiên bản 47 trong manifest. Script Properties, Cache và Lock tạo bên trong thư viện thuộc backend dùng chung, theo tài liệu Google: https://developers.google.com/apps-script/guides/libraries#resource_scoping . Hai giao diện dùng cùng khóa cập nhật. Khi nâng cấp backend, kiểm thử và tăng version thư viện trong manifest; không bật developmentMode trên production.
 
 ## Danh mục mới — 09/11/2026
 
@@ -27,3 +27,7 @@ Chỉ khi cả hai PGĐ đồng ý, hệ thống mới ghi đúng một dòng v�
 Triển khai từ thư mục này: `clasp push --force`, sau đó cập nhật deployment hiện có. Không chạy setupEquipmentApp hay tạo trigger email trong project mobile.
 
 Tối ưu hiệu năng: mỗi thao tác chỉ đọc mỗi bảng cần dùng một lần; dữ liệu đã lưu được cập nhật vào bộ nhớ của chính thao tác đó. Đăng nhập và các nút tạo/nhận/gửi/xác nhận trả luôn snapshot mới, tránh gọi tải toàn bộ lần thứ hai. Bộ nhớ này không dùng chung giữa các thao tác; mỗi thao tác vẫn đọc tài khoản và quyền mới từ Sheets. Phản hồi chậm của phiên đã đăng xuất bị bỏ qua.
+
+## Đổi mật khẩu
+
+Menu Tài khoản có form mật khẩu hiện tại, mật khẩu mới và nhập lại mật khẩu mới. Mật khẩu mới dài 8–200 ký tự; lưu dạng băm trong đúng ô matKhau của tài khoản đăng nhập. Đổi xong đăng nhập lại bằng mật khẩu mới; các phiên cũ của tài khoản hết hiệu lực. Không cần sửa hoặc thêm cột trong Sheets.
