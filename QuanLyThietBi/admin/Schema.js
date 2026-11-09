@@ -59,6 +59,7 @@ const ADMIN_TABLES = {
       tenXuong: "Tên xưởng",
       tenMay: "Tên máy",
       maThietBi: "Mã thiết bị",
+      soLuong: "Số lượng",
       ThongSoKyThuat: "Thông số kỹ thuật",
       congDung: "Công dụng",
       dangSuDung: "Đang sử dụng",

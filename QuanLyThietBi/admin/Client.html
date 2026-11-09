@@ -380,7 +380,7 @@
                 ? "email"
                 : k === "ngayLapDat"
                   ? "date"
-                  : k === "soNgayCanBaoDuong"
+                  : ["soNgayCanBaoDuong", "soLuong"].includes(k)
                     ? "number"
                     : "text";
           return field(
@@ -395,6 +395,8 @@
               ? 'readonly placeholder="Tự động khi lưu"'
               : k === "soNgayCanBaoDuong"
                 ? 'min="1" max="36500" step="1"'
+                : k === "soLuong"
+                  ? 'min="0" step="1"'
                 : k === "matKhau"
                   ? 'minlength="8" maxlength="200" autocomplete="new-password"'
                   : 'maxlength="500"',

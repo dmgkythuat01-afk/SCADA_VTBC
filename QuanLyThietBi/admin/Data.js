@@ -163,6 +163,8 @@ function saveAdminData_(name, p) {
     row.tenMay = matches[0].tenMay;
   }
   if (name === "DanhMucThietBi") {
+    if (row.soLuong && (!/^\d+$/.test(row.soLuong) || !Number.isSafeInteger(Number(row.soLuong))))
+      throw Error("Số lượng phải là số nguyên không âm.");
     if (row.ngayLapDat) adminDate_(row.ngayLapDat);
     if (
       row.soNgayCanBaoDuong &&
