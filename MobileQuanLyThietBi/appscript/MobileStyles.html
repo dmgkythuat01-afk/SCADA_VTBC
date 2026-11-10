@@ -1184,50 +1184,139 @@
     }
   }
   .m-date-filter {
-    padding: 16px;
+    box-sizing: border-box;
+    max-width: 100%;
+    min-width: 0;
+    padding: 10px 12px;
     background: #fff;
     border: 1px solid #dce9e3;
-    border-radius: 18px;
-    margin: 0 0 18px;
+    border-radius: 12px;
+    margin: 0 0 12px;
   }
-  .m-date-fields {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 12px;
-    margin: 12px 0;
-  }
-  .m-date-fields label {
+  .m-date-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
     min-width: 0;
-    display: grid;
-    gap: 6px;
-    font-size: 14px;
+    margin-bottom: 7px;
+  }
+  .m-date-toolbar strong {
+    font-size: 12px;
     font-weight: 600;
-  }
-  .m-date-fields input {
-    box-sizing: border-box;
-    width: 100%;
-    min-width: 0;
-    min-height: 46px;
-    padding: 10px 8px;
-    font: inherit;
-    font-size: 16px;
-    border: 1px solid #c9dcd1;
-    border-radius: 10px;
-    background: #f9fcfa;
-    color: #173f33;
+    line-height: 1.3;
   }
   .m-date-actions {
     display: flex;
-    gap: 10px;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
   }
   .m-date-actions button {
-    flex: 1;
-    min-height: 44px;
+    width: auto;
+    min-width: 0;
+    min-height: 28px;
+    height: 28px;
+    padding: 3px 9px;
+    border-radius: 7px;
+    font-size: 12px;
+    line-height: 1.2;
   }
-  .m-date-filter .m-hint {
-    margin: 10px 0 0;
+  .m-date-actions #mobileDateReset {
+    background: #f1f6f2;
+    border: 1px solid #dbe5dc;
+    color: #42614e;
+  }
+  .m-date-fields {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 10px;
+    min-width: 0;
+    max-width: 100%;
+    margin: 0;
+  }
+  .m-date-fields label {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 3px;
+    min-width: 0;
+    max-width: 100%;
+    margin: 0;
+    overflow: hidden;
+    font-size: 11px;
+    font-weight: 500;
+    line-height: 1.2;
+    color: #657765;
+  }
+  .m-date-fields input[type="date"] {
+    display: block;
+    box-sizing: border-box;
+    min-width: 0;
+    width: 100%;
+    max-width: 100%;
+    height: 38px;
+    min-height: 38px;
+    margin: 0;
+    padding: 4px 6px;
+    font-family: inherit;
+    font-size: 16px;
+    line-height: normal;
+    border: 1px solid #cddbcf;
+    border-radius: 7px;
+    background: #f9fcfa;
+    color: #173f33;
+    -webkit-appearance: none;
+    appearance: none;
+    overflow: hidden;
+  }
+  .m-date-fields input[type="date"]::-webkit-date-and-time-value {
+    min-width: 0;
+    margin: 0;
+    text-align: left;
+  }
+  .m-date-fields input[type="date"]::-webkit-datetime-edit {
+    min-width: 0;
+    padding: 0;
+  }
+  .m-date-fields input[type="date"]::-webkit-calendar-picker-indicator {
+    flex-shrink: 0;
+    width: 15px;
+    margin: 0;
+    padding: 0;
+  }
+  .m-date-filter .m-error {
+    font-size: 12px;
+    margin: 6px 0 0;
   }
   .m-date-filter .m-error:empty {
     display: none;
+  }
+  .m-ticket-title {
+    font-size: 22px;
+    margin: 0 0 10px;
+    line-height: 1.25;
+  }
+  .m-ticket-filters {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 9px;
+    margin: 0 0 12px;
+  }
+  .m-ticket-filters input,
+  .m-ticket-filters select {
+    box-sizing: border-box;
+    min-width: 0;
+    width: 100%;
+    max-width: 100%;
+    height: 40px;
+    min-height: 40px;
+    margin: 0;
+    padding: 7px 8px;
+    font-size: 16px;
+    border-radius: 9px;
+  }
+  .m-ticket-filters .m-chips {
+    grid-column: 1/-1;
+    margin: 0;
   }
 </style>

@@ -35,7 +35,6 @@
       rejected: "Cần làm lại",
     };
     const ICONS = {
-      home: "M3 10 12 3l9 7M5 9v12h5v-7h4v7h5V9",
       tickets: "M7 3h10v4H7zM5 5H3v16h18V5h-2M7 12h10M7 16h6",
       plus: "M12 5v14M5 12h14",
       check: "m5 12 4 4 10-10M20 13v7H4V4h11",
@@ -45,7 +44,7 @@
     const M = {
       token: sessionStorage.getItem("dmgMobileWorkSession") || "",
       data: null,
-      page: $("mobileInitialRequest").value ? "detail" : "home",
+      page: $("mobileInitialRequest").value ? "detail" : "tickets",
       requestId: $("mobileInitialRequest").value,
       status: "all",
       workshop: "all",
@@ -233,15 +232,11 @@
       container.hidden = ["create", "account", "detail"].includes(M.page);
       if (container.hidden) return;
       container.innerHTML =
-        '<form id="mobileDateForm"><b>Lọc theo ngày tạo phiếu</b><div class="m-date-fields"><label>Từ ngày<input type="date" id="mobileDateFrom" required value="' +
+        '<form id="mobileDateForm"><div class="m-date-toolbar"><strong>Ngày tạo phiếu</strong><div class="m-date-actions"><button class="m-primary" type="submit">Lọc</button><button id="mobileDateReset" type="button" aria-label="7 ngày gần nhất" title="7 ngày gần nhất">7 ngày</button></div></div><div class="m-date-fields"><label for="mobileDateFrom">Từ ngày<input type="date" id="mobileDateFrom" required value="' +
         esc(M.dateRange.from) +
-        '"></label><label>Đến ngày<input type="date" id="mobileDateTo" required value="' +
+        '"></label><label for="mobileDateTo">Đến ngày<input type="date" id="mobileDateTo" required value="' +
         esc(M.dateRange.to) +
-        '"></label></div><div class="m-date-actions"><button class="m-primary" type="submit">Lọc</button><button id="mobileDateReset" type="button">7 ngày gần nhất</button></div><p class="m-hint">Đang hiển thị ' +
-        date(M.dateRange.from) +
-        " — " +
-        date(M.dateRange.to) +
-        '</p><p id="mobileDateError" class="m-error" role="alert"></p></form>';
+        '"></label></div><p id="mobileDateError" class="m-error" role="alert"></p></form>';
       $("mobileDateForm").onsubmit = (event) => {
         event.preventDefault();
         try {
@@ -381,7 +376,6 @@
     function nav() {
       const items = managerMode()
         ? [
-            ["home", "Tổng quan", "home"],
             ["tickets", "Tất cả phiếu", "tickets"],
             [
               "pending",
@@ -393,14 +387,12 @@
           ]
         : technical()
           ? [
-              ["home", "Tổng quan", "home"],
               ["tickets", "Tất cả phiếu", "tickets"],
               ["assigned", "Giao cho tôi", "assigned"],
               ["results", "Kết quả", "check"],
               ["account", "Tài khoản", "person"],
             ]
           : [
-              ["home", "Tổng quan", "home"],
               [
                 "tickets",
                 M.data.capabilities.shiftLeader
@@ -445,7 +437,6 @@
       nav();
       (
         ({
-          home: home,
           tickets: tickets,
           assigned: tickets,
           pending: pending,
@@ -453,7 +444,7 @@
           create: create,
           account: account,
           detail: detail,
-        })[M.page] || home
+        })[M.page] || tickets
       )();
     }
     function ticketCard(r) {
@@ -479,136 +470,6 @@
         time(r.createdAt) +
         " →</span></div></button></article>"
       );
-    }
-    function home() {
-      const rows = dateRequests(),
-        counts = [
-          ["Mới tạo", rows.filter((r) => r.status === "new").length, "new"],
-          [
-            "Đang xử lý",
-            rows.filter((r) => r.status === "in_progress").length,
-            "in_progress",
-          ],
-          [
-            "Chờ xác nhận",
-            rows.filter((r) => r.status === "awaiting_confirmation").length,
-            "awaiting_confirmation",
-          ],
-          [
-            "Cần làm lại",
-            rows.filter((r) => r.status === "rework").length,
-            "rework",
-          ],
-        ];
-      const urgent = rows
-        .filter((r) =>
-          technical()
-            ? ["new", "rework"].includes(r.status)
-            : pendingMine().some((p) => p.id === r.id),
-        )
-        .sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt)))
-        .slice(0, 4);
-      const visibleIds = dateIds();
-      const notices = M.data.notifications
-        .filter((n) =>
-          n.requestId
-            ? visibleIds.has(n.requestId)
-            : MobileDateRange.matches(
-                { createdDate: n.date, createdAt: n.sentAt },
-                M.dateRange,
-              ),
-        )
-        .slice()
-        .reverse()
-        .slice(0, 4);
-      $("mobileContent").innerHTML =
-        '<section class="m-hero"><span class="m-eyebrow">' +
-        esc(
-          managerMode()
-            ? "PHÊ DUYỆT & THEO DÕI"
-            : technical()
-              ? "ĐỘI NGŨ KỸ THUẬT"
-              : "VẬN HÀNH CHỦ ĐỘNG",
-        ) +
-        "</span><h1>Chào " +
-        esc(M.data.user.name) +
-        " 👋</h1><p>" +
-        esc(
-          technical()
-            ? "Theo dõi mọi phiếu theo xưởng. Bạn có thể nhận và xử lý bất kỳ phiếu nào."
-            : "Gửi vấn đề đúng nơi, theo dõi kết quả và xác nhận sau khi kiểm tra.",
-        ) +
-        "</p>" +
-        button(
-          "page",
-          !M.data.capabilities.requester
-            ? "Xem phiếu yêu cầu →"
-            : "＋ Tạo yêu cầu mới",
-          !M.data.capabilities.requester ? "tickets" : "create",
-        ) +
-        '</section><div class="m-stats">' +
-        counts
-          .concat([
-            [
-              "Chờ PGĐ duyệt",
-              rows.filter((r) => r.status === "awaiting_pgd").length,
-              "awaiting_pgd",
-            ],
-          ])
-          .map(
-            ([label, n, status]) =>
-              '<button type="button" class="m-stat ' +
-              (["awaiting_confirmation", "rework"].includes(status)
-                ? "warning"
-                : "") +
-              '" data-mobile-action="status" data-id="' +
-              status +
-              '"><small>' +
-              label +
-              "</small><b>" +
-              n +
-              "</b></button>",
-          )
-          .join("") +
-        '</div><div class="m-section-head"><h2>' +
-        esc(
-          technical()
-            ? "Cần ưu tiên xử lý"
-            : managerMode()
-              ? "Chờ phê duyệt PGĐ"
-              : M.data.capabilities.shiftLeader
-                ? "Đang chờ trưởng ca xác nhận"
-                : "Theo dõi xác nhận & phê duyệt",
-        ) +
-        "</h2>" +
-        button("page", "Xem tất cả →", technical() ? "tickets" : "pending") +
-        "</div>" +
-        (urgent.length
-          ? urgent.map(ticketCard).join("")
-          : empty(
-              "Mọi thứ đã được cập nhật",
-              technical()
-                ? "Chưa có phiếu mới hoặc cần làm lại."
-                : "Kết quả kỹ thuật gửi sẽ xuất hiện ở đây.",
-            )) +
-        (notices.length
-          ? '<div class="m-section-head"><h2>Thông báo gần đây</h2></div><div class="m-card">' +
-            notices
-              .map(
-                (n) =>
-                  '<button class="m-notification ' +
-                  (n.status === "unread" ? "unread" : "") +
-                  '" data-mobile-action="notice" data-id="' +
-                  esc(n.id) +
-                  '"><b>' +
-                  esc(n.message) +
-                  "</b><small>" +
-                  time(n.sentAt) +
-                  "</small></button>",
-              )
-              .join("") +
-            "</div>"
-          : "");
     }
     function filteredTickets() {
       let rows = dateRequests();
@@ -646,7 +507,7 @@
         M.data.requests.map((r) => [r.workshopId, r.workshopName]),
       );
       $("mobileContent").innerHTML =
-        '<h1 class="m-title">' +
+        '<h1 class="m-title m-ticket-title">' +
         (M.page === "assigned"
           ? "Giao cho tôi"
           : technical()
@@ -654,13 +515,7 @@
             : M.data.capabilities.shiftLeader || managerMode()
               ? "Tất cả phiếu yêu cầu"
               : "Phiếu của tôi") +
-        '</h1><p class="m-subtitle">' +
-        esc(
-          technical()
-            ? "Danh sách được gom theo xưởng. Mọi kỹ thuật đều được nhận và xử lý."
-            : "Theo dõi từng yêu cầu từ lúc tạo đến khi xác nhận hoàn thành.",
-        ) +
-        '</p><div class="m-filters"><input id="mobileSearch" placeholder="Tìm máy, bộ phận, nội dung…" value="' +
+        '</h1><div class="m-filters m-ticket-filters"><input id="mobileSearch" placeholder="Tìm phiếu…" value="' +
         esc(M.query) +
         '"><select id="mobileWorkshopFilter"><option value="all">Tất cả xưởng</option>' +
         Array.from(workshops)
@@ -1628,7 +1483,7 @@
       if (name === "mode") {
         M.mode = id;
         sessionStorage.setItem("mobileAdminMode", id);
-        go("home");
+        go("tickets");
         return;
       }
       if (name === "logout") {
@@ -1649,7 +1504,7 @@
       M.review = null;
       M.createDraft = {};
       M.createKey = uid();
-      M.page = "home";
+      M.page = "tickets";
       M.requestId = "";
       M.status = "all";
       M.workshop = "all";
@@ -1723,7 +1578,7 @@
     };
     $("mobileBrand").onclick = (e) => {
       e.preventDefault();
-      go("home");
+      go("tickets");
     };
     $("mobileAvatar").onclick = () => go("account");
     $("mobileReportForm").onsubmit = (e) => {
