@@ -177,15 +177,19 @@ function mobileWorkValidateReportCriteria_(draft, request, p) {
   });
 }
 function mobileWorkSubmissionFingerprint_(p) {
-  return adminHmac_(
-    JSON.stringify([
+  const fields = [
       mobileWorkText_(p.content, 12000),
       String(p.performedDate || ""),
       Array.isArray(p.checks) ? p.checks : [],
       Array.isArray(p.actualResults)
         ? p.actualResults.map((v) => mobileWorkText_(v, 2000))
         : [],
-    ]),
-    mobileWorkSecret_(),
-  );
+    ],
+    notes = [
+      mobileWorkText_(p.noiDungCaiTien, 12000),
+      mobileWorkText_(p.yKienDongGop, 12000),
+    ];
+  // Empty new fields retain compatibility with signatures of older reports.
+  if (notes.some(Boolean)) fields.push(...notes);
+  return adminHmac_(JSON.stringify(fields), mobileWorkSecret_());
 }

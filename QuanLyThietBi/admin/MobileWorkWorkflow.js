@@ -292,6 +292,8 @@ function mobileWorkStartReport_(u, p) {
     actualByName: u.name,
     actualRole: u.position || u.role,
     content: "",
+    noiDungCaiTien: "",
+    yKienDongGop: "",
     performedDate: maintenanceToday_(),
     checks: "[]",
     photos: "[]",
@@ -334,6 +336,8 @@ function mobileWorkSaveReportDraft_(u, p) {
   const { d } = mobileWorkEditableReport_(u, p);
   mobileWorkCheckRevision_(d, p);
   d.content = mobileWorkText_(p.content, 12000);
+  d.noiDungCaiTien = mobileWorkText_(p.noiDungCaiTien, 12000);
+  d.yKienDongGop = mobileWorkText_(p.yKienDongGop, 12000);
   if (p.performedDate) {
     maintenanceDate_(p.performedDate);
     d.performedDate = p.performedDate;
@@ -409,6 +413,8 @@ function mobileWorkSubmitReport_(u, p) {
       )
       .reduce((n, x) => Math.max(n, Number(x.ordinal) || 0), 0) + 1;
   d.content = mobileWorkRequired_(p.content, "nội dung báo cáo", 12000);
+  d.noiDungCaiTien = mobileWorkText_(p.noiDungCaiTien, 12000);
+  d.yKienDongGop = mobileWorkText_(p.yKienDongGop, 12000);
   d.performedDate = performed;
   d.checks = JSON.stringify(p.checks || []);
   d.actualResults = JSON.stringify(p.actualResults || []);

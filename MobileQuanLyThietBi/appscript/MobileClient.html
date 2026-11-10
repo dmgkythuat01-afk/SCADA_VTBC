@@ -908,6 +908,22 @@
             "</div>"
         : "";
     }
+    function reportNotes(d) {
+      return [
+        ["Nội dung cải tiến", d.noiDungCaiTien],
+        ["Ý kiến đóng góp", d.yKienDongGop],
+      ]
+        .filter(([, value]) => value)
+        .map(
+          ([label, value]) =>
+            '<div class="m-criterion"><b>' +
+            label +
+            '</b><p class="m-detail-description">' +
+            esc(value) +
+            "</p></div>",
+        )
+        .join("");
+    }
     function reportHistory(d) {
       const reviews = M.data.reviews.filter((v) => v.reportId === d.id);
       return (
@@ -924,6 +940,7 @@
         "</small><p>" +
         esc(d.content || "Báo cáo đang soạn, chưa gửi người yêu cầu.") +
         "</p>" +
+        reportNotes(d) +
         parse(d.checklist)
           .map(
             (label, i) =>
@@ -1154,6 +1171,8 @@
             $("mobileReportChecklist").querySelectorAll("[data-actual-result]"),
           ).map((i) => i.value),
           content: $("mobileReportText").value,
+          noiDungCaiTien: $("mobileReportImprovement").value,
+          yKienDongGop: $("mobileReportFeedback").value,
           performedDate: $("mobilePerformedDate").value,
           checks: Array.from(
             $("mobileReportChecklist").querySelectorAll(
@@ -1197,6 +1216,10 @@
         (r.componentName ? " · " + esc(r.componentName) : " · Toàn máy") +
         "</small></div>";
       $("mobileReportText").value = text || "";
+      $("mobileReportImprovement").value =
+        cached?.noiDungCaiTien ?? d.noiDungCaiTien ?? "";
+      $("mobileReportFeedback").value =
+        cached?.yKienDongGop ?? d.yKienDongGop ?? "";
       $("mobilePerformedDate").value =
         cached?.performedDate || d.performedDate || M.data.today;
       $("mobilePerformedDate").min =
@@ -1300,6 +1323,8 @@
           $("mobileReportChecklist").querySelectorAll("[data-actual-result]"),
         ).map((i) => i.value),
         content: $("mobileReportText").value,
+        noiDungCaiTien: $("mobileReportImprovement").value,
+        yKienDongGop: $("mobileReportFeedback").value,
         performedDate: $("mobilePerformedDate").value,
         checks: Array.from(
           $("mobileReportChecklist").querySelectorAll('input[type="checkbox"]'),
@@ -1397,6 +1422,7 @@
         '</div><p class="m-detail-description">' +
         esc(d.content) +
         "</p>" +
+        reportNotes(d) +
         attachmentButtons(d);
       $("mobileReviewForm").elements.decision.value = "accept";
       $("mobileReviewReason").value = "";
