@@ -123,6 +123,8 @@ function mobileWorkCreateRequest_(u, p) {
       (r) => r.createdBy === u.email && r.requestKey === key,
     );
   if (prior) return prior;
+  const requestedCompletion = mobileWorkText_(p.ngayDeNghiHoanThanh, 10);
+  if (requestedCompletion) maintenanceDate_(requestedCompletion);
   const all = mobileWorkRows_("Assets"),
     workshop = all.find(
       (a) =>
@@ -205,6 +207,7 @@ function mobileWorkCreateRequest_(u, p) {
     createdByName: u.name,
     createdAt: mobileWorkNow_(),
     createdDate: maintenanceToday_(),
+    ngayDeNghiHoanThanh: requestedCompletion,
     status: "new",
     trangThaiPGDChatLuong: "",
     trangThaiPGDSanXuat: "",

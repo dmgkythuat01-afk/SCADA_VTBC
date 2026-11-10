@@ -495,7 +495,13 @@
         esc(requestTypeLabel(r.type)) +
         " · Giao cho " +
         esc(person(r.assignedTo)) +
-        '</p><div class="m-card-bottom"><span>' +
+        "</p>" +
+        (r.ngayDeNghiHoanThanh
+          ? "<p>Đề nghị hoàn thành: " +
+            esc(date(r.ngayDeNghiHoanThanh)) +
+            "</p>"
+          : "") +
+        '<div class="m-card-bottom"><span>' +
         esc(r.createdByName || r.createdBy) +
         "</span><span>" +
         time(r.createdAt) +
@@ -748,7 +754,9 @@
         esc(d.title || "") +
         '" maxlength="250" placeholder="Ví dụ: Động cơ có tiếng ồn bất thường"></label><label>Mô tả lỗi / yêu cầu chi tiết<textarea name="description" rows="5" required maxlength="12000" placeholder="Hiện tượng, thời điểm xảy ra, ảnh hưởng đến sản xuất…">' +
         esc(d.description || "") +
-        '</textarea></label></div><div class="m-form-section"><h2><span class="m-step">03</span>Phân công ban đầu</h2><label>Người được phân công<select name="assignedTo" required><option value="">-- Chọn người / bộ phận kỹ thuật --</option>' +
+        '</textarea></label><label>Đề nghị ngày hoàn thành<input type="date" name="ngayDeNghiHoanThanh" id="mobileRequestedCompletion" value="' +
+        esc(d.ngayDeNghiHoanThanh || "") +
+        '"></label></div><div class="m-form-section"><h2><span class="m-step">03</span>Phân công ban đầu</h2><label>Người được phân công<select name="assignedTo" required><option value="">-- Chọn người / bộ phận kỹ thuật --</option>' +
         M.data.technicians
           .map((t) =>
             option(
@@ -968,6 +976,12 @@
           ["ĐƯỢC PHÂN CÔNG", person(r.assignedTo)],
           ["ĐANG / ĐÃ XỬ LÝ", r.actualByName || "Chưa có người nhận"],
           ["THỜI GIAN TẠO", time(r.createdAt)],
+          [
+            "ĐỀ NGHỊ NGÀY HOÀN THÀNH",
+            r.ngayDeNghiHoanThanh
+              ? date(r.ngayDeNghiHoanThanh)
+              : "Chưa đề nghị",
+          ],
           [
             "HOÀN THÀNH",
             r.completedDate ? date(r.completedDate) : "Chưa hoàn thành",

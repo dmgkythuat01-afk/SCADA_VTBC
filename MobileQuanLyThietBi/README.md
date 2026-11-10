@@ -10,7 +10,7 @@ Chủ project mở editor, chọn `capQuyenMobile` → Run → cấp quyền Goo
 
 Dùng chung file Sheets và tài khoản hiện có trong `TaiKhoan` với app quản trị. Không tự tạo tài khoản mẫu, bản sao danh mục hoặc trigger email. Các role TruongCa/CongNhan/PhongCongNghe tạo phiếu; KyThuat/CoKhi/TuDongHoa xem mọi phiếu và báo cáo; trưởng ca xác nhận rồi hai PGĐ duyệt song song. Người thực hiện được ghi theo tài khoản thực tế.
 
-Project này chứa Code.js và ba file MobileIndex/MobileStyles/MobileClient. Backend nghiệp vụ nằm trong các file `MobileWork*.js` của `QuanLyThietBi/admin/`, gọi qua thư viện EquipmentCore và ghim phiên bản 49 trong manifest. Script Properties, Cache và Lock tạo bên trong thư viện thuộc backend dùng chung, theo tài liệu Google: https://developers.google.com/apps-script/guides/libraries#resource_scoping . Hai giao diện dùng cùng khóa cập nhật. Khi nâng cấp backend, kiểm thử và tăng version thư viện trong manifest; không bật developmentMode trên production.
+Project này chứa Code.js và ba file MobileIndex/MobileStyles/MobileClient. Backend nghiệp vụ nằm trong các file `MobileWork*.js` của `QuanLyThietBi/admin/`, gọi qua thư viện EquipmentCore và ghim phiên bản 51 trong manifest. Script Properties, Cache và Lock tạo bên trong thư viện thuộc backend dùng chung, theo tài liệu Google: https://developers.google.com/apps-script/guides/libraries#resource_scoping . Hai giao diện dùng cùng khóa cập nhật. Khi nâng cấp backend, kiểm thử và tăng version thư viện trong manifest; không bật developmentMode trên production.
 
 ## Danh mục mới — 09/11/2026
 
@@ -51,3 +51,7 @@ Menu Tổng quan đã bỏ. Đăng nhập, bấm logo hoặc đổi chế độ 
 ## Bố cục điện thoại và máy tính
 
 Dưới1024px giữ giao diện điện thoại, menu dưới và bộ lọc ngày gọn. Từ1024px dùng menu trái, nội dung rộng, bộ lọc trên một hàng, danh sách2cột (3cột từ1440px), form tạo phiếu/tài khoản/báo cáo tận dụng chiều ngang. Cùng một URL, tài khoản, phân quyền và dữ liệu; đổi kích thước không tải lại hoặc xóa dữ liệu đang nhập. Phần desktop nằm riêng trong DesktopStyles.html, không thay CSS điện thoại.
+
+## Đề nghị ngày hoàn thành
+
+Form tạo phiếu có ngày đề nghị hoàn thành, lưu vào PhieuYeuCau.ngayDeNghiHoanThanh. Hiển thị trên card và chi tiết cho các vai trò được xem phiếu. Có thể để trống; ngày hợp lệ lưu ISO và hiển thị dd/mm/yyyy. Trường này độc lập với ngày thực tế hoàn thành; không làm đổi lịch bảo dưỡng. Cột bổ sung đã đối chiếu nguyên vẹn các ô cũ của14sheet, không tạo phiếu mẫu.

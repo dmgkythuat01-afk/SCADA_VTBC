@@ -17,6 +17,7 @@ const MOBILE_WORK_SCHEMA = {
       "createdByName",
       "createdAt",
       "createdDate",
+      "ngayDeNghiHoanThanh",
       "status",
       "actualBy",
       "actualByName",
@@ -50,6 +51,7 @@ const MOBILE_WORK_SCHEMA = {
       "tenNguoiYeuCau",
       "thoiGianTao",
       "ngayYeuCau",
+      "ngayDeNghiHoanThanh",
       "trangThai",
       "nguoiDangXuLy",
       "tenNguoiDangXuLy",
@@ -235,6 +237,7 @@ function mobileWorkReadTable_(name) {
                 "Asia/Ho_Chi_Minh",
                 [
                   "createdDate",
+                  "ngayDeNghiHoanThanh",
                   "performedDate",
                   "completedDate",
                   "date",
