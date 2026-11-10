@@ -972,8 +972,10 @@
         .filter((d) => d.requestId === r.id)
         .sort((a, b) => Number(b.ordinal) - Number(a.ordinal));
       $("mobileContent").innerHTML =
+        '<div class="m-detail-toolbar">' +
         button("page", "← Danh sách phiếu", "tickets", "m-back") +
         button("print", "In / Xuất PDF", r.id, "m-primary") +
+        '</div>' +
         '<div class="m-card"><div class="m-card-body"><div class="m-card-top"><span class="m-code">#' +
         esc(r.id.slice(-8).toUpperCase()) +
         "</span>" +
