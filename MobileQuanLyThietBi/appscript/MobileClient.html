@@ -424,14 +424,12 @@
               "check",
             ],
             ["results", "Lịch sử duyệt", "assigned"],
-            ["account", "Tài khoản", "person"],
           ]
         : technical()
           ? [
               ["tickets", "Tất cả phiếu", "tickets"],
               ["assigned", "Giao cho tôi", "assigned"],
               ["results", "Kết quả", "check"],
-              ["account", "Tài khoản", "person"],
             ]
           : [
               [
@@ -447,7 +445,6 @@
                 M.data.capabilities.shiftLeader ? "Chờ xác nhận" : "Theo dõi",
                 "check",
               ],
-              ["account", "Tài khoản", "person"],
             ];
       $("mobileNav").innerHTML = items
         .map(
