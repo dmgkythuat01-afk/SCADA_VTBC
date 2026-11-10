@@ -1331,7 +1331,9 @@
     background: #f9fcfa;
     overflow: hidden;
   }
-  .m-date-fields .m-date-control input[type="date"] {
+  .m-date-control input[type="date"] {
+    min-width: 0;
+    max-width: 100%;
     position: absolute;
     inset: 0;
     z-index: 2;
@@ -1345,9 +1347,7 @@
     opacity: 0;
     cursor: pointer;
   }
-  .m-date-fields
-    .m-date-control
-    input[type="date"]::-webkit-calendar-picker-indicator {
+  .m-date-control input[type="date"]::-webkit-calendar-picker-indicator {
     position: absolute;
     inset: 0;
     width: 100%;
@@ -1384,5 +1384,8 @@
   .m-date-control:focus-within {
     border-color: #207858;
     box-shadow: 0 0 0 2px #20785816;
+  }
+  .m-form-section label > .m-date-control {
+    margin-top: 9px;
   }
 </style>

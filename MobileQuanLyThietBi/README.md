@@ -55,3 +55,5 @@ Dưới1024px giữ giao diện điện thoại, menu dưới và bộ lọc ng�
 ## Đề nghị ngày hoàn thành
 
 Form tạo phiếu có ngày đề nghị hoàn thành, lưu vào PhieuYeuCau.ngayDeNghiHoanThanh. Hiển thị trên card và chi tiết cho các vai trò được xem phiếu. Có thể để trống; ngày hợp lệ lưu ISO và hiển thị dd/mm/yyyy. Trường này độc lập với ngày thực tế hoàn thành; không làm đổi lịch bảo dưỡng. Cột bổ sung đã đối chiếu nguyên vẹn các ô cũ của14sheet, không tạo phiếu mẫu.
+
+Ngày đề nghị hoàn thành dùng cùng bộ chọn ngày gọn như Từ ngày/Đến ngày: hiển thị dd/mm/yyyy chữ14px, giữ inputdate gốc và tên trườngngayDeNghiHoanThanh, không tràn form trên điện thoại.

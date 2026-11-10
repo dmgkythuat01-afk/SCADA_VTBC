@@ -227,7 +227,7 @@
     function dateIds() {
       return new Set(dateRequests().map((r) => r.id));
     }
-    function dateField(id, label, value) {
+    function dateField(id, label, value, options = {}) {
       return (
         '<label for="' +
         id +
@@ -235,16 +235,28 @@
         label +
         '<span class="m-date-control"><input type="date" id="' +
         id +
-        '" required aria-label="' +
+        '" name="' +
+        esc(options.name || id) +
+        '" ' +
+        (options.required === false ? "" : "required") +
+        ' aria-label="' +
         label +
         ' (ngày/tháng/năm)" value="' +
         esc(value) +
         '"><span class="m-date-display" id="' +
         id +
         'Display" aria-hidden="true">' +
-        esc(date(value)) +
+        esc(date(value) || "dd/mm/yyyy") +
         '</span><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 10h18"/></svg></span></label>'
       );
+    }
+    function bindDateField(id) {
+      const input = $(id),
+        update = () => {
+          $(id + "Display").textContent = date(input.value) || "dd/mm/yyyy";
+        };
+      input.oninput = update;
+      input.onchange = update;
     }
     function renderDateFilter() {
       const container = $("mobileDateFilter");
@@ -255,14 +267,7 @@
         dateField("mobileDateFrom", "Từ ngày", M.dateRange.from) +
         dateField("mobileDateTo", "Đến ngày", M.dateRange.to) +
         '</div><p id="mobileDateError" class="m-error" role="alert"></p></form>';
-      for (const id of ["mobileDateFrom", "mobileDateTo"]) {
-        const input = $(id),
-          update = () => {
-            $(id + "Display").textContent = date(input.value) || "dd/mm/yyyy";
-          };
-        input.oninput = update;
-        input.onchange = update;
-      }
+      ["mobileDateFrom", "mobileDateTo"].forEach(bindDateField);
       $("mobileDateForm").onsubmit = (event) => {
         event.preventDefault();
         try {
@@ -754,9 +759,14 @@
         esc(d.title || "") +
         '" maxlength="250" placeholder="Ví dụ: Động cơ có tiếng ồn bất thường"></label><label>Mô tả lỗi / yêu cầu chi tiết<textarea name="description" rows="5" required maxlength="12000" placeholder="Hiện tượng, thời điểm xảy ra, ảnh hưởng đến sản xuất…">' +
         esc(d.description || "") +
-        '</textarea></label><label>Đề nghị ngày hoàn thành<input type="date" name="ngayDeNghiHoanThanh" id="mobileRequestedCompletion" value="' +
-        esc(d.ngayDeNghiHoanThanh || "") +
-        '"></label></div><div class="m-form-section"><h2><span class="m-step">03</span>Phân công ban đầu</h2><label>Người được phân công<select name="assignedTo" required><option value="">-- Chọn người / bộ phận kỹ thuật --</option>' +
+        "</textarea></label>" +
+        dateField(
+          "mobileRequestedCompletion",
+          "Đề nghị ngày hoàn thành",
+          d.ngayDeNghiHoanThanh || "",
+          { name: "ngayDeNghiHoanThanh", required: false },
+        ) +
+        '</div><div class="m-form-section"><h2><span class="m-step">03</span>Phân công ban đầu</h2><label>Người được phân công<select name="assignedTo" required><option value="">-- Chọn người / bộ phận kỹ thuật --</option>' +
         M.data.technicians
           .map((t) =>
             option(
@@ -767,6 +777,7 @@
           )
           .join("") +
         '</select></label><p class="m-hint">Các tài khoản kỹ thuật khác vẫn xem được phiếu và có thể nhận xử lý.</p></div><p id="mobileCreateError" class="m-error"></p><button id="mobileCreateButton" class="m-primary m-wide" type="submit">Gửi yêu cầu →</button></form>';
+      bindDateField("mobileRequestedCompletion");
       $("mobileCreateType").value = d.type || "repair";
       fillMachines(d.machineId || "", d.componentId || "", d.scheduleId || "");
       $("mobileCreateWorkshop").onchange = () => fillMachines("", "", "");
