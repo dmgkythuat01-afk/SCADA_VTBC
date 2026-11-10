@@ -761,7 +761,7 @@
           .filter((a) => a.type === "workshop" && enabled(a))
           .map((a) => option(a.id, a.name, d.workshopId))
           .join("") +
-        '</select></label><label>Máy<select name="machineId" id="mobileCreateMachine" required></select></label><label>Thiết bị <span class="m-optional">có thể để trống</span><select name="componentId" id="mobileCreateComponent"></select></label><p class="m-hint">Để trống thiết bị nếu yêu cầu sửa chữa, bảo dưỡng hoặc làm mới cho cả máy.</p></div><div class="m-form-section"><h2><span class="m-step">02</span>Nội dung yêu cầu</h2><label>Loại yêu cầu<select name="type" id="mobileCreateType"><option value="repair">Sửa chữa</option><option value="maintenance">Bảo dưỡng</option><option value="new_work">Làm mới</option></select></label><div id="mobileScheduleBox" hidden><label>Lịch bảo dưỡng liên quan <span class="m-optional">không bắt buộc</span><select name="scheduleId" id="mobileCreateSchedule"></select></label><p class="m-hint">Lịch được tính kỳ tiếp theo sau khi bạn đồng ý kết quả, dựa trên ngày kỹ thuật thực hiện.</p></div><label>Tiêu đề ngắn <span class="m-optional">không bắt buộc</span><input name="title" value="' +
+        '</select></label><label>Máy<select name="machineId" id="mobileCreateMachine" required></select></label><label>Thiết bị <span class="m-optional">có thể để trống</span><select name="componentId" id="mobileCreateComponent"></select></label><p class="m-hint">Để trống thiết bị nếu yêu cầu sửa chữa hoặc làm mới cho cả máy.</p></div><div class="m-form-section"><h2><span class="m-step">02</span>Nội dung yêu cầu</h2><label>Loại yêu cầu<select name="type" id="mobileCreateType"><option value="repair">Sửa chữa</option><option value="new_work">Làm mới</option></select></label><label>Tiêu đề ngắn <span class="m-optional">không bắt buộc</span><input name="title" value="' +
         esc(d.title || "") +
         '" maxlength="250" placeholder="Ví dụ: Động cơ có tiếng ồn bất thường"></label><label>Mô tả lỗi / yêu cầu chi tiết<textarea name="description" rows="5" required maxlength="12000" placeholder="Hiện tượng, thời điểm xảy ra, ảnh hưởng đến sản xuất…">' +
         esc(d.description || "") +
@@ -784,12 +784,10 @@
           .join("") +
         '</select></label><p class="m-hint">Các tài khoản kỹ thuật khác vẫn xem được phiếu và có thể nhận xử lý.</p></div><p id="mobileCreateError" class="m-error"></p><button id="mobileCreateButton" class="m-primary m-wide" type="submit">Gửi yêu cầu →</button></form>';
       bindDateField("mobileRequestedCompletion");
-      $("mobileCreateType").value = d.type || "repair";
+      $("mobileCreateType").value = ["repair", "new_work"].includes(d.type) ? d.type : "repair";
       fillMachines(d.machineId || "", d.componentId || "", d.scheduleId || "");
       $("mobileCreateWorkshop").onchange = () => fillMachines("", "", "");
       $("mobileCreateMachine").onchange = () => fillComponents("", "");
-      $("mobileCreateComponent").onchange = () => fillSchedules("");
-      $("mobileCreateType").onchange = () => fillSchedules("");
       $("mobileCreateForm").onsubmit = submitCreate;
     }
     function fillMachines(selected, component, schedule) {
@@ -819,23 +817,6 @@
         '<option value="">Toàn máy / không chọn thiết bị</option>' +
         rows.map((a) => option(a.id, a.name, selected)).join("");
       $("mobileCreateComponent").disabled = !machine;
-      fillSchedules(schedule);
-    }
-    function fillSchedules(selected) {
-      const part = $("mobileCreateComponent").value,
-        show = $("mobileCreateType").value === "maintenance" && !!part;
-      $("mobileScheduleBox").hidden = !show;
-      const rows = show
-        ? M.data.schedules.filter((s) => s.componentId === part)
-        : [];
-      $("mobileCreateSchedule").innerHTML =
-        '<option value="">Không gắn lịch định kỳ</option>' +
-        rows
-          .map((s) =>
-            option(s.id, s.name + " · hạn " + date(s.dueDate), selected),
-          )
-          .join("");
-      $("mobileCreateSchedule").disabled = !show;
     }
     async function submitCreate(e) {
       e.preventDefault();
