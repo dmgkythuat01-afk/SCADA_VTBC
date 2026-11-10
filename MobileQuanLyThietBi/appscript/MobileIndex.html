@@ -12,6 +12,8 @@
     <?!= HtmlService.createHtmlOutputFromFile('DesktopStyles').getContent(); ?>
   </head>
   <body>
+    <input type="hidden" id="mobileInitialReport" value="<?= reportId ?>" />
+    <input type="hidden" id="mobileInitialPhoto" value="<?= photoId ?>" />
     <input
       id="mobileInitialRequest"
       type="hidden"
@@ -262,6 +264,8 @@
     </dialog>
     <div id="mobileToast" class="m-toast" role="status" hidden></div>
     <?!= HtmlService.createHtmlOutputFromFile('MobileDateRange').getContent();
+    ?> <?!= HtmlService.createHtmlOutputFromFile('PrintQr').getContent();
+    ?> <?!= HtmlService.createHtmlOutputFromFile('EquipmentPrint').getContent();
     ?> <?!= HtmlService.createHtmlOutputFromFile('MobileClient').getContent();
     ?>
   </body>

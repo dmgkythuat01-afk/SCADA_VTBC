@@ -8,6 +8,10 @@ function doGet(e) {
   template.initialRequestId = /^[A-Za-z0-9_-]{1,100}$/.test(requested)
     ? requested
     : "";
+  for (const key of ["reportId", "photoId"]) {
+    const value = String((e && e.parameter && e.parameter[key]) || "");
+    template[key] = /^[A-Za-z0-9_-]{1,200}$/.test(value) ? value : "";
+  }
   return template
     .evaluate()
     .setTitle("DMG Mobile — Yêu cầu bảo trì")

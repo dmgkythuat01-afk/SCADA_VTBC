@@ -21,6 +21,7 @@ function setup() {
     "MobileWorkWorkflow",
     "MobileWorkApprovals",
     "MobileWorkPhotos",
+    "MobileWorkPrint",
   ])
     vm.runInContext(
       fs.readFileSync("QuanLyThietBi/admin/" + name + ".js", "utf8"),
@@ -99,6 +100,11 @@ function setup() {
     adminSecret_: () => "secret",
     readAdminRows_: (n) => structuredClone(catalog[n] || []),
     mobileWorkCatalogRows_: (n) => structuredClone(catalog[n] || []),
+    mobileWorkGrid_: (n) => {
+      const rows = catalog[n] || [];
+      const headers = [...new Set(rows.flatMap(r => Object.keys(r)))];
+      return { values: [headers, ...rows.map(r => headers.map(k => r[k] ?? ""))] };
+    },
     mobileWorkHistoryRows_: (n) => structuredClone(history[n] || []),
     SpreadsheetApp: { flush() {} },
     maintenanceRows_: (n) => structuredClone(history[n] || []),

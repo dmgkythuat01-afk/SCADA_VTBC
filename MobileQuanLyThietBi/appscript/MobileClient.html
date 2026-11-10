@@ -395,6 +395,12 @@
             minute: "2-digit",
           });
         if (!quiet || !["create"].includes(M.page)) render();
+        const photoId = $("mobileInitialPhoto")?.value;
+        if (photoId) {
+          const reportId = $("mobileInitialReport").value;
+          $("mobileInitialPhoto").value = "";
+          await action("photo", photoId, { dataset: { report: reportId } });
+        }
       } catch (e) {
         if (M.token !== token) return;
         if (/phiên đăng nhập/i.test(e.message)) {
@@ -967,6 +973,7 @@
         .sort((a, b) => Number(b.ordinal) - Number(a.ordinal));
       $("mobileContent").innerHTML =
         button("page", "← Danh sách phiếu", "tickets", "m-back") +
+        button("print", "In / Xuất PDF", r.id, "m-primary") +
         '<div class="m-card"><div class="m-card-body"><div class="m-card-top"><span class="m-code">#' +
         esc(r.id.slice(-8).toUpperCase()) +
         "</span>" +
@@ -1454,6 +1461,12 @@
       window.scrollTo(0, 0);
     }
     async function action(name, id, target) {
+      if (name === "print") {
+        const w = EquipmentPrint.open();
+        try { EquipmentPrint.render(w, await api("printRequest", { requestId: id })); }
+        catch (error) { EquipmentPrint.fail(w, error); throw error; }
+        return;
+      }
       if (name === "page") {
         go(id);
         return;

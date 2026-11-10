@@ -1,5 +1,13 @@
 # DMG Mobile Quan ly thiet bi
 
+## In / Xuất PDF phiếu yêu cầu
+
+Mở chi tiết phiếu rồi chọn **In / Xuất PDF**. Cửa sổ phiếu mở theo mẫu BM-QT-TB-01.05, khổ A4 ngang; chọn máy in hoặc Lưu dưới dạng PDF trong hộp thoại trình duyệt. Cửa sổ có nút In / Lưu PDF để gọi lại hộp thoại. Cho phép popup cho trang nếu trình duyệt đang chặn.
+
+Thông tin người đề nghị và người được giao đọc từ TaiKhoan, gồm chucVuTrongCongTy, phongSanXuat, phongBan. Bộ phận tiếp nhận ghi người thực tế thực hiện và thời gian tạo báo cáo đã gửi; Bộ phận bàn giao ghi trưởng ca thực tế xác nhận. Trưởng ban an toàn dùng chữ ký PGDChatLuong, Ban giám đốc dùng PGDSanXuat. Các chữ ký chỉ lấy từ cùng lần báo cáo, ô chưa ký để trống để ký tay. Có thể in khi chưa hoàn tất quy trình.
+
+Ảnh có QR dẫn tới đúng ảnh trong ứng dụng, vẫn cần đăng nhập và quyền xem phiếu; không đổi ảnh Drive sang công khai. Nội dung dài và các ảnh ngoài ba ảnh đầu được giữ đầy đủ trong phụ lục. QR tạo tại trình duyệt, không gửi dữ liệu sang dịch vụ QR bên ngoài. Logo trên mẫu là bản vector dựng từ ảnh tham chiếu.
+
 App dùng chung cho điện thoại và máy tính, tự đổi bố cục theo độ rộng màn hình.
 
 Apps Script: https://script.google.com/d/1pslo6vQfhFAZlB_jVzjZQsrTgvdAMIZ4yS4emcVZW7eqqQziWhzBu3LQ/edit
@@ -10,7 +18,7 @@ Chủ project mở editor, chọn `capQuyenMobile` → Run → cấp quyền Goo
 
 Dùng chung file Sheets và tài khoản hiện có trong `TaiKhoan` với app quản trị. Không tự tạo tài khoản mẫu, bản sao danh mục hoặc trigger email. Các role TruongCa/CongNhan/PhongCongNghe tạo phiếu; KyThuat/CoKhi/TuDongHoa xem mọi phiếu và báo cáo; trưởng ca xác nhận rồi hai PGĐ duyệt song song. Người thực hiện được ghi theo tài khoản thực tế.
 
-Project này chứa Code.js và ba file MobileIndex/MobileStyles/MobileClient. Backend nghiệp vụ nằm trong các file `MobileWork*.js` của `QuanLyThietBi/admin/`, gọi qua thư viện EquipmentCore và ghim phiên bản 51 trong manifest. Script Properties, Cache và Lock tạo bên trong thư viện thuộc backend dùng chung, theo tài liệu Google: https://developers.google.com/apps-script/guides/libraries#resource_scoping . Hai giao diện dùng cùng khóa cập nhật. Khi nâng cấp backend, kiểm thử và tăng version thư viện trong manifest; không bật developmentMode trên production.
+Project này chứa giao diện mobile/desktop, bộ lọc ngày và bản in. Backend nghiệp vụ nằm trong các file `MobileWork*.js` của `QuanLyThietBi/admin/`, gọi qua thư viện EquipmentCore và ghim phiên bản 52 trong manifest. Script Properties, Cache và Lock tạo bên trong thư viện thuộc backend dùng chung, theo tài liệu Google: https://developers.google.com/apps-script/guides/libraries#resource_scoping . Hai giao diện dùng cùng khóa cập nhật. Khi nâng cấp backend, kiểm thử và tăng version thư viện trong manifest; không bật developmentMode trên production.
 
 ## Danh mục mới — 09/11/2026
 

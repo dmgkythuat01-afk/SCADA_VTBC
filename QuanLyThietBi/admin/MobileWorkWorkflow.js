@@ -523,6 +523,7 @@ function mobileWorkApi(token, action, payload) {
     mobileWorkReconcile_();
     const actions = {
       snapshot: mobileWorkSnapshot_,
+      printRequest: mobileWorkPrintRequest_,
       create: mobileWorkCreateRequest_,
       claim: mobileWorkClaimRequest_,
       startReport: mobileWorkStartReport_,
