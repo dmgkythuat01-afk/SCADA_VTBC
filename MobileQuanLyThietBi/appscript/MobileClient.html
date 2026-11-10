@@ -227,16 +227,42 @@
     function dateIds() {
       return new Set(dateRequests().map((r) => r.id));
     }
+    function dateField(id, label, value) {
+      return (
+        '<label for="' +
+        id +
+        '">' +
+        label +
+        '<span class="m-date-control"><input type="date" id="' +
+        id +
+        '" required aria-label="' +
+        label +
+        ' (ngày/tháng/năm)" value="' +
+        esc(value) +
+        '"><span class="m-date-display" id="' +
+        id +
+        'Display" aria-hidden="true">' +
+        esc(date(value)) +
+        '</span><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 10h18"/></svg></span></label>'
+      );
+    }
     function renderDateFilter() {
       const container = $("mobileDateFilter");
       container.hidden = ["create", "account", "detail"].includes(M.page);
       if (container.hidden) return;
       container.innerHTML =
-        '<form id="mobileDateForm"><div class="m-date-toolbar"><strong>Ngày tạo phiếu</strong><div class="m-date-actions"><button class="m-primary" type="submit">Lọc</button><button id="mobileDateReset" type="button" aria-label="7 ngày gần nhất" title="7 ngày gần nhất">7 ngày</button></div></div><div class="m-date-fields"><label for="mobileDateFrom">Từ ngày<input type="date" id="mobileDateFrom" required value="' +
-        esc(M.dateRange.from) +
-        '"></label><label for="mobileDateTo">Đến ngày<input type="date" id="mobileDateTo" required value="' +
-        esc(M.dateRange.to) +
-        '"></label></div><p id="mobileDateError" class="m-error" role="alert"></p></form>';
+        '<form id="mobileDateForm"><div class="m-date-toolbar"><strong>Ngày tạo phiếu</strong><div class="m-date-actions"><button class="m-primary" type="submit">Lọc</button><button id="mobileDateReset" type="button" aria-label="7 ngày gần nhất" title="7 ngày gần nhất">7 ngày</button></div></div><div class="m-date-fields">' +
+        dateField("mobileDateFrom", "Từ ngày", M.dateRange.from) +
+        dateField("mobileDateTo", "Đến ngày", M.dateRange.to) +
+        '</div><p id="mobileDateError" class="m-error" role="alert"></p></form>';
+      for (const id of ["mobileDateFrom", "mobileDateTo"]) {
+        const input = $(id),
+          update = () => {
+            $(id + "Display").textContent = date(input.value) || "dd/mm/yyyy";
+          };
+        input.oninput = update;
+        input.onchange = update;
+      }
       $("mobileDateForm").onsubmit = (event) => {
         event.preventDefault();
         try {
