@@ -1183,4 +1183,51 @@
       grid-template-columns: 1fr 1fr;
     }
   }
+  .m-date-filter {
+    padding: 16px;
+    background: #fff;
+    border: 1px solid #dce9e3;
+    border-radius: 18px;
+    margin: 0 0 18px;
+  }
+  .m-date-fields {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    margin: 12px 0;
+  }
+  .m-date-fields label {
+    min-width: 0;
+    display: grid;
+    gap: 6px;
+    font-size: 14px;
+    font-weight: 600;
+  }
+  .m-date-fields input {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    min-height: 46px;
+    padding: 10px 8px;
+    font: inherit;
+    font-size: 16px;
+    border: 1px solid #c9dcd1;
+    border-radius: 10px;
+    background: #f9fcfa;
+    color: #173f33;
+  }
+  .m-date-actions {
+    display: flex;
+    gap: 10px;
+  }
+  .m-date-actions button {
+    flex: 1;
+    min-height: 44px;
+  }
+  .m-date-filter .m-hint {
+    margin: 10px 0 0;
+  }
+  .m-date-filter .m-error:empty {
+    display: none;
+  }
 </style>

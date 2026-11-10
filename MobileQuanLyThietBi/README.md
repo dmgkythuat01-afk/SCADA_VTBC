@@ -39,3 +39,7 @@ Tạo phiếu có ba lựa chọn: Sửa chữa (`repair`), Bảo dưỡng (`mai
 ## Nội dung bổ sung báo cáo
 
 Hai ô Nội dung cải tiến (`noiDungCaiTien`) và Ý kiến đóng góp (`yKienDongGop`) nằm ngay sau Nội dung báo cáo, không bắt buộc. Lưu đúng hai cột cùng tên hiện có trong BaoCaoKhacPhuc, hỗ trợ lưu nháp/mở lại và hiển thị trong lịch sử, màn hình trưởng ca/PGĐ xác nhận. Không sửa header hoặc dữ liệu Sheets khi triển khai.
+
+## Lọc ngày dùng chung
+
+Các màn hình dữ liệu (Tổng quan, danh sách phiếu, Giao cho tôi, Chờ xác nhận/phê duyệt, Kết quả và Lịch sử duyệt) mặc định theo ngày tạo phiếu trong 7 ngày gần nhất: hôm nay và 6 ngày trước, gồm cả hai đầu mốc. Ngày hôm nay lấy từ backend theo giờ Việt Nam. Bộ lọc Từ ngày–Đến ngày giữ khi chuyển menu; nút 7 ngày gần nhất trả về mặc định. Lọc ngay trên dữ liệu đã tải, không gọi lại server. Tạo phiếu/Tài khoản không có danh sách theo ngày; chi tiết giữ đầy đủ lịch sử của phiếu đang mở.

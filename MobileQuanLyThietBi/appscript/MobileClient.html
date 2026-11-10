@@ -60,6 +60,8 @@
       submitKey: "",
       review: null,
       reviewKey: "",
+      dateRange: null,
+      datePreset: true,
     };
     function rpc(method, ...args) {
       return new Promise((resolve, reject) => {
@@ -218,8 +220,50 @@
         !!field && r.status === "awaiting_pgd" && r[field] === "Chờ phê duyệt"
       );
     }
-    function pendingMine() {
+    function dateRequests() {
       return M.data.requests.filter((r) =>
+        MobileDateRange.matches(r, M.dateRange),
+      );
+    }
+    function dateIds() {
+      return new Set(dateRequests().map((r) => r.id));
+    }
+    function renderDateFilter() {
+      const container = $("mobileDateFilter");
+      container.hidden = ["create", "account", "detail"].includes(M.page);
+      if (container.hidden) return;
+      container.innerHTML =
+        '<form id="mobileDateForm"><b>Lọc theo ngày tạo phiếu</b><div class="m-date-fields"><label>Từ ngày<input type="date" id="mobileDateFrom" required value="' +
+        esc(M.dateRange.from) +
+        '"></label><label>Đến ngày<input type="date" id="mobileDateTo" required value="' +
+        esc(M.dateRange.to) +
+        '"></label></div><div class="m-date-actions"><button class="m-primary" type="submit">Lọc</button><button id="mobileDateReset" type="button">7 ngày gần nhất</button></div><p class="m-hint">Đang hiển thị ' +
+        date(M.dateRange.from) +
+        " — " +
+        date(M.dateRange.to) +
+        '</p><p id="mobileDateError" class="m-error" role="alert"></p></form>';
+      $("mobileDateForm").onsubmit = (event) => {
+        event.preventDefault();
+        try {
+          const range = MobileDateRange.validate(
+            $("mobileDateFrom").value,
+            $("mobileDateTo").value,
+          );
+          M.dateRange = range;
+          M.datePreset = false;
+          render();
+        } catch (error) {
+          $("mobileDateError").textContent = error.message;
+        }
+      };
+      $("mobileDateReset").onclick = () => {
+        M.dateRange = MobileDateRange.lastSeven(M.data.today);
+        M.datePreset = true;
+        render();
+      };
+    }
+    function pendingMine() {
+      return dateRequests().filter((r) =>
         managerMode()
           ? M.data.capabilities.viewer
             ? r.status === "awaiting_pgd"
@@ -300,6 +344,8 @@
           prefetched?.token === token ? prefetched.data : await api("snapshot");
         if (M.token !== token) return;
         M.data = data;
+        if (M.datePreset || !M.dateRange)
+          M.dateRange = MobileDateRange.lastSeven(data.today);
         M.mode = data.capabilities.admin
           ? sessionStorage.getItem("mobileAdminMode") || "technical"
           : data.capabilities.technical
@@ -395,6 +441,7 @@
     }
     function render() {
       if (!M.data) return;
+      renderDateFilter();
       nav();
       (
         ({
@@ -434,7 +481,7 @@
       );
     }
     function home() {
-      const rows = M.data.requests,
+      const rows = dateRequests(),
         counts = [
           ["Mới tạo", rows.filter((r) => r.status === "new").length, "new"],
           [
@@ -461,7 +508,19 @@
         )
         .sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt)))
         .slice(0, 4);
-      const notices = M.data.notifications.slice().reverse().slice(0, 4);
+      const visibleIds = dateIds();
+      const notices = M.data.notifications
+        .filter((n) =>
+          n.requestId
+            ? visibleIds.has(n.requestId)
+            : MobileDateRange.matches(
+                { createdDate: n.date, createdAt: n.sentAt },
+                M.dateRange,
+              ),
+        )
+        .slice()
+        .reverse()
+        .slice(0, 4);
       $("mobileContent").innerHTML =
         '<section class="m-hero"><span class="m-eyebrow">' +
         esc(
@@ -552,7 +611,7 @@
           : "");
     }
     function filteredTickets() {
-      let rows = M.data.requests;
+      let rows = dateRequests();
       if (M.page === "assigned")
         rows = rows.filter((r) => r.assignedTo === M.data.user.email);
       if (M.status !== "all") rows = rows.filter((r) => r.status === M.status);
@@ -695,8 +754,10 @@
             ));
     }
     function results() {
+      const visibleIds = dateIds();
       if (managerMode()) {
         const reviews = M.data.reviews
+          .filter((v) => visibleIds.has(v.requestId))
           .filter(
             (v) =>
               M.data.capabilities.viewer || v.createdBy === M.data.user.email,
@@ -730,6 +791,7 @@
         return;
       }
       const reports = M.data.reports
+        .filter((d) => visibleIds.has(d.requestId))
         .filter((d) => d.createdBy === M.data.user.email)
         .sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));
       $("mobileContent").innerHTML =
@@ -1599,6 +1661,8 @@
       ])
         $(id).close();
       M.nextSnapshot = null;
+      M.dateRange = null;
+      M.datePreset = true;
       sessionStorage.removeItem("dmgMobileWorkSession");
       for (let i = sessionStorage.length - 1; i >= 0; i--) {
         const key = sessionStorage.key(i);

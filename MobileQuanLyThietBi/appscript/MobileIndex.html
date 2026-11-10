@@ -89,6 +89,7 @@
       <main class="m-main">
         <p id="mobileSync" class="m-sync"></p>
         <div id="mobileError" class="m-error-panel" role="alert" hidden></div>
+        <section id="mobileDateFilter" class="m-date-filter" hidden></section>
         <section id="mobileContent"></section>
       </main>
       <nav id="mobileNav" class="m-bottom" aria-label="Menu chính"></nav>
@@ -241,6 +242,8 @@
       ><img id="mobileFullPhoto" alt="Ảnh kết quả khắc phục" />
     </dialog>
     <div id="mobileToast" class="m-toast" role="status" hidden></div>
-    <?!= HtmlService.createHtmlOutputFromFile('MobileClient').getContent(); ?>
+    <?!= HtmlService.createHtmlOutputFromFile('MobileDateRange').getContent();
+    ?> <?!= HtmlService.createHtmlOutputFromFile('MobileClient').getContent();
+    ?>
   </body>
 </html>

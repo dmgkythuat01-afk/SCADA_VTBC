@@ -1,0 +1,43 @@
+<script>
+  const MobileDateRange = (() => {
+    function valid(value) {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(String(value || ""))) return false;
+      const d = new Date(value + "T00:00:00Z");
+      return !isNaN(d.getTime()) && d.toISOString().slice(0, 10) === value;
+    }
+    function day(value) {
+      const text = String(value || "");
+      if (valid(text)) return text;
+      const prefix = text.slice(0, 10);
+      if (!valid(prefix)) return "";
+      if (!/(?:Z|[+-]\d{2}:?\d{2})$/i.test(text)) return prefix;
+      const d = new Date(text);
+      if (isNaN(d.getTime())) return "";
+      const parts = new Intl.DateTimeFormat("en-CA", {
+          timeZone: "Asia/Ho_Chi_Minh",
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+        }).formatToParts(d),
+        get = (type) => parts.find((p) => p.type === type).value;
+      return get("year") + "-" + get("month") + "-" + get("day");
+    }
+    function validate(from, to) {
+      if (!valid(from) || !valid(to))
+        throw Error("Vui lòng chọn đủ từ ngày và đến ngày hợp lệ.");
+      if (from > to) throw Error("Từ ngày không được lớn hơn Đến ngày.");
+      return { from, to };
+    }
+    function lastSeven(today) {
+      validate(today, today);
+      const d = new Date(today + "T00:00:00Z");
+      d.setUTCDate(d.getUTCDate() - 6);
+      return { from: d.toISOString().slice(0, 10), to: today };
+    }
+    function matches(request, range) {
+      const date = day(request.createdDate) || day(request.createdAt);
+      return !!date && date >= range.from && date <= range.to;
+    }
+    return { day, validate, lastSeven, matches };
+  })();
+</script>
