@@ -10,7 +10,7 @@ Chủ project mở editor, chọn `capQuyenMobile` → Run → cấp quyền Goo
 
 Dùng chung file Sheets và tài khoản hiện có trong `TaiKhoan` với app quản trị. Không tự tạo tài khoản mẫu, bản sao danh mục hoặc trigger email. Các role TruongCa/CongNhan/PhongCongNghe tạo phiếu; KyThuat/CoKhi/TuDongHoa xem mọi phiếu và báo cáo; trưởng ca xác nhận rồi hai PGĐ duyệt song song. Người thực hiện được ghi theo tài khoản thực tế.
 
-Project này chứa Code.js và ba file MobileIndex/MobileStyles/MobileClient. Backend nghiệp vụ nằm trong các file `MobileWork*.js` của `QuanLyThietBi/admin/`, gọi qua thư viện EquipmentCore và ghim phiên bản 47 trong manifest. Script Properties, Cache và Lock tạo bên trong thư viện thuộc backend dùng chung, theo tài liệu Google: https://developers.google.com/apps-script/guides/libraries#resource_scoping . Hai giao diện dùng cùng khóa cập nhật. Khi nâng cấp backend, kiểm thử và tăng version thư viện trong manifest; không bật developmentMode trên production.
+Project này chứa Code.js và ba file MobileIndex/MobileStyles/MobileClient. Backend nghiệp vụ nằm trong các file `MobileWork*.js` của `QuanLyThietBi/admin/`, gọi qua thư viện EquipmentCore và ghim phiên bản 48 trong manifest. Script Properties, Cache và Lock tạo bên trong thư viện thuộc backend dùng chung, theo tài liệu Google: https://developers.google.com/apps-script/guides/libraries#resource_scoping . Hai giao diện dùng cùng khóa cập nhật. Khi nâng cấp backend, kiểm thử và tăng version thư viện trong manifest; không bật developmentMode trên production.
 
 ## Danh mục mới — 09/11/2026
 
@@ -31,3 +31,7 @@ Tối ưu hiệu năng: mỗi thao tác chỉ đọc mỗi bảng cần dùng m�
 ## Đổi mật khẩu
 
 Menu Tài khoản có form mật khẩu hiện tại, mật khẩu mới và nhập lại mật khẩu mới. Mật khẩu mới dài 8–200 ký tự; lưu dạng băm trong đúng ô matKhau của tài khoản đăng nhập. Đổi xong đăng nhập lại bằng mật khẩu mới; các phiên cũ của tài khoản hết hiệu lực. Không cần sửa hoặc thêm cột trong Sheets.
+
+## Loại yêu cầu
+
+Tạo phiếu có ba lựa chọn: Sửa chữa (`repair`), Bảo dưỡng (`maintenance`), Làm mới (`new_work`). Làm mới dùng cùng luồng báo cáo/ảnh, trưởng ca xác nhận và hai PGĐ phê duyệt; không gắn lịch định kỳ hoặc làm thay đổi ngày bảo dưỡng. Kết quả được giữ trong bảng lịch sử công việc `LichSuSuaChua`, có ghi rõ Làm mới cùng mô tả yêu cầu; loại gốc giữ riêng ở `PhieuYeuCau.loaiYeuCau`.

@@ -1,3 +1,10 @@
+function mobileWorkTypeLabel_(type) {
+  return (
+    { repair: "Sửa chữa", maintenance: "Bảo dưỡng", new_work: "Làm mới" }[
+      type
+    ] || type
+  );
+}
 function mobileWorkRole_(value) {
   return String(value || "")
     .normalize("NFD")
@@ -138,7 +145,7 @@ function mobileWorkCreateRequest_(u, p) {
     : null;
   if (p.componentId && !component)
     throw Error("Thiết bị không thuộc máy đã chọn.");
-  if (!["repair", "maintenance"].includes(p.type))
+  if (!["repair", "maintenance", "new_work"].includes(p.type))
     throw Error("Loại yêu cầu không hợp lệ.");
   const assignedTo = mobileWorkRequired_(
       p.assignedTo,
@@ -187,8 +194,7 @@ function mobileWorkCreateRequest_(u, p) {
     type: p.type,
     title:
       mobileWorkText_(p.title, 250) ||
-      (p.type === "repair" ? "Sửa chữa — " : "Bảo dưỡng — ") +
-        (component?.name || machine.name),
+      mobileWorkTypeLabel_(p.type) + " — " + (component?.name || machine.name),
     description: mobileWorkRequired_(
       p.description,
       "mô tả lỗi/yêu cầu chi tiết",

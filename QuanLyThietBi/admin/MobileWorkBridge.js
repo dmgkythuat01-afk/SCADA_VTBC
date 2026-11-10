@@ -33,7 +33,15 @@ function mobileWorkAppendAdminHistory_(request, report, review) {
       nguoiThucHien: report.actualBy,
       tenNguoiThucHien: report.actualByName,
       moTaLoi: request.type === "repair" ? request.description : "",
-      noiDung: request.title + "\n" + report.content,
+      noiDung:
+        (request.type === "new_work"
+          ? "Loại yêu cầu: Làm mới\n" +
+            request.title +
+            "\nYêu cầu: " +
+            request.description
+          : request.title) +
+        "\n" +
+        report.content,
       ketQua: report.content,
       chiTietKiemTra: JSON.stringify(criteria),
       danhSachAnh: JSON.stringify(

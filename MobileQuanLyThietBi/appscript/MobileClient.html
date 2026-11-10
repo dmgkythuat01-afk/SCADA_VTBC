@@ -129,6 +129,13 @@
             minute: "2-digit",
           });
     }
+    function requestTypeLabel(type) {
+      return (
+        { repair: "Sửa chữa", maintenance: "Bảo dưỡng", new_work: "Làm mới" }[
+          type
+        ] || type
+      );
+    }
     function roleName(value) {
       const key = String(value || "")
         .normalize("NFD")
@@ -416,7 +423,7 @@
         esc(r.machineName) +
         (r.componentName ? " · " + esc(r.componentName) : " · Toàn máy") +
         "</p><p>" +
-        esc(r.type === "repair" ? "Sửa chữa" : "Bảo dưỡng") +
+        esc(requestTypeLabel(r.type)) +
         " · Giao cho " +
         esc(person(r.assignedTo)) +
         '</p><div class="m-card-bottom"><span>' +
@@ -787,7 +794,7 @@
           .filter((a) => a.type === "workshop" && enabled(a))
           .map((a) => option(a.id, a.name, d.workshopId))
           .join("") +
-        '</select></label><label>Máy<select name="machineId" id="mobileCreateMachine" required></select></label><label>Thiết bị <span class="m-optional">có thể để trống</span><select name="componentId" id="mobileCreateComponent"></select></label><p class="m-hint">Để trống thiết bị nếu yêu cầu sửa chữa hoặc bảo dưỡng cho cả máy.</p></div><div class="m-form-section"><h2><span class="m-step">02</span>Nội dung yêu cầu</h2><label>Loại yêu cầu<select name="type" id="mobileCreateType"><option value="repair">Sửa chữa</option><option value="maintenance">Bảo dưỡng</option></select></label><div id="mobileScheduleBox" hidden><label>Lịch bảo dưỡng liên quan <span class="m-optional">không bắt buộc</span><select name="scheduleId" id="mobileCreateSchedule"></select></label><p class="m-hint">Lịch được tính kỳ tiếp theo sau khi bạn đồng ý kết quả, dựa trên ngày kỹ thuật thực hiện.</p></div><label>Tiêu đề ngắn <span class="m-optional">không bắt buộc</span><input name="title" value="' +
+        '</select></label><label>Máy<select name="machineId" id="mobileCreateMachine" required></select></label><label>Thiết bị <span class="m-optional">có thể để trống</span><select name="componentId" id="mobileCreateComponent"></select></label><p class="m-hint">Để trống thiết bị nếu yêu cầu sửa chữa, bảo dưỡng hoặc làm mới cho cả máy.</p></div><div class="m-form-section"><h2><span class="m-step">02</span>Nội dung yêu cầu</h2><label>Loại yêu cầu<select name="type" id="mobileCreateType"><option value="repair">Sửa chữa</option><option value="maintenance">Bảo dưỡng</option><option value="new_work">Làm mới</option></select></label><div id="mobileScheduleBox" hidden><label>Lịch bảo dưỡng liên quan <span class="m-optional">không bắt buộc</span><select name="scheduleId" id="mobileCreateSchedule"></select></label><p class="m-hint">Lịch được tính kỳ tiếp theo sau khi bạn đồng ý kết quả, dựa trên ngày kỹ thuật thực hiện.</p></div><label>Tiêu đề ngắn <span class="m-optional">không bắt buộc</span><input name="title" value="' +
         esc(d.title || "") +
         '" maxlength="250" placeholder="Ví dụ: Động cơ có tiếng ồn bất thường"></label><label>Mô tả lỗi / yêu cầu chi tiết<textarea name="description" rows="5" required maxlength="12000" placeholder="Hiện tượng, thời điểm xảy ra, ảnh hưởng đến sản xuất…">' +
         esc(d.description || "") +
@@ -990,7 +997,7 @@
         '</div><div class="m-detail-grid">' +
         [
           ["NGƯỜI YÊU CẦU", r.createdByName || r.createdBy],
-          ["LOẠI YÊU CẦU", r.type === "repair" ? "Sửa chữa" : "Bảo dưỡng"],
+          ["LOẠI YÊU CẦU", requestTypeLabel(r.type)],
           ["ĐƯỢC PHÂN CÔNG", person(r.assignedTo)],
           ["ĐANG / ĐÃ XỬ LÝ", r.actualByName || "Chưa có người nhận"],
           ["THỜI GIAN TẠO", time(r.createdAt)],
