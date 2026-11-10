@@ -1,0 +1,467 @@
+<style>
+  .m-sidebar {
+    display: contents;
+  }
+  .m-sidebar-brand,
+  .m-sidebar-caption,
+  .m-sidebar-footer,
+  .m-desktop-heading,
+  .m-desktop-user {
+    display: none;
+  }
+  .m-ticket-grid {
+    display: contents;
+  }
+  @media (min-width: 1024px) {
+    :root {
+      --sidebar-width: 248px;
+    }
+    .m-sidebar {
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      inset: 0 auto 0 0;
+      width: var(--sidebar-width);
+      height: 100vh;
+      height: 100dvh;
+      padding: 22px 14px 18px;
+      background: #123e35;
+      color: #e6f2e8;
+      z-index: 40;
+      border-right: 1px solid #153d32;
+    }
+    .m-sidebar-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+      width: 100%;
+      padding: 8px 10px 24px;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+      color: #fff;
+      text-align: left;
+      min-height: 70px;
+      font-size: 22px;
+      font-weight: 800;
+    }
+    .m-sidebar-brand small {
+      display: block;
+      margin-top: 5px;
+      font-size: 9px;
+      letter-spacing: 1px;
+      font-weight: 500;
+      color: #b6cdbd;
+    }
+    .m-sidebar-brand .m-logo {
+      width: 42px;
+      height: 42px;
+    }
+    .m-sidebar-caption {
+      display: block;
+      margin: 12px 12px 16px;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 1.1px;
+      text-transform: uppercase;
+      color: #9cbdaa;
+    }
+    .m-sidebar .m-bottom {
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      justify-content: flex-start;
+      position: static;
+      flex: 1;
+      min-height: 0;
+      gap: 8px;
+      padding: 0;
+      width: 100%;
+      max-width: none;
+      transform: none;
+      background: transparent;
+      border: 0;
+      border-radius: 0;
+      backdrop-filter: none;
+      overflow-y: auto;
+    }
+    .m-sidebar .m-bottom button {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 12px;
+      flex: none;
+      width: 100%;
+      max-width: none;
+      min-height: 50px;
+      padding: 12px 14px;
+      border-radius: 11px;
+      text-align: left;
+      color: #bad2c3;
+    }
+    .m-sidebar .m-bottom button:hover {
+      background: #ffffff0c;
+      color: #fff;
+    }
+    .m-sidebar .m-bottom button.active {
+      background: #ffffff18;
+      color: #fff;
+      box-shadow: inset 3px 0 #a8d497;
+    }
+    .m-sidebar .m-bottom button.active::before {
+      display: none;
+    }
+    .m-sidebar .m-bottom button span {
+      font-size: 14px;
+      font-weight: 500;
+      white-space: normal;
+      line-height: 1.5;
+    }
+    .m-sidebar .m-bottom button svg {
+      width: 21px;
+      height: 21px;
+      flex-shrink: 0;
+    }
+    .m-sidebar .m-bottom .m-nav-count {
+      position: static;
+      flex-shrink: 0;
+      min-width: 21px;
+      margin-left: auto;
+      padding: 3px 6px;
+      text-align: center;
+      font-size: 10px;
+      background: #c28653;
+    }
+    .m-sidebar-footer {
+      display: block;
+      flex-shrink: 0;
+      padding: 18px 12px 0;
+      margin-top: 24px;
+      border-top: 1px solid #ffffff15;
+      font-size: 10px;
+      line-height: 1.8;
+      color: #9ebdad;
+    }
+    .m-topbar {
+      height: 74px;
+      margin-left: var(--sidebar-width);
+      padding: 14px 30px;
+    }
+    .m-topbar .m-brand {
+      display: none;
+    }
+    .m-desktop-heading {
+      display: grid;
+      gap: 4px;
+    }
+    .m-desktop-heading strong {
+      font-size: 17px;
+      font-weight: 650;
+    }
+    .m-desktop-heading span {
+      font-size: 11px;
+      color: #7b8d80;
+    }
+    .m-desktop-user {
+      display: block;
+      max-width: 300px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 12px;
+      font-weight: 500;
+      color: #52705d;
+    }
+    .m-top-actions {
+      gap: 12px;
+    }
+    .m-main {
+      max-width: none;
+      width: auto;
+      margin: 0 0 0 var(--sidebar-width);
+      padding: 20px 30px 40px;
+    }
+    .m-sync {
+      margin-bottom: 10px;
+      font-size: 11px;
+    }
+    .m-ticket-title,
+    .m-title {
+      font-size: 25px;
+      margin-bottom: 16px;
+    }
+    .m-date-filter {
+      padding: 12px 16px;
+      margin-bottom: 24px;
+      border-radius: 14px;
+    }
+    .m-date-filter form {
+      display: grid;
+      grid-template-columns: max-content minmax(128px, 180px) minmax(
+          128px,
+          180px
+        ) minmax(128px, 1fr);
+      align-items: center;
+      gap: 14px;
+    }
+    .m-date-toolbar,
+    .m-date-fields {
+      display: contents;
+    }
+    .m-date-toolbar strong {
+      grid-column: 1;
+      grid-row: 1;
+      font-size: 12px;
+    }
+    .m-date-fields label:first-child {
+      grid-column: 2;
+      grid-row: 1;
+    }
+    .m-date-fields label:last-child {
+      grid-column: 3;
+      grid-row: 1;
+    }
+    .m-date-fields label {
+      font-size: 11px;
+    }
+    .m-date-actions {
+      grid-column: 4;
+      grid-row: 1;
+      justify-self: end;
+    }
+    .m-date-actions button {
+      height: 34px;
+      min-height: 34px;
+      padding: 6px 12px;
+      font-size: 13px;
+    }
+    .m-date-filter .m-error {
+      grid-column: 1/-1;
+      margin: 0;
+    }
+    .m-ticket-filters {
+      grid-template-columns: minmax(240px, 1fr) 230px;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .m-ticket-filters .m-chips {
+      padding-left: 0;
+      padding-right: 0;
+      flex-wrap: wrap;
+      overflow: visible;
+    }
+    .m-ticket-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+      align-items: stretch;
+    }
+    .m-ticket-grid > .m-card {
+      min-width: 0;
+      margin: 0;
+    }
+    .m-ticket-grid .m-ticket-open {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      padding: 20px;
+    }
+    .m-ticket-grid .m-ticket-open h3 {
+      font-size: 18px;
+      overflow-wrap: anywhere;
+    }
+    .m-ticket-grid .m-ticket-open p {
+      font-size: 13px;
+    }
+    .m-ticket-grid .m-card-bottom {
+      margin-top: auto;
+      padding-top: 14px;
+      font-size: 11px;
+    }
+    .m-group-title {
+      font-size: 14px;
+      margin: 26px 0 14px;
+    }
+    .m-group-title span {
+      font-size: 11px;
+    }
+    #mobileContent[data-page="pending"],
+    #mobileContent[data-page="results"] {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+      align-items: start;
+    }
+    #mobileContent[data-page="pending"] > .m-title,
+    #mobileContent[data-page="pending"] > .m-subtitle,
+    #mobileContent[data-page="pending"] > .m-empty,
+    #mobileContent[data-page="results"] > .m-title,
+    #mobileContent[data-page="results"] > .m-subtitle,
+    #mobileContent[data-page="results"] > .m-empty {
+      grid-column: 1/-1;
+      margin-bottom: 0;
+    }
+    #mobileContent[data-page="pending"] > .m-card,
+    #mobileContent[data-page="results"] > .m-card {
+      min-width: 0;
+      margin: 0;
+    }
+    .m-detail-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 22px;
+    }
+    .m-detail-grid label {
+      font-size: 11px;
+    }
+    .m-detail-grid p {
+      font-size: 14px;
+    }
+    .m-detail-title {
+      font-size: 27px;
+    }
+    .m-action-bar {
+      max-width: 660px;
+    }
+    .m-history {
+      padding: 24px;
+    }
+    .m-approval-grid {
+      gap: 18px;
+    }
+    #mobileCreateForm {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      column-gap: 28px;
+      padding: 26px;
+    }
+    #mobileCreateForm > .m-form-section:nth-of-type(1) {
+      grid-column: 1;
+      grid-row: 1;
+    }
+    #mobileCreateForm > .m-form-section:nth-of-type(2) {
+      grid-column: 2;
+      grid-row: 1 / span 2;
+    }
+    #mobileCreateForm > .m-form-section:nth-of-type(3) {
+      grid-column: 1;
+      grid-row: 2;
+    }
+    #mobileCreateForm > .m-error,
+    #mobileCreateForm > button {
+      grid-column: 1/-1;
+    }
+    #mobileCreateForm > button {
+      justify-self: end;
+      width: auto;
+      min-width: 230px;
+    }
+    #mobileContent[data-page="account"] {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 20px;
+      align-items: start;
+    }
+    #mobileContent[data-page="account"] > .m-title {
+      grid-column: 1/-1;
+      margin-bottom: 0;
+    }
+    #mobileContent[data-page="account"] > .m-card {
+      grid-column: 1;
+      grid-row: 2;
+    }
+    #mobileContent[data-page="account"] > .m-hint {
+      grid-column: 1;
+      grid-row: 3;
+    }
+    #mobileChangePasswordForm {
+      grid-column: 2;
+      grid-row: 2 / span 2;
+      padding: 26px;
+    }
+    .m-account-row,
+    .m-account-row b {
+      font-size: 13px;
+    }
+    .m-sheet {
+      max-width: 860px;
+      width: calc(100% - 80px);
+      padding: 26px 30px;
+      margin: auto;
+      border-radius: 22px;
+      max-height: 90dvh;
+    }
+    #mobileReportFields {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      column-gap: 22px;
+    }
+    #mobileReportInfo,
+    #mobileReportChecklist,
+    #mobileReportFields > .m-photo-actions,
+    #mobileReportFields > .m-photo-grid,
+    #mobileReportFields > .m-hint,
+    #mobileReportFields > .m-error,
+    #mobileReportFields > .m-sheet-actions {
+      grid-column: 1/-1;
+    }
+    #mobileReportFields > label:nth-of-type(2),
+    #mobileReportFields > label:nth-of-type(5) {
+      grid-column: 1/-1;
+    }
+    .m-photo-grid {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+    .m-toast {
+      left: calc(50% + 124px);
+      bottom: 24px;
+      max-width: 640px;
+    }
+    .m-login {
+      display: grid;
+      grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+      align-items: center;
+      gap: 0 48px;
+      width: calc(100% - 64px);
+      max-width: 1040px;
+      min-height: 560px;
+      padding: 44px;
+      margin: 7vh auto;
+      background:
+        radial-gradient(ellipse at 0 0, #dfecd8, transparent 65%), #f4f7ef;
+      box-shadow: 0 20px 80px #153e3510;
+    }
+    .m-login-brand {
+      grid-column: 1;
+      grid-row: 1;
+    }
+    .m-login-copy {
+      grid-column: 1;
+      grid-row: 2 / span 2;
+      padding: 24px 0;
+    }
+    .m-login h1 {
+      font-size: 36px;
+    }
+    .m-login-form {
+      grid-column: 2;
+      grid-row: 1 / span 4;
+    }
+    .m-desktop-link {
+      grid-column: 1;
+      grid-row: 4;
+      text-align: left;
+      margin-top: 0;
+    }
+  }
+  @media (min-width: 1440px) {
+    .m-ticket-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+    .m-main {
+      padding-left: 36px;
+      padding-right: 36px;
+    }
+  }
+</style>

@@ -1,6 +1,6 @@
 # DMG Mobile Quan ly thiet bi
 
-Project riêng cho điện thoại, mở thẳng giao diện mobile với menu dưới.
+App dùng chung cho điện thoại và máy tính, tự đổi bố cục theo độ rộng màn hình.
 
 Apps Script: https://script.google.com/d/1pslo6vQfhFAZlB_jVzjZQsrTgvdAMIZ4yS4emcVZW7eqqQziWhzBu3LQ/edit
 
@@ -47,3 +47,7 @@ Các màn hình dữ liệu (danh sách phiếu, Giao cho tôi, Chờ xác nhậ
 Menu Tổng quan đã bỏ. Đăng nhập, bấm logo hoặc đổi chế độ đều mở thẳng danh sách phiếu. Bộ lọc ngày gồm thanh tiêu đề/nút Lọc–7 ngày và hai ô ngày nằm cùng hàng; không có dòng ngày lặp. Tìm phiếu và chọn xưởng nằm cùng hàng để dành chỗ cho card nội dung. Đã kiểm tra bố cục ở320/360/390px.
 
 Ô lọc ngày hiển thị cố định dd/mm/yyyy bằng chữ14px, độc lập định dạng ngày của trình duyệt. Bên dưới vẫn là inputdate gốc để chọn lịch, lưu giá trị ISOyyyy-mm-dd phục vụ bộ lọc.
+
+## Bố cục điện thoại và máy tính
+
+Dưới1024px giữ giao diện điện thoại, menu dưới và bộ lọc ngày gọn. Từ1024px dùng menu trái, nội dung rộng, bộ lọc trên một hàng, danh sách2cột (3cột từ1440px), form tạo phiếu/tài khoản/báo cáo tận dụng chiều ngang. Cùng một URL, tài khoản, phân quyền và dữ liệu; đổi kích thước không tải lại hoặc xóa dữ liệu đang nhập. Phần desktop nằm riêng trong DesktopStyles.html, không thay CSS điện thoại.

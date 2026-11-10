@@ -9,6 +9,7 @@
     <meta name="theme-color" content="#123e35" />
     <title>DMG · Yêu cầu bảo trì</title>
     <?!= HtmlService.createHtmlOutputFromFile('MobileStyles').getContent(); ?>
+    <?!= HtmlService.createHtmlOutputFromFile('DesktopStyles').getContent(); ?>
   </head>
   <body>
     <input
@@ -70,6 +71,10 @@
     </section>
     <div id="mobileApp" hidden>
       <header class="m-topbar">
+        <div class="m-desktop-heading">
+          <strong>Quản lý yêu cầu thiết bị</strong
+          ><span>Sửa chữa, bảo dưỡng và làm mới</span>
+        </div>
         <a href="#" id="mobileBrand" class="m-brand"
           ><span class="m-logo">D</span
           ><span>DMG<small>YÊU CẦU BẢO TRÌ</small></span></a
@@ -81,6 +86,7 @@
             aria-label="Tải lại dữ liệu"
           >
             ↻</button
+          ><span id="mobileDesktopUser" class="m-desktop-user"></span
           ><button id="mobileAvatar" class="m-avatar" aria-label="Tài khoản">
             D
           </button>
@@ -92,7 +98,20 @@
         <section id="mobileDateFilter" class="m-date-filter" hidden></section>
         <section id="mobileContent"></section>
       </main>
-      <nav id="mobileNav" class="m-bottom" aria-label="Menu chính"></nav>
+      <aside class="m-sidebar" aria-label="Điều hướng ứng dụng">
+        <button
+          type="button"
+          class="m-sidebar-brand"
+          data-mobile-action="page"
+          data-id="tickets"
+        >
+          <span class="m-logo">D</span
+          ><span>DMG<small>QUẢN LÝ THIẾT BỊ</small></span>
+        </button>
+        <p class="m-sidebar-caption">Không gian làm việc</p>
+        <nav id="mobileNav" class="m-bottom" aria-label="Menu chính"></nav>
+        <div class="m-sidebar-footer">Sửa chữa · Bảo dưỡng · Làm mới</div>
+      </aside>
     </div>
     <dialog id="mobileReportDialog" class="m-sheet">
       <form id="mobileReportForm">
