@@ -755,11 +755,11 @@
         ) +
         '</div><h3 class="m-section-title">Chỉ tiêu kiểm tra</h3>' +
         (d.criteria.length
-          ? '<div class="m-table-wrap"><table class="m-criteria-table"><tr><th>Chỉ tiêu</th><th>Tham số cần kiểm tra</th><th>Chỉ tiêu đánh giá 1</th><th>Chỉ tiêu đánh giá 2</th><th>Chỉ tiêu đánh giá 3</th></tr>' +
+          ? '<div class="m-table-wrap"><table class="m-criteria-table"><tr><th>Loại đánh giá</th><th>Chỉ tiêu</th><th>Tham số cần kiểm tra</th><th>Chỉ tiêu đánh giá 1</th><th>Chỉ tiêu đánh giá 2</th><th>Chỉ tiêu đánh giá 3</th></tr>' +
             d.criteria
               .map(
                 (c) =>
-                  "<tr><td>" +
+                  "<tr><td>" + esc(c.loaiDanhGia || "") + "</td><td>" +
                   esc(c.danhMucCanKiemTra) +
                   "</td><td>" +
                   esc(criterionParameter(c)) +
@@ -880,7 +880,7 @@
     }
     function criterionParameter(c) { return c.thamSoCanKiemTra ?? c.thongSoTieuChuan ?? c.tieuChuan ?? ""; }
     function criterionAssessments(c) {
-      return [1,2,3].filter(n => c["chiTieuDanhGia"+n]).map(n => '<p><b>Chỉ tiêu đánh giá '+n+':</b> '+esc(c["chiTieuDanhGia"+n])+'</p>').join('');
+      return (c.loaiDanhGia ? '<p><b>Loại đánh giá:</b> '+esc(c.loaiDanhGia)+'</p>' : '') + [1,2,3].filter(n => c["chiTieuDanhGia"+n]).map(n => '<p><b>Chỉ tiêu đánh giá '+n+':</b> '+esc(c["chiTieuDanhGia"+n])+'</p>').join('');
     }
     function updateRecordDevice() {
       const f = $("maintenanceRecordForm"),
@@ -1110,11 +1110,11 @@
         esc(r.ketQua) +
         "</p>" +
         (checks.length
-          ? '<h3>Chi tiết kiểm tra</h3><div class="m-table-wrap"><table><tr><th>Chỉ tiêu</th><th>Tham số cần kiểm tra</th><th>Chỉ tiêu đánh giá 1</th><th>Chỉ tiêu đánh giá 2</th><th>Chỉ tiêu đánh giá 3</th><th>Thực tế</th><th>Kết luận</th></tr>' +
+          ? '<h3>Chi tiết kiểm tra</h3><div class="m-table-wrap"><table><tr><th>Loại đánh giá</th><th>Chỉ tiêu</th><th>Tham số cần kiểm tra</th><th>Chỉ tiêu đánh giá 1</th><th>Chỉ tiêu đánh giá 2</th><th>Chỉ tiêu đánh giá 3</th><th>Thực tế</th><th>Kết luận</th></tr>' +
             checks
               .map(
                 (c) =>
-                  "<tr><td>" +
+                  "<tr><td>" + esc(c.loaiDanhGia || "") + "</td><td>" +
                   esc(c.chiTieu) +
                   "</td><td>" +
                   esc(criterionParameter(c)) +
@@ -1245,7 +1245,7 @@
             parse(r.chiTietKiemTra)
               .map(
                 (c) =>
-                  c.chiTieu +
+                  (c.loaiDanhGia || "") + " | " + c.chiTieu +
                   " | " +
                   criterionParameter(c) + " | " + [1,2,3].map(n=>c["chiTieuDanhGia"+n] || "").join(" | ") +
                   " | " +

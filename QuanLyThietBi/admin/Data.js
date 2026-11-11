@@ -104,6 +104,8 @@ function prepareAdminData_(name, p, read = readAdminRows_) {
       throw Error("Vui lòng nhập " + spec.columns[k].toLowerCase() + ".");
   });
   const all = read(name);
+  if (name === "DanhMucCanKiemTra" && !["Điện", "Cơ khí"].includes(row.loaiDanhGia))
+    throw Error("Loại đánh giá chỉ được chọn Điện hoặc Cơ khí.");
   if (
     all.some(
       (r) =>

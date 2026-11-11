@@ -376,13 +376,17 @@
         (row ? "Sửa " : "Thêm ") + spec().label.toLocaleLowerCase("vi");
       $("formError").textContent = "";
       $("save").textContent = "Lưu thông tin";
-      const fieldOrder = orderedColumns();
+      const fieldOrder = orderedColumns().slice();
+      if (S.table === "DanhMucCanKiemTra" && fieldOrder.includes("loaiDanhGia")) {
+        fieldOrder.splice(fieldOrder.indexOf("loaiDanhGia"),1);
+        fieldOrder.splice(fieldOrder.indexOf("maThietBi")+1,0,"loaiDanhGia");
+      }
       $("editorFields").innerHTML = fieldOrder
         .map((key) => [key, spec().columns[key]])
         .map(([k, label]) => {
           const required = spec().required.includes(k),
             value = k === "matKhau" ? "" : row?.[k] || "";
-          if (isRelation(k) || ["chucVu", "dangSuDung"].includes(k))
+          if (isRelation(k) || ["chucVu", "dangSuDung", "loaiDanhGia"].includes(k))
             return selectField(k, label, required);
           const type = [
             "ThongSoKyThuat",
@@ -567,6 +571,7 @@
     }
     function setFormOptions(values) {
       const f = $("editorForm");
+      if (f.elements.loaiDanhGia) setOptions("loaiDanhGia",["Điện","Cơ khí"],["Điện","Cơ khí"].includes(values.loaiDanhGia) ? values.loaiDanhGia : "");
       if (isRelation("tenXuong"))
         setOptions(
           "tenXuong",

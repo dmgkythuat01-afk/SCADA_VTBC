@@ -75,6 +75,7 @@ test("workshop/machine/device/checklist CRUD validates dependencies and duplicat
       tenMay: "Máy A",
       maThietBi: "TB1",
       danhMucCanKiemTra: "Nhiệt độ",
+      loaiDanhGia: "Điện",
       thamSoCanKiemTra: "< 60°C",
       chiTieuDanhGia1: "Đánh giá 1 ".repeat(60),
       chiTieuDanhGia2: "Không rung",
@@ -82,6 +83,9 @@ test("workshop/machine/device/checklist CRUD validates dependencies and duplicat
     },
   });
   assert.equal(tables.DanhMucCanKiemTra.length, 1);
+  assert.equal(tables.DanhMucCanKiemTra[0].loaiDanhGia,"Điện");
+  const typeCheck=c.publicAdminRow_("DanhMucCanKiemTra",tables.DanhMucCanKiemTra[0]);
+  assert.throws(()=>c.saveAdminData_("DanhMucCanKiemTra",{...typeCheck,values:{loaiDanhGia:"Khác"}}),/Điện|Cơ khí/);
   assert.equal(tables.DanhMucCanKiemTra[0].chiTieuDanhGia1,"Đánh giá 1 ".repeat(60).trim());
   const criterion=c.publicAdminRow_("DanhMucCanKiemTra",tables.DanhMucCanKiemTra[0]);
   c.saveAdminData_("DanhMucCanKiemTra",{...criterion,values:{chiTieuDanhGia2:"Không tiếng ồn"}});

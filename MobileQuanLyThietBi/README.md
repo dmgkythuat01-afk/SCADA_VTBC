@@ -48,11 +48,13 @@ Chủ project mở editor, chọn `capQuyenMobile` → Run → cấp quyền Goo
 
 Dùng chung file Sheets và tài khoản hiện có trong `TaiKhoan` với app quản trị. Không tự tạo tài khoản mẫu, bản sao danh mục hoặc trigger email. Các role TruongCa/CongNhan/PhongCongNghe tạo phiếu; KyThuat/CoKhi/TuDongHoa xem mọi phiếu và báo cáo; trưởng ca xác nhận rồi hai PGĐ duyệt song song. Người thực hiện được ghi theo tài khoản thực tế.
 
-Project này chứa giao diện mobile/desktop, bộ lọc ngày và bản in. Backend nghiệp vụ nằm trong các file `MobileWork*.js` của `QuanLyThietBi/admin/`, gọi qua thư viện EquipmentCore và ghim phiên bản 59 trong manifest. Script Properties, Cache và Lock tạo bên trong thư viện thuộc backend dùng chung, theo tài liệu Google: https://developers.google.com/apps-script/guides/libraries#resource_scoping . Hai giao diện dùng cùng khóa cập nhật. Khi nâng cấp backend, kiểm thử và tăng version thư viện trong manifest; không bật developmentMode trên production.
+Project này chứa giao diện mobile/desktop, bộ lọc ngày và bản in. Backend nghiệp vụ nằm trong các file `MobileWork*.js` của `QuanLyThietBi/admin/`, gọi qua thư viện EquipmentCore và ghim phiên bản 60 trong manifest. Script Properties, Cache và Lock tạo bên trong thư viện thuộc backend dùng chung, theo tài liệu Google: https://developers.google.com/apps-script/guides/libraries#resource_scoping . Hai giao diện dùng cùng khóa cập nhật. Khi nâng cấp backend, kiểm thử và tăng version thư viện trong manifest; không bật developmentMode trên production.
 
 ## Danh mục kiểm tra — cập nhật 11/11/2026
 
-DanhMucCanKiemTra dùng thamSoCanKiemTra thay thongSoTieuChuan, kèm chiTieuDanhGia1, chiTieuDanhGia2, chiTieuDanhGia3. Snapshot/checklist/phiên bản dữ liệu và lịch sử giữ đủ năm trường nội dung. Thay đổi một trong các trường sẽ yêu cầu cập nhật checklist nháp. Các bản ghi lịch sử cũ vẫn đọc được; không sửa dữ liệu lịch sử hoặc header sheet khi triển khai.
+Cột loaiDanhGia chọn Điện hoặc Cơ khí. Admin thêm/sửa danh mục kiểm tra có combobox bắt buộc ngay sau Mã thiết bị; bảng vẫn theo thứ tự cột sheet. Có lọc Loại đánh giá; snapshot/checklist/lịch sử/Excel giữ giá trị này. Bản lịch sử cũ chưa có loại vẫn đọc được.
+
+DanhMucCanKiemTra dùng thamSoCanKiemTra thay thongSoTieuChuan, kèm chiTieuDanhGia1, chiTieuDanhGia2, chiTieuDanhGia3. Snapshot/checklist/phiên bản dữ liệu và lịch sử giữ đủ loại đánh giá và năm trường nội dung. Thay đổi một trong các trường sẽ yêu cầu cập nhật checklist nháp. Các bản ghi lịch sử cũ vẫn đọc được; không sửa dữ liệu lịch sử hoặc header sheet khi triển khai.
 
 ## Danh mục mới — 09/11/2026
 
