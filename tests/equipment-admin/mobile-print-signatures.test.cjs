@@ -10,8 +10,11 @@ test('print signs delegation before a report exists and maps delivery/receipt to
  let d=f.start(worker,fresh());d=f.api(worker,'submitReport',{reportId:d.id,revision:d.revision,submitKey:'plan',content:'Biện pháp'});f.approveBoth(r,d);
  assert.equal(print().signatures.handover,null);assert.equal(print().signatures.receiving,null);
  f.c.mobileWorkNow_=()=> '2026-11-09T07:00:00Z';d=f.start(worker,fresh());d=f.api(worker,'uploadPhoto',{reportId:d.id,revision:d.revision,uploadKey:'photo',dataUrl:'data:image/jpeg;base64,/9j/2Q=='}).report;
- f.c.mobileWorkNow_=()=> '2026-11-09T09:00:00Z';d=f.api(worker,'submitReport',{reportId:d.id,revision:d.revision,submitKey:'handover',performedDate:'2026-11-09'});
+ f.c.mobileWorkNow_=()=> '2026-11-09T09:00:00Z';d=f.api(worker,'submitReport',{reportId:d.id,revision:d.revision,submitKey:'handover',performedDate:'2026-11-09',yKienDongGop:'Ghi chú của người làm'});
+ assert.equal(print().report.feedback,'');
  assert.equal(print().signatures.handover.name,'CoKhi Người thử');assert.equal(print().signatures.handover.time,'2026-11-09T09:00:00Z');assert.equal(print().signatures.receiving,null);
- f.c.mobileWorkNow_=()=> '2026-11-09T10:00:00Z';f.review(owner,fresh(),d);
+ f.c.mobileWorkNow_=()=> '2026-11-09T10:00:00Z';f.api(owner,'review',{requestId:r.id,reportId:d.id,revision:fresh().revision,decision:'accept',reason:'Đã kiểm tra và đồng ý nhận bàn giao',reviewKey:'receipt'});
+ f.tables.ServiceReviews.push({id:'IGNORED',requestId:r.id,reportId:d.id,processed:false,reason:'Chưa ký'},{id:'OTHER_ROUND',requestId:r.id,reportId:'another-report',processed:true,reason:'Vòng cũ'});
+ assert.equal(print().report.feedback,'Đã kiểm tra và đồng ý nhận bàn giao');
  const p=print();assert.equal(p.signatures.receiving.name,'CongNhan Người thử');assert.equal(p.signatures.receiving.time,'2026-11-09T10:00:00Z');assert.equal(p.signatures.handover.name,'CoKhi Người thử');assert.equal(p.signatures.mechanical.time,'2026-11-09T03:00:00Z');
 });

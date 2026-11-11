@@ -31,10 +31,13 @@ function mobileWorkPrintRequest_(u, p) {
   };
   const delegation = mobileWorkRows_("ServiceReviews").filter(v => v.requestId === r.id && v.decision === "v2_assign" && v.createdBy === r.assignedTo && v.reason === r.actualBy && String(v.processed) === "true").slice(-1)[0];
   const legacyReceipt = reviews.filter(v => v.decision === "accept" && v.createdBy === r.createdBy).slice(-1)[0];
+  // ServiceReviews.reason maps to XacNhanKhacPhuc.noiDungPhanHoi.
+  // Keep feedback scoped to this report round; never substitute worker notes.
+  const feedback = reviews.map(v => String(v.reason || "").trim()).filter(Boolean).join("\n");
   return {
     request: { id:r.id, type:r.type, status:r.status, createdAt:r.createdAt, deadline:r.ngayDeNghiHoanThanh || "", description:r.description || "", workshop:r.workshopName || "", machine:r.machineName || "", device:r.deviceName || r.componentName || "" },
     creator: profile(r.createdBy, r.createdByName), assignee: profile(mobileWorkV2_(r) && r.actualBy ? r.actualBy : r.assignedTo),
-    report: d ? { id:d.id, ordinal:d.ordinal, status:d.status, content:d.content || "", improvement:d.noiDungCaiTien || "", feedback:d.yKienDongGop || "" } : null,
+    report: d ? { id:d.id, ordinal:d.ordinal, status:d.status, content:d.content || "", improvement:d.noiDungCaiTien || "", feedback } : null,
     signatures: {
       mechanical: delegation ? {name:delegation.createdByName || delegation.createdBy,time:delegation.createdAt} : null,
       receiving: v2 ? v2Signature("v2_handover_accept",d.id) : legacyReceipt ? {name:legacyReceipt.createdByName || legacyReceipt.createdBy,time:legacyReceipt.createdAt} : null,
