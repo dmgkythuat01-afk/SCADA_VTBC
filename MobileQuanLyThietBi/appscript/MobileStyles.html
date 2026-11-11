@@ -389,6 +389,7 @@
     background: #f6faf1;
   }
   .m-card-top {
+    flex-wrap: wrap;
     display: flex;
     justify-content: space-between;
     gap: 10px;
@@ -396,6 +397,8 @@
     margin-bottom: 13px;
   }
   .m-code {
+    min-width: 0;
+    overflow-wrap: anywhere;
     font-size: 10px;
     letter-spacing: 0.5px;
     color: #8a9886;
@@ -1415,4 +1418,5 @@
   .m-form-section label > .m-date-control {
     margin-top: 9px;
   }
+  .m-document-code { overflow-wrap: anywhere; }
 </style>

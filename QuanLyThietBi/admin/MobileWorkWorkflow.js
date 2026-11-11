@@ -177,7 +177,7 @@ function mobileWorkCreateRequest_(u, p) {
       throw Error("Lịch bảo dưỡng không phù hợp với thiết bị đã chọn.");
   }
   const r = {
-    id: mobileWorkId_(),
+    id: mobileWorkDocumentId_({repair:"SC",new_work:"LM",maintenance:"BD"}[p.type]),
     workshopId: workshop.id,
     workshopName: workshop.name || "",
     machineId: machine.id,
@@ -282,7 +282,7 @@ function mobileWorkStartReport_(u, p) {
     ? mobileWorkRows_("Schedules").find((s) => s.id === r.scheduleId)
     : null;
   const d = {
-    id: mobileWorkId_(),
+    id: mobileWorkDocumentId_("BC"),
     requestId: r.id,
     ordinal:
       all
@@ -464,7 +464,7 @@ function mobileWorkReviewReport_(u, p) {
   if (!["accept", "reject"].includes(p.decision))
     throw Error("Kết quả xác nhận không hợp lệ.");
   const review = {
-    id: mobileWorkId_(),
+    id: mobileWorkDocumentId_("XN"),
     requestId: r.id,
     reportId: d.id,
     decision: p.decision,

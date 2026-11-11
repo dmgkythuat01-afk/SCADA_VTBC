@@ -69,7 +69,8 @@ function mobileWorkV2Prior_(u, p, decision, reportId, reason, keyName) {
   return { key, prior };
 }
 function mobileWorkV2Event_(u, r, reportId, decision, reason, key) {
-  const v = {id:mobileWorkId_(), requestId:r.id, reportId, decision, reason, createdBy:u.email,
+  const prefix=decision === "v2_assign" ? "PC" : decision.startsWith("v2_quality_") ? "PDCL" : decision.startsWith("v2_production_") ? "PDSX" : "XN";
+  const v = {id:mobileWorkDocumentId_(prefix), requestId:r.id, reportId, decision, reason, createdBy:u.email,
     createdByName:u.name, createdAt:mobileWorkNow_(), reviewKey:key, processed:false, calendarResult:""};
   mobileWorkWrite_("ServiceReviews", v);
   return mobileWorkV2Apply_(v);
@@ -95,7 +96,7 @@ function mobileWorkV2Start_(u, p) {
   if (existing) return existing;
   let source = stage === "handover" ? mobileWorkReport_(r.lastReportId) : all.filter(d => d.requestId === r.id).sort((a,b)=>Number(b.ordinal)-Number(a.ordinal))[0];
   if (stage === "handover" && (source.status !== "v2_plan_approved" || !mobileWorkPgdApproved_(r))) throw Error("Chưa đủ hai phê duyệt biện pháp.");
-  const d = {id:mobileWorkId_(),requestId:r.id,ordinal:all.filter(d=>d.requestId===r.id).reduce((n,d)=>Math.max(n,Number(d.ordinal)||0),0)+1,
+  const d = {id:mobileWorkDocumentId_(stage === "plan" ? "BP" : "BG"),requestId:r.id,ordinal:all.filter(d=>d.requestId===r.id).reduce((n,d)=>Math.max(n,Number(d.ordinal)||0),0)+1,
     status:"v2_"+stage+"_draft",createdBy:u.email,createdByName:u.name,actualBy:u.email,actualByName:u.name,actualRole:u.position || u.role,
     content:source?.content || "",noiDungCaiTien:source?.noiDungCaiTien || "",yKienDongGop:"",performedDate:stage === "handover"?maintenanceToday_():"",
     checks:"[]",photos:"[]",createdAt:mobileWorkNow_(),submittedAt:"",revision:1,

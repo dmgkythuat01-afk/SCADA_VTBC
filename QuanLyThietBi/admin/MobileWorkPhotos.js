@@ -32,7 +32,7 @@ function mobileWorkUploadReportPhoto_(u, p) {
       Utilities.newBlob(
         bytes,
         "image/jpeg",
-        "REPORT_" + d.id + "_" + mobileWorkId_() + ".jpg",
+        mobileWorkDocumentId_("ANH") + "_" + d.id + ".jpg",
       ),
     ),
     attachment = {

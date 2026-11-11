@@ -15,6 +15,7 @@ function setup({workflow = "legacy"} = {}) {
     "MobileWorkIO",
     "MobileWorkStore",
     "MobileWorkAuth",
+    "MobileWorkIds",
     "MobileWorkPassword",
     "MobileWorkCatalog",
     "MobileWorkBridge",
@@ -89,7 +90,8 @@ function setup({workflow = "legacy"} = {}) {
       NhatKyThongBaoBaoDuong: [],
     },
     cache = new Map(),
-    files = new Map();
+    files = new Map(),
+    properties = new Map([["BAODUONG_PHOTO_FOLDER","photos"]]);
   let locked = false,
     count = 0,
     fail = null;
@@ -146,9 +148,14 @@ function setup({workflow = "legacy"} = {}) {
       }),
     },
     PropertiesService: {
-      getScriptProperties: () => ({ getProperty: () => "photos" }),
+      getScriptProperties: () => ({ getProperty: k => properties.get(k) ?? null, setProperty: (k,v) => properties.set(k,String(v)) }),
     },
     Utilities: {
+      formatDate: (date,zone,pattern) => {
+        if (pattern !== "ddMMyyyyHHmmssSSS") throw Error("Unexpected test format: "+pattern);
+        const parts=Object.fromEntries(new Intl.DateTimeFormat('en-GB',{timeZone:zone,day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit',hourCycle:'h23'}).formatToParts(date).map(p=>[p.type,p.value]));
+        return parts.day+parts.month+parts.year+parts.hour+parts.minute+parts.second+String(date.getUTCMilliseconds()).padStart(3,'0');
+      },
       getUuid: () => crypto.randomUUID(),
       base64Decode: (s) => Array.from(Buffer.from(s, "base64")),
       base64Encode: (bytes) => Buffer.from(bytes).toString("base64"),

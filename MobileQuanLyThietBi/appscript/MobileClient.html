@@ -491,7 +491,7 @@
         '<article class="m-card"><button type="button" class="m-ticket-open" data-mobile-action="open" data-id="' +
         esc(r.id) +
         '"><div class="m-card-top"><span class="m-code">#' +
-        esc(r.id.slice(-8).toUpperCase()) +
+        esc(r.id) +
         "</span>" +
         badge(r.status) +
         "</div><h3>" +
@@ -527,7 +527,7 @@
         const q = M.query.toLocaleLowerCase("vi");
         rows = rows.filter((r) =>
           (
-            r.title +
+            r.id + " " + r.title +
             " " +
             r.description +
             " " +
@@ -875,7 +875,7 @@
         d.ordinal +
         "</span>" +
         badge(d.status) +
-        "</div><h3>" +
+        '</div><p class="m-hint m-document-code">Mã: ' + esc(d.id) + '</p><h3>' +
         esc(d.actualByName || d.createdByName) +
         "</h3><small>" +
         esc(roleName(d.actualRole)) +
@@ -945,7 +945,7 @@
         button("print", "In / Xuất PDF", r.id, "m-primary") +
         '</div>' +
         '<div class="m-card"><div class="m-card-body"><div class="m-card-top"><span class="m-code">#' +
-        esc(r.id.slice(-8).toUpperCase()) +
+        esc(r.id) +
         "</span>" +
         badge(r.status) +
         '</div><h1 class="m-detail-title">' +

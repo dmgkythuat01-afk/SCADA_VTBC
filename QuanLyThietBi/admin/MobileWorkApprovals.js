@@ -227,7 +227,7 @@ function mobileWorkApprovePgd_(user, p) {
   // Deliberately independent of the shared request revision: both branches may
   // sign the same report from screens opened before either signature.
   const review = {
-    id: mobileWorkId_(),
+    id: mobileWorkDocumentId_(branch === "quality" ? "PDCL" : "PDSX"),
     requestId: r.id,
     reportId: d.id,
     decision,

@@ -17,6 +17,15 @@ Chữ ký trên bản in: hai PGĐ ký đúng bản biện pháp trước thi c�
 Các ghi chú về luồng trưởng ca xác nhận trước PGĐ bên dưới là mô tả lịch sử trước ngày 11/11/2026, không áp dụng cho phiếu mới hoặc phiếu đã chuyển luồng.
 
 
+
+## Quy tắc mã mới — 11/11/2026
+
+Mã chứng từ mới gồm tiền tố + ddMMyyyyHHmmssSSS, theo giờ Asia/Ho_Chi_Minh. Ví dụ SC11112026104530123. Các tiền tố: SC sửa chữa; LM làm mới; BP biện pháp; BG bàn giao; PC phân công; PDCL/PDSX duyệt PGĐ Chất lượng/Sản xuất; XN xác nhận; BC báo cáo luồng cũ; BD bảo dưỡng luồng cũ. Phiếu tạo mới chỉ có SC và LM.
+
+Tên file ảnh bắt đầu ANH + thời gian và kèm mã báo cáo; ID file Drive vẫn do Google quản lý. Thông báo/lịch sử dùng mã liên kết dẫn xuất từ mã phiếu để bảo toàn chống trùng. Mã cũ và các liên kết hiện có giữ nguyên. Khóa gửi lại và phiên đăng nhập tiếp tục dùng mã ngẫu nhiên, không đổi sang thời gian.
+
+Bộ sinh mã chạy trong khóa cập nhật dùng chung, lưu mili giây đã cấp vào Script Properties; nếu tạo trong cùng mili giây hoặc đồng hồ lùi thì tăng mốc tối thiểu1ms để không trùng. Mã phiếu hiển thị đầy đủ trên card/chi tiết và tìm kiếm không phân biệt hoa thường; mã báo cáo hiển thị trong lịch sử.
+
 ## In / Xuất PDF phiếu yêu cầu
 
 Ba trường Đề nghị tới phòng, Người chịu trách nhiệm, Phòng/tổ sản xuất bên phải lấy phongBan, hoTen, phongSanXuat của tài khoản nguoiDuocGiao (phân công ban đầu), kể cả đã giao người khác thi công.
@@ -39,7 +48,7 @@ Chủ project mở editor, chọn `capQuyenMobile` → Run → cấp quyền Goo
 
 Dùng chung file Sheets và tài khoản hiện có trong `TaiKhoan` với app quản trị. Không tự tạo tài khoản mẫu, bản sao danh mục hoặc trigger email. Các role TruongCa/CongNhan/PhongCongNghe tạo phiếu; KyThuat/CoKhi/TuDongHoa xem mọi phiếu và báo cáo; trưởng ca xác nhận rồi hai PGĐ duyệt song song. Người thực hiện được ghi theo tài khoản thực tế.
 
-Project này chứa giao diện mobile/desktop, bộ lọc ngày và bản in. Backend nghiệp vụ nằm trong các file `MobileWork*.js` của `QuanLyThietBi/admin/`, gọi qua thư viện EquipmentCore và ghim phiên bản 57 trong manifest. Script Properties, Cache và Lock tạo bên trong thư viện thuộc backend dùng chung, theo tài liệu Google: https://developers.google.com/apps-script/guides/libraries#resource_scoping . Hai giao diện dùng cùng khóa cập nhật. Khi nâng cấp backend, kiểm thử và tăng version thư viện trong manifest; không bật developmentMode trên production.
+Project này chứa giao diện mobile/desktop, bộ lọc ngày và bản in. Backend nghiệp vụ nằm trong các file `MobileWork*.js` của `QuanLyThietBi/admin/`, gọi qua thư viện EquipmentCore và ghim phiên bản 58 trong manifest. Script Properties, Cache và Lock tạo bên trong thư viện thuộc backend dùng chung, theo tài liệu Google: https://developers.google.com/apps-script/guides/libraries#resource_scoping . Hai giao diện dùng cùng khóa cập nhật. Khi nâng cấp backend, kiểm thử và tăng version thư viện trong manifest; không bật developmentMode trên production.
 
 ## Danh mục mới — 09/11/2026
 
