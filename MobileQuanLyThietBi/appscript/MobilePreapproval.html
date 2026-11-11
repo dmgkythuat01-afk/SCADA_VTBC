@@ -9,6 +9,8 @@ const MobilePreapproval = (() => {
   const isDraft=d=>['draft','v2_plan_draft','v2_handover_draft'].includes(d?.status);
   const canAssign=(r,user)=>r.status==='v2_assignment' && r.assignedTo===user.email;
   const canWork=(r,user)=>['v2_plan','v2_ready'].includes(r.status) && r.actualBy===user.email;
+  const assignedLists=(rows,user)=>({initial:rows.filter(r=>r.assignedTo===user.email),worker:rows.filter(r=>r.actualBy===user.email)});
+  const assignedPending=(rows,user)=>rows.filter(r=>canAssign(r,user)||canWork(r,user));
   const planId=d=>stage(d)==='handover'?String(d.draftKey).split('|')[2]:d?.id;
   const canResume=(d,r,user)=>isDraft(d) && d.createdBy===user.email && (!isRequest(r) || String(d.draftKey).startsWith('v2|') && canWork(r,user) && Number(d.baseRevision)===Number(r.revision));
   function assignment(r,data,esc){
@@ -34,6 +36,6 @@ const MobilePreapproval = (() => {
     $('mobileSendReport').textContent=plan?'Gửi BGD phê duyệt →':handover?'Gửi bàn giao cho người tạo →':'Gửi xác nhận →';
     $('mobileReportProgress').textContent=plan?'Hai PGĐ phải cùng đồng ý trước khi thi công.':handover?'Bàn giao cần ít nhất một ảnh. Ảnh lưu riêng tư trên Drive.':'Ảnh lưu riêng tư trên Google Drive.';
   }
-  return {labels,isRequest,stage,isDraft,canAssign,canWork,planId,canResume,assignment,bindAssignment,configureReport};
+  return {labels,isRequest,stage,isDraft,canAssign,canWork,assignedLists,assignedPending,planId,canResume,assignment,bindAssignment,configureReport};
 })();
 </script>

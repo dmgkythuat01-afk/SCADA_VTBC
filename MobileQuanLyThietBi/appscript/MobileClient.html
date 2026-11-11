@@ -410,6 +410,10 @@
         }
       }
     }
+    function navCount(page) {
+      if (page === "assigned") return MobilePreapproval.assignedPending(dateRequests(),M.data.user).length;
+      return !technical() && page === "pending" ? pendingMine().length : 0;
+    }
     function nav() {
       const items = managerMode()
         ? [
@@ -456,9 +460,9 @@
             '"/></svg><span>' +
             label +
             "</span>" +
-            (!technical() && page === "pending" && pendingMine().length
+            (navCount(page)
               ? '<small class="m-nav-count">' +
-                pendingMine().length +
+                navCount(page) +
                 "</small>"
               : "") +
             "</button>",
@@ -593,31 +597,22 @@
           )
           .join("") +
         '</div></div><div id="mobileTicketGroups"></div>';
-      const rows = filteredTickets(),
-        groups = new Map();
-      rows.forEach((r) => {
-        if (!groups.has(r.workshopId))
-          groups.set(r.workshopId, { name: r.workshopName, rows: [] });
-        groups.get(r.workshopId).rows.push(r);
-      });
-      $("mobileTicketGroups").innerHTML = rows.length
-        ? Array.from(groups.values())
-            .map(
-              (g) =>
-                '<h2 class="m-group-title">' +
-                esc(g.name) +
-                "<span>" +
-                g.rows.length +
-                " phiếu</span></h2>" +
-                '<div class="m-ticket-grid">' +
-                g.rows.map(ticketCard).join("") +
-                "</div>",
-            )
-            .join("")
-        : empty(
-            "Không có phiếu phù hợp",
-            "Thử đổi bộ lọc hoặc tải lại dữ liệu.",
-          );
+      const rows = filteredTickets();
+      function grouped(list) {
+        const groups = new Map();
+        list.forEach(r => {
+          if (!groups.has(r.workshopId)) groups.set(r.workshopId,{name:r.workshopName,rows:[]});
+          groups.get(r.workshopId).rows.push(r);
+        });
+        return Array.from(groups.values()).map(g => '<h2 class="m-group-title">'+esc(g.name)+'<span>'+g.rows.length+' phiếu</span></h2><div class="m-ticket-grid">'+g.rows.map(ticketCard).join('')+'</div>').join('');
+      }
+      if (M.page === "assigned") {
+        const lists = MobilePreapproval.assignedLists(rows,M.data.user);
+        const section = (kind,title,list,hint) => '<section class="m-card m-assignment-list" data-assignment-kind="'+kind+'"><div class="m-section-head"><h2>'+title+'</h2><span class="m-hint">'+list.length+' phiếu</span></div><p class="m-hint">'+hint+'</p>'+(list.length ? grouped(list) : empty('Chưa có phiếu phù hợp','Thử đổi bộ lọc ngày hoặc bộ lọc trạng thái.'))+'</section>';
+        $("mobileTicketGroups").innerHTML = section('initial','Phân công ban đầu cho tôi',lists.initial,'Mở phiếu chờ phân công để chọn người thực hiện; các phiếu đã phân công vẫn ở đây để theo dõi.') + section('worker','Giao cho tôi',lists.worker,'Các phiếu bạn được chọn trực tiếp thực hiện: lập biện pháp và bàn giao sau khi được duyệt.');
+      } else {
+        $("mobileTicketGroups").innerHTML = rows.length ? grouped(rows) : empty('Không có phiếu phù hợp','Thử đổi bộ lọc hoặc tải lại dữ liệu.');
+      }
       $("mobileWorkshopFilter").onchange = (e) => {
         M.workshop = e.target.value;
         tickets();
