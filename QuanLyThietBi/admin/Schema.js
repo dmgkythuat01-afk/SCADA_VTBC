@@ -86,7 +86,7 @@ const ADMIN_TABLES = {
       boPhanDanhGia: "Bộ phận đánh giá",
       loai: "Loại",
       tanSuat: "Tần suất",
-      danhMucCanKiemTra: "Chỉ tiêu cần kiểm tra",
+      danhMucCanKiemTra: "Danh mục cần kiểm tra",
       thamSoCanKiemTra: "Tham số cần kiểm tra",
       chiTieuDanhGia1: "Chỉ tiêu đánh giá 1",
       chiTieuDanhGia2: "Chỉ tiêu đánh giá 2",
