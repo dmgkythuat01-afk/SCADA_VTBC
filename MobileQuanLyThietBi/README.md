@@ -19,6 +19,8 @@ Các ghi chú về luồng trưởng ca xác nhận trước PGĐ bên dưới l
 
 ## In / Xuất PDF phiếu yêu cầu
 
+Ba trường Đề nghị tới phòng, Người chịu trách nhiệm, Phòng/tổ sản xuất bên phải lấy phongBan, hoTen, phongSanXuat của tài khoản nguoiDuocGiao (phân công ban đầu), kể cả đã giao người khác thi công.
+
 Ô Ý kiến đóng góp lấy noiDungPhanHoi của XacNhanKhacPhuc, chỉ các phản hồi đã xử lý thuộc đúng phiếu và lần báo cáo đang in. Nếu có nhiều phản hồi trong cùng lần thì hiển thị từng dòng. Không lấy yKienDongGop của người làm thay thế; chưa có phản hồi thì để trống.
 
 Mở chi tiết phiếu rồi chọn **In / Xuất PDF**. Cửa sổ phiếu mở theo mẫu BM-QT-TB-01.05, khổ A4 ngang; chọn máy in hoặc Lưu dưới dạng PDF trong hộp thoại trình duyệt. Cửa sổ có nút In / Lưu PDF để gọi lại hộp thoại. Cho phép popup cho trang nếu trình duyệt đang chặn.
@@ -37,7 +39,7 @@ Chủ project mở editor, chọn `capQuyenMobile` → Run → cấp quyền Goo
 
 Dùng chung file Sheets và tài khoản hiện có trong `TaiKhoan` với app quản trị. Không tự tạo tài khoản mẫu, bản sao danh mục hoặc trigger email. Các role TruongCa/CongNhan/PhongCongNghe tạo phiếu; KyThuat/CoKhi/TuDongHoa xem mọi phiếu và báo cáo; trưởng ca xác nhận rồi hai PGĐ duyệt song song. Người thực hiện được ghi theo tài khoản thực tế.
 
-Project này chứa giao diện mobile/desktop, bộ lọc ngày và bản in. Backend nghiệp vụ nằm trong các file `MobileWork*.js` của `QuanLyThietBi/admin/`, gọi qua thư viện EquipmentCore và ghim phiên bản 56 trong manifest. Script Properties, Cache và Lock tạo bên trong thư viện thuộc backend dùng chung, theo tài liệu Google: https://developers.google.com/apps-script/guides/libraries#resource_scoping . Hai giao diện dùng cùng khóa cập nhật. Khi nâng cấp backend, kiểm thử và tăng version thư viện trong manifest; không bật developmentMode trên production.
+Project này chứa giao diện mobile/desktop, bộ lọc ngày và bản in. Backend nghiệp vụ nằm trong các file `MobileWork*.js` của `QuanLyThietBi/admin/`, gọi qua thư viện EquipmentCore và ghim phiên bản 57 trong manifest. Script Properties, Cache và Lock tạo bên trong thư viện thuộc backend dùng chung, theo tài liệu Google: https://developers.google.com/apps-script/guides/libraries#resource_scoping . Hai giao diện dùng cùng khóa cập nhật. Khi nâng cấp backend, kiểm thử và tăng version thư viện trong manifest; không bật developmentMode trên production.
 
 ## Danh mục mới — 09/11/2026
 

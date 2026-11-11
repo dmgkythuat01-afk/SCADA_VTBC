@@ -36,7 +36,7 @@ function mobileWorkPrintRequest_(u, p) {
   const feedback = reviews.map(v => String(v.reason || "").trim()).filter(Boolean).join("\n");
   return {
     request: { id:r.id, type:r.type, status:r.status, createdAt:r.createdAt, deadline:r.ngayDeNghiHoanThanh || "", description:r.description || "", workshop:r.workshopName || "", machine:r.machineName || "", device:r.deviceName || r.componentName || "" },
-    creator: profile(r.createdBy, r.createdByName), assignee: profile(mobileWorkV2_(r) && r.actualBy ? r.actualBy : r.assignedTo),
+    creator: profile(r.createdBy, r.createdByName), assignee: profile(r.assignedTo),
     report: d ? { id:d.id, ordinal:d.ordinal, status:d.status, content:d.content || "", improvement:d.noiDungCaiTien || "", feedback } : null,
     signatures: {
       mechanical: delegation ? {name:delegation.createdByName || delegation.createdBy,time:delegation.createdAt} : null,
