@@ -3,7 +3,7 @@ function mobileWorkAppendAdminHistory_(request, report, review) {
     throw Error("Chưa đủ phê duyệt PGĐ Chất lượng và PGĐ Sản xuất.");
   const name =
       request.type === "maintenance" ? "LichSuBaoDuong" : "LichSuSuaChua",
-    id = "MOBILE_" + request.id,
+    id = (mobileWorkV2_(request) ? "MOBILE2_" : "MOBILE_") + request.id,
     existing = mobileWorkHistoryRows_(name).find((h) => h.maLichSu === id);
   if (existing) return existing;
   const source = mobileWorkParse_(report.criteriaSnapshot, []),

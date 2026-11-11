@@ -1,8 +1,9 @@
 function mobileWorkUploadReportPhoto_(u, p) {
   const key = mobileWorkRequired_(p.uploadKey, "mã tải ảnh", 100),
-    { d } = mobileWorkEditableReport_(u, p),
+    { d, r } = mobileWorkEditableReport_(u, p),
     photos = mobileWorkParse_(d.photos, []),
     existing = photos.find((a) => a.uploadKey === key);
+  if (mobileWorkV2_(r) && mobileWorkV2Stage_(d) !== "handover") throw Error("Ảnh chỉ được thêm ở bước bàn giao sau hai PGĐ phê duyệt.");
   if (existing) return { report: d, attachment: existing };
   mobileWorkCheckRevision_(d, p);
   if (photos.length >= 12) throw Error("Tối đa 12 ảnh mỗi lần báo cáo.");
@@ -54,7 +55,7 @@ function mobileWorkReadReportPhoto_(u, p) {
     caps = mobileWorkRequireAccess_(u);
   if (
     !mobileWorkCanView_(u, r) ||
-    (d.status === "draft" && d.createdBy !== u.email && !caps.admin)
+    (mobileWorkDraft_(d) && d.createdBy !== u.email && !caps.admin)
   )
     throw Error("Bạn không được xem ảnh của báo cáo này.");
   const attachment = mobileWorkParse_(d.photos, []).find((a) => a.id === p.id);

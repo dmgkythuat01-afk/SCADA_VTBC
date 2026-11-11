@@ -168,7 +168,7 @@
           </label>
           <div id="mobileReportChecklist"></div>
           <label
-            >Ảnh kết quả <span class="m-optional">tối đa 12 ảnh</span></label
+            id="mobileReportPhotoLabel">Ảnh kết quả <span class="m-optional">tối đa 12 ảnh</span></label
           >
           <div class="m-photo-actions">
             <button type="button" data-mobile-action="camera">▣ Chụp ảnh</button
@@ -266,6 +266,7 @@
     <?!= HtmlService.createHtmlOutputFromFile('MobileDateRange').getContent();
     ?> <?!= HtmlService.createHtmlOutputFromFile('PrintQr').getContent();
     ?> <?!= HtmlService.createHtmlOutputFromFile('EquipmentPrint').getContent();
+    ?> <?!= HtmlService.createHtmlOutputFromFile('MobilePreapproval').getContent();
     ?> <?!= HtmlService.createHtmlOutputFromFile('MobileClient').getContent();
     ?>
   </body>

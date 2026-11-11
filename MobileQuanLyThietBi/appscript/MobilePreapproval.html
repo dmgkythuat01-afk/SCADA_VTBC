@@ -1,0 +1,39 @@
+<script>
+const MobilePreapproval = (() => {
+  const labels = {
+    v2_assignment:'Chờ phân công thực hiện',v2_plan:'Lập / sửa biện pháp',v2_pgd:'Chờ PGĐ duyệt biện pháp',v2_ready:'Được phép thi công',v2_confirmation:'Chờ người tạo nhận bàn giao',
+    v2_plan_draft:'Nháp biện pháp',v2_plan_submitted:'Biện pháp chờ PGĐ',v2_plan_approved:'Biện pháp đã được duyệt',v2_plan_rejected:'Biện pháp cần làm lại',v2_plan_revoked:'Biện pháp phải duyệt lại',v2_handover_draft:'Nháp bàn giao',v2_handover_submitted:'Đã gửi bàn giao',v2_handover_accepted:'Đã nhận bàn giao',v2_handover_rejected:'Bàn giao bị từ chối',
+  };
+  const isRequest=r=>String(r?.requestKey || '').startsWith('v2|') || String(r?.status).startsWith('v2_');
+  const stage=d=>String(d?.draftKey || '').split('|')[1] || '';
+  const isDraft=d=>['draft','v2_plan_draft','v2_handover_draft'].includes(d?.status);
+  const canAssign=(r,user)=>r.status==='v2_assignment' && r.assignedTo===user.email;
+  const canWork=(r,user)=>['v2_plan','v2_ready'].includes(r.status) && r.actualBy===user.email;
+  const planId=d=>stage(d)==='handover'?String(d.draftKey).split('|')[2]:d?.id;
+  const canResume=(d,r,user)=>isDraft(d) && d.createdBy===user.email && (!isRequest(r) || String(d.draftKey).startsWith('v2|') && canWork(r,user) && Number(d.baseRevision)===Number(r.revision));
+  function assignment(r,data,esc){
+    if(!canAssign(r,data.user))return '';
+    return '<form id="mobileAssignForm" class="m-form-card"><h2>Phân công người thực hiện</h2><p class="m-hint">Chọn người lập biện pháp và thi công; có thể chọn chính bạn.</p><label>Người thực hiện<select id="mobileAssignWorker" required><option value="">-- Chọn người thực hiện --</option>'+data.technicians.map(t=>'<option value="'+esc(t.useName)+'">'+esc(t.name+' — '+t.position)+'</option>').join('')+'</select></label><p id="mobileAssignError" class="m-error"></p><button class="m-primary" type="submit">Xác nhận phân công</button></form>';
+  }
+  function bindAssignment(r,api,load,toast){
+    const form=document.getElementById('mobileAssignForm');if(!form)return;
+    const operationKey=crypto.randomUUID();
+    form.onsubmit=async e=>{e.preventDefault();const button=form.querySelector('button');button.disabled=true;try{await api('assign',{requestId:r.id,revision:r.revision,worker:document.getElementById('mobileAssignWorker').value,operationKey});await load();toast('Đã phân công người thực hiện lập biện pháp.');}catch(error){document.getElementById('mobileAssignError').textContent=error.message;}finally{button.disabled=false;}};
+  }
+  function configureReport(d){
+    const current=stage(d),plan=current==='plan',handover=current==='handover',v2=plan||handover;
+    const $=id=>document.getElementById(id),show=(node,yes)=>{if(node){node.hidden=!yes;node.style.display=yes?'':'none';}};
+    const field=(id,yes,required)=>{const node=$(id);show(node.closest('label'),yes);node.disabled=!yes;node.required=!!required;};
+    $('mobileReportDialog').querySelector('h2').textContent=plan?'Biện pháp thi công':handover?'Báo cáo bàn giao':'Báo cáo thực hiện';
+    $('mobileReportDialog').querySelector('.m-eyebrow').textContent=plan?'TRÌNH HAI PGĐ PHÊ DUYỆT':handover?'SAU KHI ĐƯỢC PHÉP THI CÔNG':'KẾT QUẢ KHẮC PHỤC';
+    field('mobilePerformedDate',!plan,!plan);field('mobileReportText',!handover,!handover);field('mobileReportImprovement',!handover,false);field('mobileReportFeedback',!plan,false);
+    $('mobileReportText').closest('label').firstChild.textContent=v2?'Biện pháp thi công':'Nội dung báo cáo';
+    $('mobileReportFeedback').closest('label').firstChild.textContent=handover?'Ghi chú thêm (không bắt buộc)':'Ý kiến đóng góp';
+    if(handover){$('mobileReportText').value=d.content || '';$('mobileReportImprovement').value=d.noiDungCaiTien || '';}
+    show($('mobileReportPhotoLabel'),!plan);show($('mobileReportDialog').querySelector('.m-photo-actions'),!plan);show($('mobileReportPhotos'),!plan);show($('mobileReportChecklist'),!v2);
+    $('mobileSendReport').textContent=plan?'Gửi BGD phê duyệt →':handover?'Gửi bàn giao cho người tạo →':'Gửi xác nhận →';
+    $('mobileReportProgress').textContent=plan?'Hai PGĐ phải cùng đồng ý trước khi thi công.':handover?'Bàn giao cần ít nhất một ảnh. Ảnh lưu riêng tư trên Drive.':'Ảnh lưu riêng tư trên Google Drive.';
+  }
+  return {labels,isRequest,stage,isDraft,canAssign,canWork,planId,canResume,assignment,bindAssignment,configureReport};
+})();
+</script>

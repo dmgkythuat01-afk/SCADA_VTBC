@@ -22,6 +22,7 @@
       },
       uid = () => crypto.randomUUID();
     const STATUS = {
+      ...MobilePreapproval.labels,
       new: "Mới tạo",
       in_progress: "Đang xử lý",
       awaiting_confirmation: "Chờ trưởng ca xác nhận",
@@ -79,6 +80,7 @@
     async function api(action, payload = {}) {
       const combined = [
         "create",
+        "assign",
         "claim",
         "startReport",
         "submitReport",
@@ -205,6 +207,7 @@
       return !!(M.data.capabilities.approver || M.data.capabilities.viewer);
     }
     function canConfirm(r) {
+      if (MobilePreapproval.isRequest(r)) return r.status === "v2_confirmation" && r.createdBy === M.data.user.email;
       return (
         M.data.capabilities.shiftLeader && r.status === "awaiting_confirmation"
       );
@@ -216,7 +219,7 @@
           production: "trangThaiPGDSanXuat",
         }[branch];
       return (
-        !!field && r.status === "awaiting_pgd" && r[field] === "Chờ phê duyệt"
+        !!field && ["awaiting_pgd", "v2_pgd"].includes(r.status) && r[field] === "Chờ phê duyệt"
       );
     }
     function dateRequests() {
@@ -289,23 +292,16 @@
       };
     }
     function pendingMine() {
-      return dateRequests().filter((r) =>
-        managerMode()
-          ? M.data.capabilities.viewer
-            ? r.status === "awaiting_pgd"
-            : canApprove(r)
-          : M.data.capabilities.shiftLeader
-            ? canConfirm(r)
-            : r.createdBy === M.data.user.email &&
-              ["awaiting_confirmation", "awaiting_pgd"].includes(r.status),
-      );
+      return dateRequests().filter(r => managerMode() ? M.data.capabilities.viewer ? ["awaiting_pgd","v2_pgd"].includes(r.status) : canApprove(r) : canConfirm(r) || MobilePreapproval.canAssign(r,M.data.user) || MobilePreapproval.canWork(r,M.data.user));
     }
     function reviewLabel(v) {
-      const actor = v.decision.startsWith("quality_")
+      if (v.decision === "v2_assign") return "Phân công thực hiện";
+      const decision = v.decision.replace(/^v2_/, "");
+      const actor = decision.startsWith("quality_")
         ? "PGĐ Chất lượng"
-        : v.decision.startsWith("production_")
+        : decision.startsWith("production_")
           ? "PGĐ Sản xuất"
-          : "Xác nhận ban đầu";
+          : decision.startsWith("handover_") ? "Người tạo nhận bàn giao" : "Xác nhận ban đầu";
       return (
         actor +
         " · " +
@@ -316,7 +312,7 @@
     }
     function pgdStatusCards(r) {
       return (
-        '<section class="m-approval-panel"><h2>Phê duyệt song song</h2><p class="m-hint">Hai PGĐ duyệt độc lập. Phiếu chỉ hoàn thành khi cả hai đồng ý.</p><div class="m-approval-grid">' +
+        '<section class="m-approval-panel"><h2>Phê duyệt song song</h2><p class="m-hint">Hai PGĐ duyệt biện pháp độc lập. Chỉ được thi công sau khi cả hai đồng ý; người tạo xác nhận bàn giao để hoàn thành.</p><div class="m-approval-grid">' +
         [
           ["quality", "PGĐ Chất lượng", "trangThaiPGDChatLuong"],
           ["production", "PGĐ Sản xuất", "trangThaiPGDSanXuat"],
@@ -324,8 +320,8 @@
           .map(([branch, label, field]) => {
             const sign = M.data.reviews.find(
                 (v) =>
-                  v.reportId === r.lastReportId &&
-                  v.decision.startsWith(branch + "_"),
+                  v.reportId === (MobilePreapproval.isRequest(r) ? MobilePreapproval.planId(M.data.reports.find(d => d.id === r.lastReportId)) : r.lastReportId) &&
+                  v.decision.startsWith((MobilePreapproval.isRequest(r) ? "v2_" : "") + branch + "_"),
               ),
               status =
                 r[field] ||
@@ -442,7 +438,7 @@
               ["create", "Tạo phiếu", "plus"],
               [
                 "pending",
-                M.data.capabilities.shiftLeader ? "Chờ xác nhận" : "Theo dõi",
+                "Chờ bàn giao",
                 "check",
               ],
             ];
@@ -519,7 +515,7 @@
     function filteredTickets() {
       let rows = dateRequests();
       if (M.page === "assigned")
-        rows = rows.filter((r) => r.assignedTo === M.data.user.email);
+        rows = rows.filter((r) => r.assignedTo === M.data.user.email || r.actualBy === M.data.user.email);
       if (M.status !== "all") rows = rows.filter((r) => r.status === M.status);
       if (M.workshop !== "all")
         rows = rows.filter((r) => r.workshopId === M.workshop);
@@ -578,11 +574,11 @@
         '</select><div class="m-chips">' +
         [
           "all",
-          "new",
-          "in_progress",
-          "awaiting_confirmation",
-          "awaiting_pgd",
-          "rework",
+          "v2_assignment",
+          "v2_plan",
+          "v2_pgd",
+          "v2_ready",
+          "v2_confirmation",
           "completed",
         ]
           .map(
@@ -641,18 +637,18 @@
         (managerMode()
           ? "Phê duyệt PGĐ"
           : M.data.capabilities.shiftLeader
-            ? "Chờ trưởng ca xác nhận"
-            : "Theo dõi phê duyệt") +
+            ? "Chờ bàn giao"
+            : "Chờ bàn giao") +
         '</h1><p class="m-subtitle">' +
         (managerMode()
           ? "Chất lượng và Sản xuất ký song song, không cần chờ nhau."
-          : "Kết quả được trưởng ca xác nhận trước khi chuyển đồng thời tới hai PGĐ.") +
+          : "Chỉ người tạo phiếu xác nhận bàn giao sau thi công. Nếu không đồng ý, biện pháp phải trình lại cả hai PGĐ.") +
         "</p>" +
         (rows.length
           ? rows.map(ticketCard).join("")
           : empty(
-              "Chưa có kết quả chờ xác nhận",
-              "Khi kỹ thuật báo cáo xong, phiếu sẽ xuất hiện tại đây.",
+              "Chưa có phiếu chờ bạn xử lý",
+              "Phiếu cần phân công, lập biện pháp hoặc nhận bàn giao sẽ xuất hiện tại đây.",
             ));
     }
     function results() {
@@ -779,7 +775,7 @@
             ),
           )
           .join("") +
-        '</select></label><p class="m-hint">Các tài khoản kỹ thuật khác vẫn xem được phiếu và có thể nhận xử lý.</p></div><p id="mobileCreateError" class="m-error"></p><button id="mobileCreateButton" class="m-primary m-wide" type="submit">Gửi yêu cầu →</button></form>';
+        '</select></label><p class="m-hint">Người được phân công ban đầu sẽ chọn người thực hiện, có thể chọn chính mình.</p></div><p id="mobileCreateError" class="m-error"></p><button id="mobileCreateButton" class="m-primary m-wide" type="submit">Gửi yêu cầu →</button></form>';
       bindDateField("mobileRequestedCompletion");
       $("mobileCreateType").value = ["repair", "new_work"].includes(d.type) ? d.type : "repair";
       fillMachines(d.machineId || "", d.componentId || "", d.scheduleId || "");
@@ -907,7 +903,7 @@
           )
           .join("") +
         attachmentButtons(d) +
-        (d.status === "draft" && d.createdBy === M.data.user.email
+        (MobilePreapproval.canResume(d,request(d.requestId),M.data.user)
           ? button("report", "Tiếp tục báo cáo →", d.requestId, "m-link")
           : "") +
         reviews
@@ -943,8 +939,7 @@
         return;
       }
       const canWork =
-          M.data.capabilities.technical &&
-          ["new", "in_progress", "rework"].includes(r.status),
+          MobilePreapproval.isRequest(r) ? MobilePreapproval.canWork(r,M.data.user) : M.data.capabilities.technical && ["new","in_progress","rework"].includes(r.status),
         canReview = canConfirm(r);
       const reports = M.data.reports
         .filter((d) => d.requestId === r.id)
@@ -971,8 +966,8 @@
         [
           ["NGƯỜI YÊU CẦU", r.createdByName || r.createdBy],
           ["LOẠI YÊU CẦU", requestTypeLabel(r.type)],
-          ["ĐƯỢC PHÂN CÔNG", person(r.assignedTo)],
-          ["ĐANG / ĐÃ XỬ LÝ", r.actualByName || "Chưa có người nhận"],
+          ["PHÂN CÔNG BAN ĐẦU", person(r.assignedTo)],
+          ["NGƯỜI THỰC HIỆN", r.actualByName || "Chưa phân công"],
           ["THỜI GIAN TẠO", time(r.createdAt)],
           [
             "ĐỀ NGHỊ NGÀY HOÀN THÀNH",
@@ -996,6 +991,7 @@
           .join("") +
         "</div></div></div>" +
         pgdStatusCards(r) +
+        MobilePreapproval.assignment(r,M.data,esc) +
         (canApprove(r)
           ? '<div class="m-action-bar">' +
             button("review", "Kiểm tra & phê duyệt PGĐ", r.id, "m-primary") +
@@ -1003,19 +999,19 @@
           : "") +
         (canWork
           ? '<div class="m-action-bar">' +
-            button(
+            (MobilePreapproval.isRequest(r) ? "" : button(
               "claim",
               r.actualBy === M.data.user.email
                 ? "Đang nhận xử lý"
                 : "Nhận xử lý",
               r.id,
-            ) +
-            button("report", "Báo cáo kết quả", r.id, "m-primary") +
+            )) +
+            button("report", MobilePreapproval.isRequest(r) ? r.status === "v2_plan" ? "Lập / sửa biện pháp" : "Báo cáo bàn giao" : "Báo cáo kết quả", r.id, "m-primary") +
             "</div>"
           : "") +
         (canReview
           ? '<div class="m-action-bar">' +
-            button("review", "Kiểm tra & xác nhận kết quả", r.id, "m-primary") +
+            button("review", MobilePreapproval.isRequest(r) ? "Xác nhận nhận bàn giao" : "Kiểm tra & xác nhận kết quả", r.id, "m-primary") +
             "</div>"
           : "") +
         (r.status === "awaiting_confirmation" && !canReview
@@ -1032,6 +1028,7 @@
               "Chưa có báo cáo khắc phục",
               "Kỹ thuật sẽ cập nhật nội dung và hình ảnh tại đây.",
             ));
+      MobilePreapproval.bindAssignment(r,api,load,toast);
     }
     function account() {
       const u = M.data.user;
@@ -1205,6 +1202,7 @@
       $("mobileReportProgress").textContent =
         "Ảnh được lưu riêng tư trên Google Drive.";
       reportPhotos();
+      MobilePreapproval.configureReport(d);
       $("mobileReportDialog").showModal();
     }
     function reportPhotos() {
@@ -1293,7 +1291,7 @@
         ).map((i) => i.checked),
       };
       try {
-        if (submit && !body.content.trim())
+        if (submit && MobilePreapproval.stage(M.reportDraft) !== "handover" && !body.content.trim())
           throw Error("Vui lòng nhập nội dung báo cáo.");
         let n = 0,
           total = M.pending.length;
@@ -1320,13 +1318,14 @@
           submitKey: M.submitKey,
         });
         if (submit) {
+          const planSent = M.reportDraft.status === "v2_plan_submitted";
           sessionStorage.removeItem(draftCacheKey());
           sessionStorage.removeItem("mobileWorkSubmit:" + M.reportDraft.id);
           $("mobileReportDialog").close();
           M.reportDraft = null;
           M.page = "detail";
           await load();
-          toast("Đã gửi kết quả cho người yêu cầu xác nhận.");
+          toast(planSent ? "Đã gửi biện pháp đến hai PGĐ phê duyệt." : "Đã gửi bàn giao cho người tạo phiếu xác nhận.");
         } else {
           $("mobileReportProgress").textContent =
             "Đã lưu bản nháp và các ảnh đã chọn.";
@@ -1364,15 +1363,15 @@
       $("mobileReviewStage").textContent =
         M.review.kind === "pgd"
           ? roleName(M.data.user.position) + " PHÊ DUYỆT"
-          : "TRƯỞNG CA XÁC NHẬN";
+          : "NGƯỜI TẠO XÁC NHẬN BÀN GIAO";
       $("mobileReviewTitle").textContent =
         M.review.kind === "pgd"
-          ? "Phê duyệt kết quả khắc phục"
-          : "Kết quả đã đạt chưa?";
+          ? "Phê duyệt biện pháp thi công"
+          : "Xác nhận nhận bàn giao";
       $("mobileReviewAcceptHint").textContent =
         M.review.kind === "pgd"
-          ? "Hoàn thành sau khi cả Chất lượng và Sản xuất đồng ý."
-          : "Gửi đồng thời cho PGĐ Chất lượng và PGĐ Sản xuất.";
+          ? "Cho phép thi công sau khi cả hai PGĐ đồng ý."
+          : "Đồng ý nhận bàn giao để hoàn thành; từ chối sẽ yêu cầu trình lại hai PGĐ.";
       M.reviewKey = uid();
       $("mobileReviewInfo").innerHTML =
         '<div class="m-performer"><small>NGƯỜI THỰC HIỆN</small><b>' +
@@ -1387,6 +1386,10 @@
         reportNotes(d) +
         attachmentButtons(d);
       $("mobileReviewForm").elements.decision.value = "accept";
+      const reviewChoices = $("mobileReviewForm").querySelectorAll('.m-choice b');
+      reviewChoices[0].textContent = M.review.kind === "pgd" ? "Đồng ý biện pháp" : "Đồng ý nhận bàn giao";
+      reviewChoices[1].textContent = "Không đồng ý — trình lại biện pháp";
+      $("mobileReviewButton").textContent = M.review.kind === "pgd" ? "Gửi phê duyệt" : "Xác nhận bàn giao";
       $("mobileReviewReason").value = "";
       $("mobileReviewReason").required = false;
       $("mobileReviewError").textContent = "";
@@ -1417,8 +1420,8 @@
           result.decision.endsWith("reject")
             ? "Đã chuyển lại kỹ thuật để khắc phục."
             : fresh?.status === "completed"
-              ? "Đủ hai phê duyệt PGĐ — phiếu hoàn thành."
-              : "Đã ghi nhận. Phiếu đang chờ các phê duyệt còn lại.",
+              ? "Đã nhận bàn giao — phiếu hoàn thành."
+              : fresh?.status === "v2_ready" ? "Đủ hai PGĐ — được phép thi công." : "Đã ghi nhận. Chờ phê duyệt còn lại.",
         );
       } catch (e) {
         $("mobileReviewError").textContent = e.message;

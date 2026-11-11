@@ -96,7 +96,7 @@ function mobileWorkSnapshot_(u) {
     reports: mobileWorkRows_("ServiceReports").filter(
       (r) =>
         ids.has(r.requestId) &&
-        (r.status !== "draft" || r.createdBy === u.email || caps.admin),
+        (!mobileWorkDraft_(r) || r.createdBy === u.email || caps.admin),
     ),
     reviews: mobileWorkRows_("ServiceReviews").filter((r) =>
       ids.has(r.requestId),
@@ -322,6 +322,8 @@ function mobileWorkStartReport_(u, p) {
   return d;
 }
 function mobileWorkEditableReport_(u, p) {
+  const current = mobileWorkReport_(p.reportId);
+  if (mobileWorkV2_(mobileWorkRequest_(current.requestId))) return mobileWorkV2Editable_(u, p);
   mobileWorkRequireTechnical_(u);
   const d = mobileWorkReport_(p.reportId),
     r = mobileWorkRequest_(d.requestId);
@@ -483,8 +485,9 @@ function mobileWorkReviewReport_(u, p) {
   return review;
 }
 function mobileWorkReconcile_() {
+  mobileWorkMigrateOpen_();
   mobileWorkRows_("ServiceReports")
-    .filter((d) => d.status === "submitted")
+    .filter((d) => d.status === "submitted" && !mobileWorkV2_(mobileWorkRequest_(d.requestId)))
     .forEach((d) => {
       const r = mobileWorkRequest_(d.requestId);
       if (r.lastReportId === d.id && r.status === "awaiting_confirmation")
@@ -496,8 +499,9 @@ function mobileWorkReconcile_() {
         mobileWorkApplySubmission_(d);
     });
   mobileWorkRows_("ServiceReviews")
-    .filter((v) => String(v.processed) !== "true")
+    .filter((v) => String(v.processed) !== "true" && !mobileWorkV2_(mobileWorkRequest_(v.requestId)))
     .forEach(mobileWorkApplyReview_);
+  mobileWorkV2Reconcile_();
 }
 function mobileWorkMarkNotification_(u, p) {
   const n = mobileWorkRows_("Notifications").find(
@@ -524,7 +528,8 @@ function mobileWorkApi(token, action, payload) {
     const actions = {
       snapshot: mobileWorkSnapshot_,
       printRequest: mobileWorkPrintRequest_,
-      create: mobileWorkCreateRequest_,
+      create: mobileWorkV2Create_,
+      assign: mobileWorkV2Assign_,
       claim: mobileWorkClaimRequest_,
       startReport: mobileWorkStartReport_,
       saveDraft: mobileWorkSaveReportDraft_,
@@ -536,12 +541,17 @@ function mobileWorkApi(token, action, payload) {
       markRead: mobileWorkMarkNotification_,
     };
     if (!actions[action]) throw Error("Thao tác không hợp lệ.");
-    const result = actions[action](u, payload || {});
+    const data = payload || {};
+    const request = data.requestId ? mobileWorkRequest_(data.requestId) : data.reportId ? mobileWorkRequest_(mobileWorkReport_(data.reportId).requestId) : null;
+    const v2Actions = {startReport:mobileWorkV2Start_,saveDraft:mobileWorkV2Save_,submitReport:mobileWorkV2Submit_,approve:mobileWorkV2Approve_,review:mobileWorkV2Review_};
+    if (request && mobileWorkV2_(request) && action === "claim") throw Error("Phiếu cần được người phân công ban đầu chọn người thực hiện.");
+    const result = (request && mobileWorkV2_(request) && v2Actions[action] || actions[action])(u, data);
     if (
       payload &&
       payload._withSnapshot === true &&
       [
         "create",
+        "assign",
         "claim",
         "startReport",
         "submitReport",

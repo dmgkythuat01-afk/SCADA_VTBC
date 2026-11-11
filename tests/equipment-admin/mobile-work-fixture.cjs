@@ -1,7 +1,7 @@
 const fs = require("node:fs"),
   vm = require("node:vm"),
   crypto = require("node:crypto");
-function setup() {
+function setup({workflow = "legacy"} = {}) {
   const c = { console };
   vm.createContext(c);
   for (const name of [
@@ -22,6 +22,7 @@ function setup() {
     "MobileWorkApprovals",
     "MobileWorkPhotos",
     "MobileWorkPrint",
+    "MobileWorkPreapproval",
   ])
     vm.runInContext(
       fs.readFileSync("QuanLyThietBi/admin/" + name + ".js", "utf8"),
@@ -172,6 +173,13 @@ function setup() {
       },
     },
   });
+  c.mobileWorkMigrationWrite_ = r => c.mobileWorkWrite_("Requests",r);
+  // Explicit historical mode keeps the old state-machine regression suites.
+  // Production always routes create/migration through the new workflow.
+  if (workflow === "legacy") {
+    c.mobileWorkV2Create_ = c.mobileWorkCreateRequest_;
+    c.mobileWorkMigrateOpen_ = () => ({changed:0});
+  }
   const login = (role) => c.loginMobile(role, "Test-password-2026").token,
     api = (token, action, p = {}) => c.mobileWorkApi(token, action, p);
   function create(token, type = "maintenance", device = true) {

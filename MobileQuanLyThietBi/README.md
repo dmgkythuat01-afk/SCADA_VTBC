@@ -1,5 +1,20 @@
 # DMG Mobile Quan ly thiet bi
 
+## Luồng hiện hành — 11/11/2026
+
+Tạo phiếu → người được phân công ban đầu chọn người thực hiện (có thể chọn chính mình) → người thực hiện nhập Biện pháp thi công và Nội dung cải tiến → hai PGĐ Chất lượng/Sản xuất phê duyệt song song → được phép thi công → người thực hiện gửi ảnh, ngày thực tế và ghi chú bàn giao → chính người tạo phiếu xác nhận hoàn thành.
+
+Chỉ người được phân công thực hiện mới soạn biện pháp hoặc gửi bàn giao. Không cho phép thêm ảnh bàn giao trước khi đủ hai PGĐ. Bàn giao cần ít nhất một ảnh, ghi chú tùy chọn; không sửa biện pháp đã được duyệt. Nếu bất kỳ PGĐ hoặc người tạo không đồng ý, phải gửi bản biện pháp mới và cả hai PGĐ duyệt lại từ đầu. Lịch sử hoàn thành chỉ ghi khi người tạo đồng ý nhận bàn giao, có chống ghi trùng khi mạng lỗi/gửi lại.
+
+Phiếu cũ chưa hoàn thành chuyển về **Chờ phân công thực hiện**, giữ người phân công ban đầu. Các báo cáo, ảnh và chữ ký cũ vẫn còn để tra cứu; không dùng chữ ký cũ làm quyền thi công mới. Phiếu cũ đã hoàn thành giữ nguyên. Không thêm cột hoặc sheet; các trạng thái V2 và tiền tố nội bộ v2| trong maYeuCauChongLap giúp nhận diện luồng mới sau khi hoàn thành.
+
+Phân công ban đầu giữ ở nguoiDuocGiao; người làm ở nguoiDangXuLy/tenNguoiDangXuLy. noiDungBaoCao là biện pháp; noiDungCaiTien giữ cải tiến; danhSachAnh và yKienDongGop lưu ảnh/ghi chú bàn giao. Các lần biện pháp và bàn giao có bản ghi riêng, giữ liên kết vòng duyệt trong mã nội bộ sẵn có.
+
+Chữ ký trên bản in: hai PGĐ ký đúng bản biện pháp trước thi công; Bộ phận tiếp nhận là người làm đã gửi bàn giao; Bộ phận bàn giao là người tạo phiếu đã xác nhận. QR ảnh vẫn yêu cầu đăng nhập. Mẫu in giữ A4 ngang, dấu ORIGIN/BẢN GỐC, hai loại Sửa chữa/Làm mới; tài khoản chỉ mở qua biểu tượng góc phải.
+
+Các ghi chú về luồng trưởng ca xác nhận trước PGĐ bên dưới là mô tả lịch sử trước ngày 11/11/2026, không áp dụng cho phiếu mới hoặc phiếu đã chuyển luồng.
+
+
 ## In / Xuất PDF phiếu yêu cầu
 
 Mở chi tiết phiếu rồi chọn **In / Xuất PDF**. Cửa sổ phiếu mở theo mẫu BM-QT-TB-01.05, khổ A4 ngang; chọn máy in hoặc Lưu dưới dạng PDF trong hộp thoại trình duyệt. Cửa sổ có nút In / Lưu PDF để gọi lại hộp thoại. Cho phép popup cho trang nếu trình duyệt đang chặn.
@@ -18,7 +33,7 @@ Chủ project mở editor, chọn `capQuyenMobile` → Run → cấp quyền Goo
 
 Dùng chung file Sheets và tài khoản hiện có trong `TaiKhoan` với app quản trị. Không tự tạo tài khoản mẫu, bản sao danh mục hoặc trigger email. Các role TruongCa/CongNhan/PhongCongNghe tạo phiếu; KyThuat/CoKhi/TuDongHoa xem mọi phiếu và báo cáo; trưởng ca xác nhận rồi hai PGĐ duyệt song song. Người thực hiện được ghi theo tài khoản thực tế.
 
-Project này chứa giao diện mobile/desktop, bộ lọc ngày và bản in. Backend nghiệp vụ nằm trong các file `MobileWork*.js` của `QuanLyThietBi/admin/`, gọi qua thư viện EquipmentCore và ghim phiên bản 52 trong manifest. Script Properties, Cache và Lock tạo bên trong thư viện thuộc backend dùng chung, theo tài liệu Google: https://developers.google.com/apps-script/guides/libraries#resource_scoping . Hai giao diện dùng cùng khóa cập nhật. Khi nâng cấp backend, kiểm thử và tăng version thư viện trong manifest; không bật developmentMode trên production.
+Project này chứa giao diện mobile/desktop, bộ lọc ngày và bản in. Backend nghiệp vụ nằm trong các file `MobileWork*.js` của `QuanLyThietBi/admin/`, gọi qua thư viện EquipmentCore và ghim phiên bản 54 trong manifest. Script Properties, Cache và Lock tạo bên trong thư viện thuộc backend dùng chung, theo tài liệu Google: https://developers.google.com/apps-script/guides/libraries#resource_scoping . Hai giao diện dùng cùng khóa cập nhật. Khi nâng cấp backend, kiểm thử và tăng version thư viện trong manifest; không bật developmentMode trên production.
 
 ## Danh mục mới — 09/11/2026
 
