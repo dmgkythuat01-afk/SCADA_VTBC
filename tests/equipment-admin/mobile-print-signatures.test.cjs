@@ -1,0 +1,17 @@
+const {test}=require('node:test'),assert=require('node:assert/strict');
+const {setup}=require('./mobile-work-fixture.cjs');
+test('print signs delegation before a report exists and maps delivery/receipt to their real event times',()=>{
+ const f=setup({workflow:'v2'}),owner=f.login('CongNhan'),initial=f.login('KyThuat'),worker=f.login('CoKhi');
+ const r=f.create(owner,'repair'),fresh=()=>f.api(owner,'snapshot').requests.find(x=>x.id===r.id),print=()=>f.api(owner,'printRequest',{requestId:r.id});
+ assert.equal(print().signatures.mechanical,null);
+ f.c.mobileWorkNow_=()=> '2026-11-09T03:00:00Z';
+ f.api(initial,'assign',{requestId:r.id,revision:fresh().revision,worker:'cokhi',operationKey:'assign'});
+ assert.equal(print().report,null);assert.equal(print().signatures.mechanical.name,'KyThuat Người thử');assert.equal(print().signatures.mechanical.time,'2026-11-09T03:00:00Z');
+ let d=f.start(worker,fresh());d=f.api(worker,'submitReport',{reportId:d.id,revision:d.revision,submitKey:'plan',content:'Biện pháp'});f.approveBoth(r,d);
+ assert.equal(print().signatures.handover,null);assert.equal(print().signatures.receiving,null);
+ f.c.mobileWorkNow_=()=> '2026-11-09T07:00:00Z';d=f.start(worker,fresh());d=f.api(worker,'uploadPhoto',{reportId:d.id,revision:d.revision,uploadKey:'photo',dataUrl:'data:image/jpeg;base64,/9j/2Q=='}).report;
+ f.c.mobileWorkNow_=()=> '2026-11-09T09:00:00Z';d=f.api(worker,'submitReport',{reportId:d.id,revision:d.revision,submitKey:'handover',performedDate:'2026-11-09'});
+ assert.equal(print().signatures.handover.name,'CoKhi Người thử');assert.equal(print().signatures.handover.time,'2026-11-09T09:00:00Z');assert.equal(print().signatures.receiving,null);
+ f.c.mobileWorkNow_=()=> '2026-11-09T10:00:00Z';f.review(owner,fresh(),d);
+ const p=print();assert.equal(p.signatures.receiving.name,'CongNhan Người thử');assert.equal(p.signatures.receiving.time,'2026-11-09T10:00:00Z');assert.equal(p.signatures.handover.name,'CoKhi Người thử');assert.equal(p.signatures.mechanical.time,'2026-11-09T03:00:00Z');
+});

@@ -12,7 +12,7 @@ Phiếu cũ chưa hoàn thành chuyển về **Chờ phân công thực hiện**
 
 Phân công ban đầu giữ ở nguoiDuocGiao; người làm ở nguoiDangXuLy/tenNguoiDangXuLy. noiDungBaoCao là biện pháp; noiDungCaiTien giữ cải tiến; danhSachAnh và yKienDongGop lưu ảnh/ghi chú bàn giao. Các lần biện pháp và bàn giao có bản ghi riêng, giữ liên kết vòng duyệt trong mã nội bộ sẵn có.
 
-Chữ ký trên bản in: hai PGĐ ký đúng bản biện pháp trước thi công; Bộ phận tiếp nhận là người làm đã gửi bàn giao; Bộ phận bàn giao là người tạo phiếu đã xác nhận. QR ảnh vẫn yêu cầu đăng nhập. Mẫu in giữ A4 ngang, dấu ORIGIN/BẢN GỐC, hai loại Sửa chữa/Làm mới; tài khoản chỉ mở qua biểu tượng góc phải.
+Chữ ký trên bản in: hai PGĐ ký đúng bản biện pháp trước thi công; Xác nhận bởi phòng Cơ điện là người phân công ban đầu, thời gian lúc phân công; Bộ phận bàn giao là người làm, thời gian lúc gửi báo cáo bàn giao; Bộ phận tiếp nhận là người tạo phiếu, thời gian lúc đồng ý nhận bàn giao. QR ảnh vẫn yêu cầu đăng nhập. Mẫu in giữ A4 ngang, dấu ORIGIN/BẢN GỐC, hai loại Sửa chữa/Làm mới; tài khoản chỉ mở qua biểu tượng góc phải.
 
 Các ghi chú về luồng trưởng ca xác nhận trước PGĐ bên dưới là mô tả lịch sử trước ngày 11/11/2026, không áp dụng cho phiếu mới hoặc phiếu đã chuyển luồng.
 
@@ -21,7 +21,7 @@ Các ghi chú về luồng trưởng ca xác nhận trước PGĐ bên dưới l
 
 Mở chi tiết phiếu rồi chọn **In / Xuất PDF**. Cửa sổ phiếu mở theo mẫu BM-QT-TB-01.05, khổ A4 ngang; chọn máy in hoặc Lưu dưới dạng PDF trong hộp thoại trình duyệt. Cửa sổ có nút In / Lưu PDF để gọi lại hộp thoại. Cho phép popup cho trang nếu trình duyệt đang chặn.
 
-Thông tin người đề nghị và người được giao đọc từ TaiKhoan, gồm chucVuTrongCongTy, phongSanXuat, phongBan. Bộ phận tiếp nhận ghi người thực tế thực hiện và thời gian tạo báo cáo đã gửi; Bộ phận bàn giao ghi trưởng ca thực tế xác nhận. Trưởng ban an toàn dùng chữ ký PGDChatLuong, Ban giám đốc dùng PGDSanXuat. Các chữ ký chỉ lấy từ cùng lần báo cáo, ô chưa ký để trống để ký tay. Có thể in khi chưa hoàn tất quy trình.
+Thông tin người đề nghị và người được giao đọc từ TaiKhoan, gồm chucVuTrongCongTy, phongSanXuat, phongBan. Ô Xác nhận bởi phòng Cơ điện ghi người phân công ban đầu và thời gian phân công. Bộ phận bàn giao ghi người thực hiện và thời gian gửi báo cáo bàn giao; Bộ phận tiếp nhận ghi người tạo phiếu và thời gian đồng ý nhận bàn giao. Trưởng ban an toàn dùng chữ ký PGDChatLuong, Ban giám đốc dùng PGDSanXuat. Các chữ ký chỉ lấy từ cùng lần báo cáo, ô chưa ký để trống để ký tay. Có thể in khi chưa hoàn tất quy trình.
 
 Ảnh có QR dẫn tới đúng ảnh trong ứng dụng, vẫn cần đăng nhập và quyền xem phiếu; không đổi ảnh Drive sang công khai. Nội dung dài và các ảnh ngoài ba ảnh đầu được giữ đầy đủ trong phụ lục. QR tạo tại trình duyệt, không gửi dữ liệu sang dịch vụ QR bên ngoài. Logo trên mẫu là bản vector dựng từ ảnh tham chiếu.
 
@@ -35,7 +35,7 @@ Chủ project mở editor, chọn `capQuyenMobile` → Run → cấp quyền Goo
 
 Dùng chung file Sheets và tài khoản hiện có trong `TaiKhoan` với app quản trị. Không tự tạo tài khoản mẫu, bản sao danh mục hoặc trigger email. Các role TruongCa/CongNhan/PhongCongNghe tạo phiếu; KyThuat/CoKhi/TuDongHoa xem mọi phiếu và báo cáo; trưởng ca xác nhận rồi hai PGĐ duyệt song song. Người thực hiện được ghi theo tài khoản thực tế.
 
-Project này chứa giao diện mobile/desktop, bộ lọc ngày và bản in. Backend nghiệp vụ nằm trong các file `MobileWork*.js` của `QuanLyThietBi/admin/`, gọi qua thư viện EquipmentCore và ghim phiên bản 54 trong manifest. Script Properties, Cache và Lock tạo bên trong thư viện thuộc backend dùng chung, theo tài liệu Google: https://developers.google.com/apps-script/guides/libraries#resource_scoping . Hai giao diện dùng cùng khóa cập nhật. Khi nâng cấp backend, kiểm thử và tăng version thư viện trong manifest; không bật developmentMode trên production.
+Project này chứa giao diện mobile/desktop, bộ lọc ngày và bản in. Backend nghiệp vụ nằm trong các file `MobileWork*.js` của `QuanLyThietBi/admin/`, gọi qua thư viện EquipmentCore và ghim phiên bản 55 trong manifest. Script Properties, Cache và Lock tạo bên trong thư viện thuộc backend dùng chung, theo tài liệu Google: https://developers.google.com/apps-script/guides/libraries#resource_scoping . Hai giao diện dùng cùng khóa cập nhật. Khi nâng cấp backend, kiểm thử và tăng version thư viện trong manifest; không bật developmentMode trên production.
 
 ## Danh mục mới — 09/11/2026
 

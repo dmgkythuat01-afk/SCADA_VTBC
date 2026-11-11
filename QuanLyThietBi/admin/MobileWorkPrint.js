@@ -29,13 +29,16 @@ function mobileWorkPrintRequest_(u, p) {
     const v = mobileWorkRows_("ServiceReviews").filter(v => v.requestId === r.id && v.reportId === reportId && v.decision === decision && String(v.processed) === "true").slice(-1)[0];
     return v ? {name:v.createdByName || v.createdBy,time:v.createdAt} : null;
   };
+  const delegation = mobileWorkRows_("ServiceReviews").filter(v => v.requestId === r.id && v.decision === "v2_assign" && v.createdBy === r.assignedTo && v.reason === r.actualBy && String(v.processed) === "true").slice(-1)[0];
+  const legacyReceipt = reviews.filter(v => v.decision === "accept" && v.createdBy === r.createdBy).slice(-1)[0];
   return {
     request: { id:r.id, type:r.type, status:r.status, createdAt:r.createdAt, deadline:r.ngayDeNghiHoanThanh || "", description:r.description || "", workshop:r.workshopName || "", machine:r.machineName || "", device:r.deviceName || r.componentName || "" },
     creator: profile(r.createdBy, r.createdByName), assignee: profile(mobileWorkV2_(r) && r.actualBy ? r.actualBy : r.assignedTo),
     report: d ? { id:d.id, ordinal:d.ordinal, status:d.status, content:d.content || "", improvement:d.noiDungCaiTien || "", feedback:d.yKienDongGop || "" } : null,
     signatures: {
-      receiving: (v2 ? handover && ["v2_handover_submitted","v2_handover_accepted"].includes(d.status) : submitted) ? { name:d.actualByName || d.actualBy, time:d.createdAt } : null,
-      handover: v2 ? v2Signature("v2_handover_accept",d.id) : signature("accept"),
+      mechanical: delegation ? {name:delegation.createdByName || delegation.createdBy,time:delegation.createdAt} : null,
+      receiving: v2 ? v2Signature("v2_handover_accept",d.id) : legacyReceipt ? {name:legacyReceipt.createdByName || legacyReceipt.createdBy,time:legacyReceipt.createdAt} : null,
+      handover: (v2 ? handover && ["v2_handover_submitted","v2_handover_accepted"].includes(d.status) : submitted) ? {name:d.actualByName || d.actualBy,time:d.submittedAt} : null,
       safety: v2 ? plan.status === "v2_plan_approved" ? v2Signature("v2_quality_accept",plan.id) : null : signature("quality_accept"),
       director: v2 ? plan.status === "v2_plan_approved" ? v2Signature("v2_production_accept",plan.id) : null : signature("production_accept"),
     },

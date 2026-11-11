@@ -18,8 +18,8 @@ test('signatures use actual shift leader and parallel PGD reviews for exact repo
   const r=f.create(t), d=f.start(tech,r); f.submit(tech,d,{noiDungCaiTien:'Cải tiến',yKienDongGop:'Đóng góp'});
   f.review(leader,r,d); f.approveBoth(r,d);
   const p=f.api(t,'printRequest',{requestId:r.id});
-  assert.equal(p.signatures.receiving.name,'CoKhi Người thử');
-  assert.equal(p.signatures.handover.name,'TruongCa Người thử');
+  assert.equal(p.signatures.receiving,null);
+  assert.equal(p.signatures.handover.name,'CoKhi Người thử');
   assert.equal(p.signatures.safety.name,'PGDChatLuong Người thử');
   assert.equal(p.signatures.director.name,'PGDSanXuat Người thử');
   assert.equal(p.report.improvement,'Cải tiến');
@@ -42,6 +42,6 @@ test('new remediation report never reuses signatures from a previous round', () 
   const next=f.start(tech,current); f.submit(tech,next);
   const p=f.api(owner,'printRequest',{requestId:r.id});
   assert.equal(p.report.id,next.id);
-  assert.equal(p.signatures.handover,null); assert.equal(p.signatures.safety,null); assert.equal(p.signatures.director,null);
-  assert.equal(p.signatures.receiving.name,'KyThuat Người thử');
+  assert.equal(p.signatures.handover.name,'KyThuat Người thử'); assert.equal(p.signatures.safety,null); assert.equal(p.signatures.director,null);
+  assert.equal(p.signatures.receiving,null);assert.equal(p.signatures.handover.name,'KyThuat Người thử');
 });
