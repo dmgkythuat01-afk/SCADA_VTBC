@@ -13,7 +13,7 @@ function maintenanceCriteria_(device) {
 }
 function maintenanceCriteriaVersion_(rows, secret) {
   return adminHmac_(
-    JSON.stringify(rows.map((r) => [r.danhMucCanKiemTra, r.thongSoTieuChuan])),
+    JSON.stringify(rows.map(equipmentCriterionSnapshot_)),
     secret || adminSecret_(),
   );
 }
@@ -145,12 +145,7 @@ function maintenanceSaveHistory_(user, p) {
           (i + 1) +
           ": cần ghi kết quả thực tế và xác nhận Đạt trước khi hoàn thành.",
       );
-    return {
-      chiTieu: criterion.danhMucCanKiemTra,
-      tieuChuan: criterion.thongSoTieuChuan,
-      ketQuaThucTe: actual,
-      ketLuan: outcome,
-    };
+    return equipmentCriterionHistory_(criterion,actual,outcome);
   });
   const uploads = maintenanceResolvePhotos_(user, p, request);
   const row = {

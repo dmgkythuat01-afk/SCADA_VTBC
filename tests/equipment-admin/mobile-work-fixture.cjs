@@ -10,6 +10,7 @@ function setup({workflow = "legacy"} = {}) {
     "Data",
     "MaintenanceDomain",
     "MaintenanceStore",
+    "EquipmentCriteria",
     "MaintenanceService",
     "MaintenanceReports",
     "MobileWorkIO",
@@ -73,7 +74,7 @@ function setup({workflow = "legacy"} = {}) {
         tenMay: "Máy đóng gói",
         maThietBi: "TB01",
         danhMucCanKiemTra: "Nhiệt độ",
-        thongSoTieuChuan: "<60°C",
+        thamSoCanKiemTra: "<60°C",
       },
     ],
   };

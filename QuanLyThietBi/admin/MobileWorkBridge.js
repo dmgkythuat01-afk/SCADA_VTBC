@@ -9,12 +9,7 @@ function mobileWorkAppendAdminHistory_(request, report, review) {
   const source = mobileWorkParse_(report.criteriaSnapshot, []),
     actual = mobileWorkParse_(report.actualResults, []),
     checks = mobileWorkParse_(report.checks, []),
-    criteria = source.map((c, i) => ({
-      chiTieu: c.danhMucCanKiemTra,
-      tieuChuan: c.thongSoTieuChuan,
-      ketQuaThucTe: actual[i] || "",
-      ketLuan: checks[i] ? "Đạt" : "Không đạt",
-    })),
+    criteria = source.map((c,i) => equipmentCriterionHistory_(c,actual[i] || "",checks[i] ? "Đạt" : "Không đạt")),
     row = {
       maLichSu: id,
       maHoSo:

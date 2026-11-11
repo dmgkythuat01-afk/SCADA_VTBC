@@ -755,14 +755,15 @@
         ) +
         '</div><h3 class="m-section-title">Chỉ tiêu kiểm tra</h3>' +
         (d.criteria.length
-          ? '<div class="m-table-wrap"><table class="m-criteria-table"><tr><th>Chỉ tiêu</th><th>Thông số tiêu chuẩn</th></tr>' +
+          ? '<div class="m-table-wrap"><table class="m-criteria-table"><tr><th>Chỉ tiêu</th><th>Tham số cần kiểm tra</th><th>Chỉ tiêu đánh giá 1</th><th>Chỉ tiêu đánh giá 2</th><th>Chỉ tiêu đánh giá 3</th></tr>' +
             d.criteria
               .map(
                 (c) =>
                   "<tr><td>" +
                   esc(c.danhMucCanKiemTra) +
                   "</td><td>" +
-                  esc(c.thongSoTieuChuan) +
+                  esc(criterionParameter(c)) +
+                  [1,2,3].map(n => "</td><td>"+esc(c["chiTieuDanhGia"+n] || "")).join("") +
                   "</td></tr>",
               )
               .join("") +
@@ -877,6 +878,10 @@
       );
       updateRecordDevice();
     }
+    function criterionParameter(c) { return c.thamSoCanKiemTra ?? c.thongSoTieuChuan ?? c.tieuChuan ?? ""; }
+    function criterionAssessments(c) {
+      return [1,2,3].filter(n => c["chiTieuDanhGia"+n]).map(n => '<p><b>Chỉ tiêu đánh giá '+n+':</b> '+esc(c["chiTieuDanhGia"+n])+'</p>').join('');
+    }
     function updateRecordDevice() {
       const f = $("maintenanceRecordForm"),
         d = M.data.devices.find((d) => d.maHoSo === f.elements.deviceKey.value);
@@ -893,9 +898,9 @@
                     (i + 1) +
                     ". " +
                     esc(c.danhMucCanKiemTra) +
-                    "</h4><p>Tiêu chuẩn: " +
-                    esc(c.thongSoTieuChuan || "Chưa khai báo") +
-                    '</p><div class="m-check-fields"><label>Kết quả thực tế<input data-criterion-actual="' +
+                    "</h4><p>Tham số cần kiểm tra: " +
+                    esc(c.thamSoCanKiemTra || "Chưa khai báo") +
+                    '</p>'+criterionAssessments(c)+'<div class="m-check-fields"><label>Kết quả thực tế<input data-criterion-actual="' +
                     i +
                     '" maxlength="2000" placeholder="Nhập số đo / kết quả kiểm tra"></label><label>Kết luận<select data-criterion-result="' +
                     i +
@@ -1105,14 +1110,15 @@
         esc(r.ketQua) +
         "</p>" +
         (checks.length
-          ? '<h3>Chi tiết kiểm tra</h3><div class="m-table-wrap"><table><tr><th>Chỉ tiêu</th><th>Tiêu chuẩn</th><th>Thực tế</th><th>Kết luận</th></tr>' +
+          ? '<h3>Chi tiết kiểm tra</h3><div class="m-table-wrap"><table><tr><th>Chỉ tiêu</th><th>Tham số cần kiểm tra</th><th>Chỉ tiêu đánh giá 1</th><th>Chỉ tiêu đánh giá 2</th><th>Chỉ tiêu đánh giá 3</th><th>Thực tế</th><th>Kết luận</th></tr>' +
             checks
               .map(
                 (c) =>
                   "<tr><td>" +
                   esc(c.chiTieu) +
                   "</td><td>" +
-                  esc(c.tieuChuan) +
+                  esc(criterionParameter(c)) +
+                  [1,2,3].map(n=>"</td><td>"+esc(c["chiTieuDanhGia"+n] || "")).join("") +
                   "</td><td>" +
                   esc(c.ketQuaThucTe) +
                   "</td><td>" +
@@ -1241,7 +1247,7 @@
                 (c) =>
                   c.chiTieu +
                   " | " +
-                  c.tieuChuan +
+                  criterionParameter(c) + " | " + [1,2,3].map(n=>c["chiTieuDanhGia"+n] || "").join(" | ") +
                   " | " +
                   c.ketQuaThucTe +
                   " | " +

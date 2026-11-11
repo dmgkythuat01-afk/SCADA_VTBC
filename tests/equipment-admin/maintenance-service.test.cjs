@@ -12,6 +12,7 @@ function setup() {
     "Data",
     "MaintenanceDomain",
     "MaintenanceStore",
+    "EquipmentCriteria",
     "MaintenanceService",
     "MaintenanceReports",
   ])
@@ -41,7 +42,7 @@ function setup() {
           tenMay: "Máy A",
           maThietBi: "T1",
           danhMucCanKiemTra: "Nhiệt độ",
-          thongSoTieuChuan: "<60°C",
+          thamSoCanKiemTra: "<60°C",
         },
       ],
     },
@@ -176,6 +177,13 @@ test("snapshot reads shared signing configuration once for a device list", () =>
   a.equal(data.devices.length, 30);
   a.equal(reads, 1);
 });
+test("new assessment columns are versioned and retained in maintenance history",()=>{
+ const s=setup(),c=s.catalog.DanhMucCanKiemTra[0];Object.assign(c,{chiTieuDanhGia1:'Mức tốt',chiTieuDanhGia2:'Mức trung bình',chiTieuDanhGia3:'Cần thay'});
+ s.payload.criteriaVersion=s.c.maintenanceCriteriaVersion_([c]);
+ const row=s.c.maintenanceSaveHistory_(s.user,s.payload),saved=JSON.parse(row.chiTietKiemTra)[0];
+ a.equal(saved.thamSoCanKiemTra,c.thamSoCanKiemTra);a.equal(saved.chiTieuDanhGia1,'Mức tốt');a.equal(saved.chiTieuDanhGia3,'Cần thay');
+ const previous=s.payload.criteriaVersion;c.chiTieuDanhGia2='Mức cần theo dõi';a.notEqual(s.c.maintenanceCriteriaVersion_([c]),previous);
+});
 test("completed maintenance advances calendar, unfinished maintenance and repair do not; replay is immutable", () => {
   const s = setup(),
     r = s.c.maintenanceSaveHistory_(s.user, s.payload);
@@ -225,7 +233,7 @@ test("stale checklist, unfinished criteria, invalid dates and unauthorized sessi
       ngayThucHien: "2026-09-01",
     }),
   );
-  s.catalog.DanhMucCanKiemTra[0].thongSoTieuChuan = "<50";
+  s.catalog.DanhMucCanKiemTra[0].thamSoCanKiemTra = "<50";
   a.throws(() => s.c.maintenanceSaveHistory_(s.user, s.payload));
   a.equal(s.tables.LichSuBaoDuong.length, 0);
 });

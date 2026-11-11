@@ -89,7 +89,10 @@ function prepareAdminData_(name, p, read = readAdminRows_) {
           "ThongSoKyThuat",
           "congDung",
           "danhMucCanKiemTra",
-          "thongSoTieuChuan",
+          "thamSoCanKiemTra",
+          "chiTieuDanhGia1",
+          "chiTieuDanhGia2",
+          "chiTieuDanhGia3",
         ].includes(k)
           ? 10000
           : 500,

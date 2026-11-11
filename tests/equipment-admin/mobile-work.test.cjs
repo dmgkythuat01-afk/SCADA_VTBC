@@ -100,7 +100,7 @@ test("changed standards reset draft checks; require fresh criteria and all actua
     t = s.login("KyThuat"),
     r = s.create(u);
   let d = s.start(t, r);
-  s.catalog.DanhMucCanKiemTra[0].thongSoTieuChuan = "<50°C";
+  s.catalog.DanhMucCanKiemTra[0].thamSoCanKiemTra = "<50°C";
   a.throws(() => s.submit(t, d), /thay đổi/);
   d = s.start(t, s.tables.Requests[0]);
   a.deepEqual(JSON.parse(d.checks), []);

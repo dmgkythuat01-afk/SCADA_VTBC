@@ -102,7 +102,7 @@ function mobileWorkCatalog_() {
         active: maintenanceActive_(device),
         revision: 1,
         checklist: JSON.stringify(
-          checks.map((c) => c.danhMucCanKiemTra + " · " + c.thongSoTieuChuan),
+          checks.map(equipmentCriterionLabel_),
         ),
       });
   });
@@ -120,23 +120,13 @@ function mobileWorkReportCriteria_(request) {
 function mobileWorkRefreshDraftCriteria_(draft, request) {
   const source = mobileWorkReportCriteria_(request);
   draft.criteriaSnapshot = JSON.stringify(
-    source.map((c) => ({
-      danhMucCanKiemTra: c.danhMucCanKiemTra,
-      thongSoTieuChuan: c.thongSoTieuChuan,
-    })),
+    source.map(equipmentCriterionSnapshot_),
   );
   draft.criteriaVersion = maintenanceCriteriaVersion_(
     source,
     mobileWorkSecret_(),
   );
-  draft.checklist = JSON.stringify(
-    source.map(
-      (c) =>
-        c.danhMucCanKiemTra +
-        " · Tiêu chuẩn: " +
-        (c.thongSoTieuChuan || "Chưa khai báo"),
-    ),
-  );
+  draft.checklist = JSON.stringify(source.map(equipmentCriterionLabel_));
   draft.checks = "[]";
   draft.actualResults = "[]";
   return draft;

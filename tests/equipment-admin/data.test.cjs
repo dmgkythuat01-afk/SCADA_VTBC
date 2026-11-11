@@ -75,10 +75,19 @@ test("workshop/machine/device/checklist CRUD validates dependencies and duplicat
       tenMay: "Máy A",
       maThietBi: "TB1",
       danhMucCanKiemTra: "Nhiệt độ",
-      thongSoTieuChuan: "< 60°C",
+      thamSoCanKiemTra: "< 60°C",
+      chiTieuDanhGia1: "Đánh giá 1 ".repeat(60),
+      chiTieuDanhGia2: "Không rung",
+      chiTieuDanhGia3: "Không rò rỉ",
     },
   });
   assert.equal(tables.DanhMucCanKiemTra.length, 1);
+  assert.equal(tables.DanhMucCanKiemTra[0].chiTieuDanhGia1,"Đánh giá 1 ".repeat(60).trim());
+  const criterion=c.publicAdminRow_("DanhMucCanKiemTra",tables.DanhMucCanKiemTra[0]);
+  c.saveAdminData_("DanhMucCanKiemTra",{...criterion,values:{chiTieuDanhGia2:"Không tiếng ồn"}});
+  assert.equal(tables.DanhMucCanKiemTra[0].thamSoCanKiemTra,"< 60°C");
+  assert.equal(tables.DanhMucCanKiemTra[0].chiTieuDanhGia2,"Không tiếng ồn");
+  assert.equal(tables.DanhMucCanKiemTra[0].chiTieuDanhGia3,"Không rò rỉ");
   assert.throws(() =>
     c.saveAdminData_("DanhMucThietBi", {
       values: {

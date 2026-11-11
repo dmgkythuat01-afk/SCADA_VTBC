@@ -84,7 +84,10 @@ const ADMIN_TABLES = {
       tenMay: "Tên máy",
       maThietBi: "Mã thiết bị",
       danhMucCanKiemTra: "Chỉ tiêu cần kiểm tra",
-      thongSoTieuChuan: "Thông số tiêu chuẩn",
+      thamSoCanKiemTra: "Tham số cần kiểm tra",
+      chiTieuDanhGia1: "Chỉ tiêu đánh giá 1",
+      chiTieuDanhGia2: "Chỉ tiêu đánh giá 2",
+      chiTieuDanhGia3: "Chỉ tiêu đánh giá 3",
     },
   },
 };
