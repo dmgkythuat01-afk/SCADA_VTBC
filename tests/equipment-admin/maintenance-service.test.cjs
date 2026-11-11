@@ -283,31 +283,11 @@ test("private photos are scoped to actor/request/device and history membership; 
     }),
   );
 });
-test("weekly mail escapes source text, deduplicates success and retries explicit mail failure", () => {
+test("retired maintenance rejects admin API and scheduled mail does not read or send", () => {
   const s = setup();
-  s.catalog.DanhMucThietBi[0].tenThietBi = "<script>";
-  s.failMail(true);
-  a.throws(() => s.c.baoCaoBaoDuongDinhKy_());
-  a.equal(s.tables.NhatKyThongBaoBaoDuong[0].trangThai, "failed");
-  s.failMail(false);
-  s.c.baoCaoBaoDuongDinhKy_();
-  a.equal(s.tables.NhatKyThongBaoBaoDuong[0].trangThai, "sent");
-  a.ok(s.c.lastMail.htmlBody.includes("&lt;script&gt;"));
-  const sent = s.mailCount;
-  s.c.baoCaoBaoDuongDinhKy_();
-  a.equal(s.mailCount, sent);
-});
-test("mail delivered before a logging failure is not automatically sent a second time", () => {
-  const s = setup(),
-    write = s.c.maintenanceWrite_;
-  s.c.maintenanceWrite_ = (name, row) => {
-    if (name === "NhatKyThongBaoBaoDuong" && row.trangThai === "sent")
-      throw Error("logging failed");
-    return write(name, row);
-  };
-  a.throws(() => s.c.baoCaoBaoDuongDinhKy_());
-  a.equal(s.mailCount, 1);
-  a.equal(s.tables.NhatKyThongBaoBaoDuong[0].trangThai, "sending");
-  s.c.baoCaoBaoDuongDinhKy_();
-  a.equal(s.mailCount, 1);
+  s.c.maintenanceSendReport_ = () => { throw Error("must not send"); };
+  a.equal(s.c.baoCaoBaoDuongDinhKy_().reason, "maintenance_module_retired");
+  a.equal(s.mailCount, 0);
+  a.equal(s.tables.NhatKyThongBaoBaoDuong.length, 0);
+  a.throws(() => s.c.maintenanceApi("", "snapshot"), /đã được gỡ/);
 });

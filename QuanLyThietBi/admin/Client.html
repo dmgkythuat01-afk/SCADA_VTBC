@@ -32,7 +32,7 @@
       DanhMucBoPhan: "Các phòng ban và bộ phận quản lý trong công ty.",
       DanhMucXuong: "Danh sách xưởng dùng để liên kết máy và thiết bị.",
       DanhMucMay: "Danh sách máy được phân theo từng xưởng.",
-      DanhMucThietBi: "Thông tin thiết bị, người quản lý và chu kỳ bảo dưỡng.",
+      DanhMucThietBi: "Thông tin thiết bị và người quản lý.",
       DanhMucCanKiemTra:
         "Các chỉ tiêu và thông số tiêu chuẩn của từng thiết bị.",
     };
@@ -44,7 +44,7 @@
         "Thêm xưởng trước, sau đó vào danh mục Máy để tạo máy thuộc xưởng.",
       DanhMucMay: "Tên xưởng được chọn từ danh mục Xưởng hiện có.",
       DanhMucThietBi:
-        "Chọn xưởng → máy; mã và tên người quản lý lấy từ danh mục Tài khoản. Chu kỳ bảo dưỡng tính theo số ngày.",
+        "Chọn xưởng → máy; mã và tên người quản lý lấy từ danh mục Tài khoản.",
       DanhMucCanKiemTra:
         "Chọn xưởng → máy → mã thiết bị để nhập các chỉ tiêu kiểm tra tương ứng.",
     };
@@ -89,11 +89,14 @@
         $("loginError").textContent = e.message;
         return;
       }
+      if (!$("login").hidden) {
+        $("loginError").textContent = e.message;
+        return;
+      }
       $("pageError").textContent = e.message;
       $("pageError").hidden = false;
     }
     function showLogin() {
-      window.DMGMaintenance?.reset();
       S.token = "";
       S.data = null;
       S.editing = null;
@@ -276,7 +279,6 @@
       $("tableHint").textContent = "Danh mục dùng chung · " + spec().label;
     }
     function render() {
-      window.DMGMaintenance?.showDataEntry();
       navigation();
       $("pageTitle").textContent = spec().label;
       $("breadcrumbLabel").textContent = spec().label;

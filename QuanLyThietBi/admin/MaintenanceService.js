@@ -290,26 +290,6 @@ function maintenanceSaveSettings_(user, p) {
   maintenanceSetSetting_("guiEmail", p.enabled ? "true" : "false");
   return { success: true };
 }
-function maintenanceApi(token, action, payload) {
-  const lock = LockService.getScriptLock();
-  lock.waitLock(30000);
-  try {
-    const user = requireAdminSession_(token),
-      p = payload || {};
-    if (typeof mobileWorkReconcileIfReady_ === "function") mobileWorkReconcileIfReady_();
-    if (action === "snapshot") return maintenanceSnapshot_(user);
-    if (action === "saveHistory") {
-      const record = maintenanceSaveHistory_(user, p);
-      return { record, snapshot: maintenanceSnapshot_(user) };
-    }
-    if (action === "uploadPhoto") return maintenanceUploadPhoto_(user, p);
-    if (action === "photo") return maintenanceReadPhoto_(user, p);
-    if (action === "saveSettings") {
-      maintenanceSaveSettings_(user, p);
-      return maintenanceSnapshot_(user);
-    }
-    throw Error("Thao tác bảo dưỡng không hợp lệ.");
-  } finally {
-    lock.releaseLock();
-  }
+function maintenanceApi() {
+  throw Error("Chức năng bảo dưỡng cũ đã được gỡ. Vui lòng dùng menu Nhập dữ liệu.");
 }

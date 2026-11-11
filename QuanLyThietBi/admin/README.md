@@ -39,3 +39,7 @@ Email hiển thị tối đa100 thiết bị ưu tiên theo hạn để báo cá
 ## Cập nhật danh mục 11/11/2026
 
 DanhMucThietBi không còn cột soNgayCanBaoDuong. DanhMucCanKiemTra dùng boPhanDanhGia (Điện/Cơ khí), loai và tanSuat. Loại và Tần suất lấy hai danh sách độc lập từ ThamSoHeThong; tải lại dữ liệu sau khi đổi tham số. Form đặt ba lựa chọn sau thiết bị; bảng giữ thứ tự cột vật lý. Checklist và lịch sử lưu cả ba trường. Chưa chuyển thuật toán nhắc hạn cũ sang lịch riêng theo từng chỉ tiêu/tanSuat; thiết bị thiếu chu kỳ cũ không tự suy diễn hạn mới.
+
+## Tạm gỡ module bảo dưỡng 11/11/2026
+
+Admin chỉ còn sáu danh mục Nhập dữ liệu. Giao diện bảo dưỡng cũ chuyển ra archive ngoài rootDir Apps Script; API quản trị cũ từ chối truy cập, handler email định kỳ không gửi nữa. Giữ các hàm nội bộ còn được mobile sửa chữa dùng; không xóa/chỉnh dữ liệu Sheets hay ảnh Drive. Lỗi tải dữ liệu khi còn ở màn hình đăng nhập hiện ngay tại form đăng nhập.

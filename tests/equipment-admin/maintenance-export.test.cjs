@@ -4,7 +4,7 @@ const test = require("node:test"),
   vm = require("node:vm");
 test("Excel export produces a ZIP workbook with text cells instead of executable formulas", () => {
   const source = fs
-      .readFileSync("QuanLyThietBi/admin/MaintenanceExport.html", "utf8")
+      .readFileSync("QuanLyThietBi/archive/admin-maintenance-20261111/MaintenanceExport.html", "utf8")
       .replace(/<\/?script>/g, ""),
     c = { window: {}, TextEncoder };
   vm.createContext(c);

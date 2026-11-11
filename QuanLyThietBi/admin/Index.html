@@ -3,7 +3,6 @@
   <head>
     <base target="_top" />
     <?!= HtmlService.createHtmlOutputFromFile('Styles').getContent(); ?>
-    <?!= HtmlService.createHtmlOutputFromFile('MaintenanceStyles').getContent(); ?>
   </head>
   <body>
     <section id="login" class="login">
@@ -55,24 +54,7 @@
           <summary>▤ <b>Nhập dữ liệu</b><span>⌄</span></summary>
           <nav id="navigation" aria-label="Danh mục nhập dữ liệu"></nav>
         </details>
-        <details open class="nav-group">
-          <summary>⚙ <b>Quản lý thiết bị</b><span>⌄</span></summary>
-          <nav aria-label="Quản lý thiết bị">
-            <button type="button" data-m-page="alerts">
-              ◷ Thông báo bảo dưỡng
-            </button>
-            <button type="button" data-m-page="history">
-              ▤ Lịch sử bảo dưỡng
-            </button>
-            <button type="button" data-m-page="repairs">
-              ⌁ Lịch sử sửa chữa
-            </button>
-            <button type="button" data-m-page="profiles">
-              ◇ Hồ sơ thiết bị
-            </button>
-          </nav>
-        </details>
-        <div class="sidebar-bottom">
+<div class="sidebar-bottom">
           <span class="connection-dot"></span> Dữ liệu Google Sheets
           <div id="currentUser"></div>
           <button id="logout">Đăng xuất ↗</button>
@@ -133,7 +115,6 @@
           </section>
           <p id="relationHint" class="relation-hint"></p>
         </div>
-        <section id="maintenancePanel" hidden></section>
       </main>
     </div>
     <dialog id="editor">
@@ -190,9 +171,6 @@
       </form>
     </dialog>
     <div id="toast" class="toast" hidden role="status"></div>
-    <?!= HtmlService.createHtmlOutputFromFile('MaintenanceDialogs').getContent(); ?>
     <?!= HtmlService.createHtmlOutputFromFile('Client').getContent(); ?>
-    <?!= HtmlService.createHtmlOutputFromFile('MaintenanceExport').getContent(); ?>
-    <?!= HtmlService.createHtmlOutputFromFile('MaintenanceClient').getContent(); ?>
   </body>
 </html>
