@@ -420,7 +420,7 @@
             "Thiết bị",
             "Người quản lý",
             "Bảo dưỡng gần nhất",
-            "Chu kỳ",
+            "Tần suất theo chỉ tiêu",
             "Hạn bảo dưỡng",
             "Trạng thái",
             "Thao tác",
@@ -449,8 +449,8 @@
                 "</span></td><td>" +
                 esc(date(d.ngayBaoDuongGanNhat) || "Chưa ghi nhận") +
                 "</td><td>" +
-                esc(d.soNgayCanBaoDuong || "—") +
-                " ngày</td><td>" +
+                esc(criteriaFrequencies(d) || "—") +
+                "</td><td>" +
                 esc(date(d.ngayDenHan) || "—") +
                 "</td><td>" +
                 badge(status[d.trangThai], d.trangThai) +
@@ -749,17 +749,16 @@
                 ? "Ngày hoàn thành gần nhất: " + date(d.ngayBaoDuongGanNhat)
                 : "Ngày lắp đặt: " + date(d.ngayLapDat)) +
                 " + " +
-                d.soNgayCanBaoDuong +
-                " ngày"
+                (criteriaFrequencies(d) || "tần suất đã lưu")
             : d.lyDo,
         ) +
         '</div><h3 class="m-section-title">Chỉ tiêu kiểm tra</h3>' +
         (d.criteria.length
-          ? '<div class="m-table-wrap"><table class="m-criteria-table"><tr><th>Loại đánh giá</th><th>Chỉ tiêu</th><th>Tham số cần kiểm tra</th><th>Chỉ tiêu đánh giá 1</th><th>Chỉ tiêu đánh giá 2</th><th>Chỉ tiêu đánh giá 3</th></tr>' +
+          ? '<div class="m-table-wrap"><table class="m-criteria-table"><tr><th>Bộ phận đánh giá</th><th>Loại</th><th>Tần suất</th><th>Chỉ tiêu</th><th>Tham số cần kiểm tra</th><th>Chỉ tiêu đánh giá 1</th><th>Chỉ tiêu đánh giá 2</th><th>Chỉ tiêu đánh giá 3</th></tr>' +
             d.criteria
               .map(
                 (c) =>
-                  "<tr><td>" + esc(c.loaiDanhGia || "") + "</td><td>" +
+                  "<tr><td>" + esc(c.boPhanDanhGia ?? c.loaiDanhGia ?? "") + "</td><td>" + esc(c.loai || "") + "</td><td>" + esc(c.tanSuat || "") + "</td><td>" +
                   esc(c.danhMucCanKiemTra) +
                   "</td><td>" +
                   esc(criterionParameter(c)) +
@@ -878,9 +877,10 @@
       );
       updateRecordDevice();
     }
+    function criteriaFrequencies(d) { return [...new Set((d.criteria || []).map(c=>c.tanSuat).filter(Boolean))].join(", "); }
     function criterionParameter(c) { return c.thamSoCanKiemTra ?? c.thongSoTieuChuan ?? c.tieuChuan ?? ""; }
     function criterionAssessments(c) {
-      return (c.loaiDanhGia ? '<p><b>Loại đánh giá:</b> '+esc(c.loaiDanhGia)+'</p>' : '') + [1,2,3].filter(n => c["chiTieuDanhGia"+n]).map(n => '<p><b>Chỉ tiêu đánh giá '+n+':</b> '+esc(c["chiTieuDanhGia"+n])+'</p>').join('');
+      return [c.loai,c.tanSuat].filter(Boolean).map(v=>"<p>"+esc(v)+"</p>").join("") + (c.boPhanDanhGia ? '<p><b>Bộ phận đánh giá:</b> '+esc(c.boPhanDanhGia)+'</p>' : '') + [1,2,3].filter(n => c["chiTieuDanhGia"+n]).map(n => '<p><b>Chỉ tiêu đánh giá '+n+':</b> '+esc(c["chiTieuDanhGia"+n])+'</p>').join('');
     }
     function updateRecordDevice() {
       const f = $("maintenanceRecordForm"),
@@ -1110,11 +1110,11 @@
         esc(r.ketQua) +
         "</p>" +
         (checks.length
-          ? '<h3>Chi tiết kiểm tra</h3><div class="m-table-wrap"><table><tr><th>Loại đánh giá</th><th>Chỉ tiêu</th><th>Tham số cần kiểm tra</th><th>Chỉ tiêu đánh giá 1</th><th>Chỉ tiêu đánh giá 2</th><th>Chỉ tiêu đánh giá 3</th><th>Thực tế</th><th>Kết luận</th></tr>' +
+          ? '<h3>Chi tiết kiểm tra</h3><div class="m-table-wrap"><table><tr><th>Bộ phận đánh giá</th><th>Loại</th><th>Tần suất</th><th>Chỉ tiêu</th><th>Tham số cần kiểm tra</th><th>Chỉ tiêu đánh giá 1</th><th>Chỉ tiêu đánh giá 2</th><th>Chỉ tiêu đánh giá 3</th><th>Thực tế</th><th>Kết luận</th></tr>' +
             checks
               .map(
                 (c) =>
-                  "<tr><td>" + esc(c.loaiDanhGia || "") + "</td><td>" +
+                  "<tr><td>" + esc(c.boPhanDanhGia ?? c.loaiDanhGia ?? "") + "</td><td>" + esc(c.loai || "") + "</td><td>" + esc(c.tanSuat || "") + "</td><td>" +
                   esc(c.chiTieu) +
                   "</td><td>" +
                   esc(criterionParameter(c)) +
@@ -1190,7 +1190,7 @@
             "Tên thiết bị",
             "Người quản lý",
             "Bộ phận",
-            "Chu kỳ (ngày)",
+            "Tần suất theo chỉ tiêu",
             "Bảo dưỡng gần nhất",
             "Hạn bảo dưỡng",
             "Trạng thái",
@@ -1202,7 +1202,7 @@
             d.tenThietBi,
             d.tenNguoiQuanLy,
             d.tenBoPhanQuanLy,
-            d.soNgayCanBaoDuong,
+            criteriaFrequencies(d),
             date(d.ngayBaoDuongGanNhat),
             date(d.ngayDenHan),
             status[d.trangThai],
@@ -1245,7 +1245,7 @@
             parse(r.chiTietKiemTra)
               .map(
                 (c) =>
-                  (c.loaiDanhGia || "") + " | " + c.chiTieu +
+                  (c.boPhanDanhGia ?? c.loaiDanhGia ?? "") + " | " + (c.loai || "") + " | " + (c.tanSuat || "") + " | " + c.chiTieu +
                   " | " +
                   criterionParameter(c) + " | " + [1,2,3].map(n=>c["chiTieuDanhGia"+n] || "").join(" | ") +
                   " | " +

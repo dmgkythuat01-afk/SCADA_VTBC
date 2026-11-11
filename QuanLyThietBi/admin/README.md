@@ -35,3 +35,7 @@ Email mặc định nhận tại tài khoản Google triển khai. Đổi danh s
 Email hiển thị tối đa100 thiết bị ưu tiên theo hạn để báo cáo gọn; số tổng hợp tính trên toàn bộ danh sách. App và Excel hiển thị/xuất đầy đủ theo bộ lọc.
 
 Ảnh hỗ trợ chọn nhiều/chụp, tối đa12JPEG, mỗi ảnh tối đa3MB sau thu nhỏ. Không chia sẻ công khai thư mục; chỉ phiên admin được đọc ảnh thuộc một bản ghi lịch sử. Nếu hủy sau khi tải ảnh hoặc lỗi khi lưu, file chưa liên kết vẫn riêng tư trong thư mục, không được đưa vào lịch sử.
+
+## Cập nhật danh mục 11/11/2026
+
+DanhMucThietBi không còn cột soNgayCanBaoDuong. DanhMucCanKiemTra dùng boPhanDanhGia (Điện/Cơ khí), loai và tanSuat. Loại và Tần suất lấy hai danh sách độc lập từ ThamSoHeThong; tải lại dữ liệu sau khi đổi tham số. Form đặt ba lựa chọn sau thiết bị; bảng giữ thứ tự cột vật lý. Checklist và lịch sử lưu cả ba trường. Chưa chuyển thuật toán nhắc hạn cũ sang lịch riêng theo từng chỉ tiêu/tanSuat; thiết bị thiếu chu kỳ cũ không tự suy diễn hạn mới.

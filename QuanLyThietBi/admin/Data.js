@@ -104,8 +104,14 @@ function prepareAdminData_(name, p, read = readAdminRows_) {
       throw Error("Vui lòng nhập " + spec.columns[k].toLowerCase() + ".");
   });
   const all = read(name);
-  if (name === "DanhMucCanKiemTra" && !["Điện", "Cơ khí"].includes(row.loaiDanhGia))
-    throw Error("Loại đánh giá chỉ được chọn Điện hoặc Cơ khí.");
+  if (name === "DanhMucCanKiemTra" && !["Điện", "Cơ khí"].includes(row.boPhanDanhGia))
+    throw Error("Bộ phận đánh giá chỉ được chọn Điện hoặc Cơ khí.");
+  if (name === "DanhMucCanKiemTra") {
+    const parameters=equipmentSystemParameters_();
+    for (const key of ["loai","tanSuat"]) {
+      if (!parameters[key].includes(row[key])) throw Error(spec.columns[key]+" phải chọn từ sheet ThamSoHeThong hiện tại.");
+    }
+  }
   if (
     all.some(
       (r) =>
@@ -178,13 +184,6 @@ function prepareAdminData_(name, p, read = readAdminRows_) {
     )
       throw Error("Số lượng phải là số nguyên không âm.");
     if (row.ngayLapDat) adminDate_(row.ngayLapDat);
-    if (
-      row.soNgayCanBaoDuong &&
-      (!/^\d+$/.test(row.soNgayCanBaoDuong) ||
-        Number(row.soNgayCanBaoDuong) < 1 ||
-        Number(row.soNgayCanBaoDuong) > 36500)
-    )
-      throw Error("Chu kỳ bảo dưỡng phải là số ngày nguyên dương.");
     if (row.maNguoiQuanLy) {
       const matches = read("TaiKhoan").filter(
         (r) =>
