@@ -1,7 +1,7 @@
 const {test}=require('node:test'),assert=require('node:assert/strict');
 const {setup}=require('./mobile-work-fixture.cjs');
-const columns=['tenXuong','tenMay','maThietBi','danhMucCanKiemTra','thamSoCanKiemTra','chiTieuDanhGia1','chiTieuDanhGia2','chiTieuDanhGia3','boPhanDanhGia','loai','tanSuat'];
-test('admin accepts the eleven actual headers without the removed standard column',()=>{
+const columns=['tenXuong','tenMay','maThietBi','tenThietBi','danhMucCanKiemTra','thamSoCanKiemTra','chiTieuDanhGia1','chiTieuDanhGia2','chiTieuDanhGia3','boPhanDanhGia','loai','tanSuat'];
+test('admin accepts the twelve actual headers without the removed standard column',()=>{
  const f=setup(),headers=[...columns].reverse(),sheet={getLastColumn:()=>headers.length,getRange:()=>({getValues:()=>[headers]})};
  const {map}=f.c.adminHeader_('DanhMucCanKiemTra',sheet);
  assert.deepEqual(Object.keys(map).sort(),[...columns].sort());assert.equal(map.thamSoCanKiemTra,headers.indexOf('thamSoCanKiemTra'));

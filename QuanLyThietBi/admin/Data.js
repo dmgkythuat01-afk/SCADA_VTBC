@@ -217,6 +217,7 @@ function prepareAdminData_(name, p, read = readAdminRows_) {
     if (matches.length !== 1)
       throw Error("Thiết bị không thuộc xưởng/máy đã chọn.");
     row.maThietBi = matches[0].maThietBi;
+    row.tenThietBi = matches[0].tenThietBi || "";
   }
   return row;
 }

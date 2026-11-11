@@ -82,6 +82,7 @@ const ADMIN_TABLES = {
       tenXuong: "Tên xưởng",
       tenMay: "Tên máy",
       maThietBi: "Mã thiết bị",
+      tenThietBi: "Tên thiết bị",
       boPhanDanhGia: "Bộ phận đánh giá",
       loai: "Loại",
       tanSuat: "Tần suất",

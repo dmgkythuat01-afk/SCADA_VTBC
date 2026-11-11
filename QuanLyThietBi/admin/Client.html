@@ -363,7 +363,7 @@
           S.table !== "DanhMucXuong" &&
           !(S.table === "DanhMucMay" && k === "tenMay") &&
           !(S.table === "DanhMucBoPhan" && k === "tenBoPhanQuanLy")) ||
-        (S.table === "DanhMucCanKiemTra" && k === "maThietBi")
+        (S.table === "DanhMucCanKiemTra" && k === "tenThietBi")
       );
     }
     function openEditor(row) {
@@ -382,7 +382,7 @@
       if (S.table === "DanhMucCanKiemTra") {
         const dependent=["boPhanDanhGia","loai","tanSuat"].filter(k=>fieldOrder.includes(k));
         dependent.forEach(k=>fieldOrder.splice(fieldOrder.indexOf(k),1));
-        fieldOrder.splice(fieldOrder.indexOf("maThietBi")+1,0,...dependent);
+        fieldOrder.splice(fieldOrder.indexOf("tenThietBi")+1,0,...dependent);
       }
       $("editorFields").innerHTML = fieldOrder
         .map((key) => [key, spec().columns[key]])
@@ -418,7 +418,9 @@
             type,
             value,
             required || (k === "matKhau" && !row),
-            k === "ThoiGianCapNhat"
+            S.table === "DanhMucCanKiemTra" && k === "maThietBi"
+              ? 'readonly placeholder="Tự điền khi chọn tên thiết bị"'
+              : k === "ThoiGianCapNhat"
               ? 'readonly placeholder="Tự động khi lưu"'
               : k === "soLuong"
                   ? 'min="0" step="1"'
@@ -590,18 +592,11 @@
             .map((r) => r.tenMay),
           values.tenMay,
         );
-      if (S.table === "DanhMucCanKiemTra")
-        setOptions(
-          "maThietBi",
-          rows("DanhMucThietBi")
-            .filter(
-              (r) =>
-                r.tenXuong === f.elements.tenXuong.value &&
-                r.tenMay === f.elements.tenMay.value,
-            )
-            .map((r) => r.maThietBi),
-          values.maThietBi,
-        );
+      if (S.table === "DanhMucCanKiemTra") {
+        const devices=rows("DanhMucThietBi").filter(r=>r.tenXuong===f.elements.tenXuong.value && r.tenMay===f.elements.tenMay.value);
+        setOptions("tenThietBi",devices.map(r=>[r.maThietBi,(r.tenThietBi || "Chưa có tên")+" · "+r.maThietBi]),values.maThietBi);
+        f.elements.maThietBi.value=values.maThietBi || "";
+      }
       if (S.table === "DanhMucThietBi") {
         const people = rows("TaiKhoan").filter((a) => a.maNhanVien);
         setOptions(
@@ -660,6 +655,8 @@
       } else if (name === "tenMay") {
         v.maThietBi = "";
         setFormOptions(v);
+      } else if (S.table === "DanhMucCanKiemTra" && name === "tenThietBi") {
+        f.elements.maThietBi.value=e.target.value;
       } else if (name === "maNguoiQuanLy" || name === "tenNguoiQuanLy") {
         const id = e.target.value;
         f.elements.maNguoiQuanLy.value = id;
@@ -671,6 +668,10 @@
       if (S.busy) return;
       if (equipmentBatchMode()) return saveEquipmentBatch();
       const values = Object.fromEntries(new FormData($("editorForm")));
+      if (S.table === "DanhMucCanKiemTra") {
+        const device=rows("DanhMucThietBi").find(r=>r.tenXuong===values.tenXuong && r.tenMay===values.tenMay && r.maThietBi===values.maThietBi);
+        values.tenThietBi=device?.tenThietBi || "";
+      }
       if (S.table === "DanhMucThietBi") {
         const person = rows("TaiKhoan").find(
           (a) => a.maNhanVien === values.maNguoiQuanLy,
