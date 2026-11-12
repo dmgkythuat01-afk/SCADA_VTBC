@@ -302,3 +302,17 @@ test("admin API requires active admin session and deduplicates repeated writes",
   tables.TaiKhoan[0].chucVu = "KyThuat";
   assert.throws(() => c.adminApi(login.token, "snapshot", {}));
 });
+
+test("checklist batch validates all rows before writing and derives equipment names",()=>{
+ const {c,tables}=setup();
+ tables.DanhMucXuong.push({_row:2,tenXuong:"A"});
+ tables.DanhMucMay.push({_row:2,tenXuong:"A",tenMay:"M"});
+ tables.DanhMucThietBi.push({_row:2,tenXuong:"A",tenMay:"M",maThietBi:"T1",tenThietBi:"Động cơ"});
+ const first={tenXuong:"A",tenMay:"M",maThietBi:"T1",tenThietBi:"Giả",danhMucCanKiemTra:"Nhiệt độ",thamSoCanKiemTra:"60°C",boPhanDanhGia:"Điện",loai:"Bảo dưỡng",tanSuatThamSo:"7 ngày"};
+ let writes=0;c.writeAdminBatch_=(name,rows)=>{writes++;tables[name].push(...rows);};
+ assert.throws(()=>c.saveAdminBatch_("DanhMucCanKiemTra",[first,{...first,danhMucCanKiemTra:"Rung",maThietBi:"Sai"}]),/Dòng 2/);
+ assert.equal(writes,0);
+ assert.throws(()=>c.saveAdminBatch_("DanhMucCanKiemTra",[first,{...first}]),/Dòng 2/);assert.equal(writes,0);
+ c.saveAdminBatch_("DanhMucCanKiemTra",[first,{...first,danhMucCanKiemTra:"Rung"}]);
+ assert.equal(writes,1);assert.equal(tables.DanhMucCanKiemTra.length,2);assert.equal(tables.DanhMucCanKiemTra[0].tenThietBi,"Động cơ");
+});

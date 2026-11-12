@@ -227,10 +227,10 @@ function saveAdminData_(name, p) {
   return row;
 }
 function saveAdminBatch_(name, values) {
-  if (name !== "DanhMucThietBi")
-    throw Error("Chỉ hỗ trợ thêm danh sách thiết bị.");
+  if (!["DanhMucThietBi", "DanhMucCanKiemTra"].includes(name))
+    throw Error("Chỉ hỗ trợ thêm danh sách thiết bị hoặc danh mục kiểm tra.");
   if (!Array.isArray(values) || values.length < 1 || values.length > 100)
-    throw Error("Danh sách cần có từ 1 đến 100 thiết bị.");
+    throw Error("Danh sách cần có từ 1 đến 100 dòng.");
   const tables = {},
     prepared = [];
   const read = (table) =>

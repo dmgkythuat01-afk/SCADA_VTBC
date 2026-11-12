@@ -440,14 +440,18 @@
       $("editor").showModal();
     }
     function equipmentBatchMode() {
-      return S.table === "DanhMucThietBi" && !S.editing;
+      return ["DanhMucThietBi", "DanhMucCanKiemTra"].includes(S.table) && !S.editing;
     }
     function equipmentFormValues() {
       const values = Object.fromEntries(new FormData($("editorForm")));
       const person = rows("TaiKhoan").find(
         (a) => a.maNhanVien === values.maNguoiQuanLy,
       );
-      values.tenNguoiQuanLy = person?.hoTen || "";
+      if (S.table === "DanhMucThietBi") values.tenNguoiQuanLy = person?.hoTen || "";
+      if (S.table === "DanhMucCanKiemTra") {
+        const device=rows("DanhMucThietBi").find(r=>r.tenXuong===values.tenXuong && r.tenMay===values.tenMay && r.maThietBi===values.maThietBi);
+        values.tenThietBi=device?.tenThietBi || "";
+      }
       return values;
     }
     function addEquipmentToBatch() {
@@ -456,7 +460,7 @@
       if (!$("editorForm").reportValidity()) return;
       if (S.queued.length >= 100) {
         $("formError").textContent =
-          "Mỗi lượt tối đa 100 thiết bị. Hãy lưu danh sách hiện tại trước.";
+          "Mỗi lượt tối đa 100 dòng. Hãy lưu danh sách hiện tại trước.";
         return;
       }
       const values = equipmentFormValues();
@@ -470,7 +474,7 @@
         );
       if ([...rows(), ...S.queued].some((row) => key(row) === key(values))) {
         $("formError").textContent =
-          "Thiết bị này đã có trong danh mục hoặc danh sách chờ lưu.";
+          "Dòng này đã có trong danh mục hoặc danh sách chờ lưu.";
         return;
       }
       S.queued.push({ ...values });
@@ -508,11 +512,11 @@
                   .join("") +
                 '<td class="row-actions"><button type="button" data-remove-queued="' +
                 index +
-                '">Bỏ dòng</button></td></tr>',
+                '">Xóa dòng</button></td></tr>',
             )
             .join("") +
           "</tbody></table>"
-        : '<div class="batch-empty">Chưa có thiết bị chờ lưu. Nhập thông tin phía trên rồi bấm “Thêm vào danh sách”.</div>';
+        : '<div class="batch-empty">Chưa có dòng chờ lưu. Nhập thông tin phía trên rồi bấm “Thêm vào danh sách”.</div>';
     }
     function closeEditor() {
       if (S.busy) return;
@@ -527,7 +531,7 @@
     async function saveEquipmentBatch() {
       if (!S.queued.length) {
         $("formError").textContent =
-          "Hãy thêm thiết bị vào danh sách trước khi lưu.";
+          "Hãy thêm dòng vào danh sách trước khi lưu.";
         return;
       }
       const count = S.queued.length;
@@ -536,7 +540,7 @@
       $("save").disabled = true;
       $("addToBatch").disabled = true;
       $("formError").textContent = "";
-      $("save").textContent = "Đang lưu " + count + " thiết bị…";
+      $("save").textContent = "Đang lưu " + count + " dòng…";
       try {
         S.data = await api("saveBatch", {
           table: S.table,
@@ -546,7 +550,7 @@
         S.queued = [];
         $("editor").close();
         showData();
-        toast("Đã lưu " + count + " thiết bị.");
+        toast("Đã lưu " + count + " dòng.");
       } catch (error) {
         $("formError").textContent = error.message;
       } finally {
