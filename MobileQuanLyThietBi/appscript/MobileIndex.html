@@ -24,20 +24,12 @@
         <span class="m-logo">D</span
         ><span>DMG <small>BẢO TRÌ THIẾT BỊ</small></span>
       </div>
-      <div class="m-login-copy">
-        <span class="m-eyebrow">KẾT NỐI VẬN HÀNH & KỸ THUẬT</span>
-        <h1>
-          Gửi yêu cầu.<br />Theo dõi đến khi<br /><em>khắc phục xong.</em>
-        </h1>
-        <p>
-          Mỗi công việc đều có người thực hiện, hình ảnh và xác nhận rõ ràng.
-        </p>
-      </div>
       <form id="mobileLoginForm" class="m-login-form">
         <h2>Đăng nhập</h2>
         <label
           >Tên đăng nhập<input
             id="mobileUsername"
+            enterkeyhint="next"
             autocomplete="username"
             autocapitalize="none"
             autocorrect="off"
@@ -48,6 +40,7 @@
           <div class="m-password">
             <input
               id="mobilePassword"
+              enterkeyhint="go"
               type="password"
               autocomplete="current-password"
               required
@@ -67,6 +60,15 @@
         </button>
         <p class="m-hint">Dùng chung tài khoản với trang quản lý thiết bị.</p>
       </form>
+      <div class="m-login-copy">
+        <span class="m-eyebrow">KẾT NỐI VẬN HÀNH & KỸ THUẬT</span>
+        <h1>
+          Gửi yêu cầu.<br />Theo dõi đến khi<br /><em>khắc phục xong.</em>
+        </h1>
+        <p>
+          Mỗi công việc đều có người thực hiện, hình ảnh và xác nhận rõ ràng.
+        </p>
+      </div>
       <a class="m-desktop-link" target="_top" href="<?= equipmentBaseUrl_() ?>"
         >Mở trang quản lý trên máy tính</a
       >

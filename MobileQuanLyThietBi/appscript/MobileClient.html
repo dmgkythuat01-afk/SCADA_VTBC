@@ -1594,6 +1594,9 @@
         })
         .finally(() => (target.disabled = false));
     });
+    $("mobileUsername").addEventListener("keydown", (event) => {
+      if (event.key === "Enter") { event.preventDefault(); $("mobilePassword").focus(); }
+    });
     $("mobileLoginForm").onsubmit = async (e) => {
       e.preventDefault();
       $("mobileLoginButton").disabled = true;
