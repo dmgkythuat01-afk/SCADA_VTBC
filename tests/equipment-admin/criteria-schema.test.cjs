@@ -1,6 +1,6 @@
 const {test}=require('node:test'),assert=require('node:assert/strict');
 const {setup}=require('./mobile-work-fixture.cjs');
-const columns=['tenXuong','tenMay','maThietBi','tenThietBi','danhMucCanKiemTra','thamSoCanKiemTra','chiTieuDanhGia1','chiTieuDanhGia2','chiTieuDanhGia3','boPhanDanhGia','loai','tanSuat'];
+const columns=['tenXuong','tenMay','maThietBi','tenThietBi','danhMucCanKiemTra','thamSoCanKiemTra','chiTieuDanhGia1','chiTieuDanhGia2','chiTieuDanhGia3','boPhanDanhGia','loai','tanSuatThamSo'];
 test('admin accepts the twelve actual headers without the removed standard column',()=>{
  const f=setup(),headers=[...columns].reverse(),sheet={getLastColumn:()=>headers.length,getRange:()=>({getValues:()=>[headers]})};
  const {map}=f.c.adminHeader_('DanhMucCanKiemTra',sheet);
@@ -8,7 +8,7 @@ test('admin accepts the twelve actual headers without the removed standard colum
 });
 test('mobile snapshots and draft versions include parameter and all three assessment criteria',()=>{
  const f=setup(),owner=f.login('TruongCa'),worker=f.login('KyThuat'),c=f.catalog.DanhMucCanKiemTra[0];
- delete c.thongSoTieuChuan;Object.assign(c,{boPhanDanhGia:'Điện',loai:'Bảo dưỡng',tanSuat:'7 ngày',thamSoCanKiemTra:'Nhiệt độ vỏ động cơ',chiTieuDanhGia1:'Dưới60°C',chiTieuDanhGia2:'Không rung',chiTieuDanhGia3:'Không ồn'});
+ delete c.thongSoTieuChuan;Object.assign(c,{boPhanDanhGia:'Điện',loai:'Bảo dưỡng',tanSuatThamSo:'7 ngày',thamSoCanKiemTra:'Nhiệt độ vỏ động cơ',chiTieuDanhGia1:'Dưới60°C',chiTieuDanhGia2:'Không rung',chiTieuDanhGia3:'Không ồn'});
  const original=f.c.maintenanceCriteriaVersion_([c]);
  for(const key of columns.slice(4)){const changed={...c,[key]:c[key]+' mới'};assert.notEqual(f.c.maintenanceCriteriaVersion_([changed]),original,key);}
  const r=f.create(owner),d=f.start(worker,r),snapshot=JSON.parse(d.criteriaSnapshot)[0];

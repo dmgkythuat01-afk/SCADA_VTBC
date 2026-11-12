@@ -4,7 +4,7 @@ function equipmentCriterionSnapshot_(row) {
   return {
     boPhanDanhGia:String(row.boPhanDanhGia ?? row.loaiDanhGia ?? ""),
     loai:String(row.loai ?? ""),
-    tanSuat:String(row.tanSuat ?? ""),
+    tanSuatThamSo:String(row.tanSuatThamSo ?? row.tanSuat ?? ""),
     danhMucCanKiemTra:String(row.danhMucCanKiemTra ?? row.chiTieu ?? ""),
     thamSoCanKiemTra:String(row.thamSoCanKiemTra ?? row.thongSoTieuChuan ?? row.tieuChuan ?? ""),
     chiTieuDanhGia1:String(row.chiTieuDanhGia1 ?? ""),
@@ -14,7 +14,7 @@ function equipmentCriterionSnapshot_(row) {
 }
 function equipmentCriterionLabel_(row) {
   const c=equipmentCriterionSnapshot_(row);
-  return [(c.boPhanDanhGia ? "["+c.boPhanDanhGia+"] " : "")+c.danhMucCanKiemTra,...[c.loai,c.tanSuat].filter(Boolean),"Tham số: "+(c.thamSoCanKiemTra || "Chưa khai báo"),
+  return [(c.boPhanDanhGia ? "["+c.boPhanDanhGia+"] " : "")+c.danhMucCanKiemTra,...[c.loai,c.tanSuatThamSo].filter(Boolean),"Tham số: "+(c.thamSoCanKiemTra || "Chưa khai báo"),
     ...[1,2,3].filter(n=>c["chiTieuDanhGia"+n]).map(n=>"Đánh giá "+n+": "+c["chiTieuDanhGia"+n])].join(" · ");
 }
 function equipmentCriterionHistory_(row,actual,outcome) {

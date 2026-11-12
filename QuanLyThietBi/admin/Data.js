@@ -108,7 +108,7 @@ function prepareAdminData_(name, p, read = readAdminRows_) {
     throw Error("Bộ phận đánh giá chỉ được chọn Điện hoặc Cơ khí.");
   if (name === "DanhMucCanKiemTra") {
     const parameters=equipmentSystemParameters_();
-    for (const key of ["loai","tanSuat"]) {
+    for (const key of ["loai","tanSuatThamSo"]) {
       if (!parameters[key].includes(row[key])) throw Error(spec.columns[key]+" phải chọn từ sheet ThamSoHeThong hiện tại.");
     }
   }

@@ -3,12 +3,12 @@ test('system parameters use independent sparse columns, trim and deduplicate wit
  const c={};vm.createContext(c);const source=fs.readFileSync('QuanLyThietBi/admin/EquipmentParameters.js','utf8');vm.runInContext(source,c);
  const values=[['tanSuat','loai'],['7 ngày','Bảo dưỡng'],['6 tháng','Vệ sinh'],['1 năm',''],[' 7 ngày ','Bảo dưỡng']];
  const result=c.equipmentSystemParameters_({getDataRange:()=>({getValues:()=>values})});
- assert.deepEqual(JSON.parse(JSON.stringify(result)),{loai:['Bảo dưỡng','Vệ sinh'],tanSuat:['7 ngày','6 tháng','1 năm']});
+ assert.deepEqual(JSON.parse(JSON.stringify(result)),{loai:['Bảo dưỡng','Vệ sinh'],tanSuatThamSo:['7 ngày','6 tháng','1 năm']});
  assert.throws(()=>c.equipmentSystemParameters_({getDataRange:()=>({getValues:()=>[['loai','loai','tanSuat']]})}),/trùng/);
 });
 test('live device schema no longer requires deleted cycle column and criterion has renamed department plus parameter fields',()=>{
  const c={};vm.createContext(c);vm.runInContext(fs.readFileSync('QuanLyThietBi/admin/Schema.js','utf8'),c);
  assert.ok(!Object.hasOwn(c.adminSpec_('DanhMucThietBi').columns,'soNgayCanBaoDuong'));
- const spec=c.adminSpec_('DanhMucCanKiemTra');for(const key of ['boPhanDanhGia','loai','tanSuat'])assert.ok(Object.hasOwn(spec.columns,key),key);
+ const spec=c.adminSpec_('DanhMucCanKiemTra');for(const key of ['boPhanDanhGia','loai','tanSuatThamSo'])assert.ok(Object.hasOwn(spec.columns,key),key);
  assert.ok(!Object.hasOwn(spec.columns,'loaiDanhGia'));
 });

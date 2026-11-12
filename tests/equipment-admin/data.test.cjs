@@ -23,7 +23,7 @@ function setup() {
   );
   Object.assign(c, {
     equipmentColumnOrder_: () => [],
-    equipmentSystemParameters_: () => ({loai:["Bảo dưỡng","Vệ sinh"],tanSuat:["7 ngày","6 tháng"]}),
+    equipmentSystemParameters_: () => ({loai:["Bảo dưỡng","Vệ sinh"],tanSuatThamSo:["7 ngày","6 tháng"]}),
     adminSecret_: () => "fixture-secret",
     adminHmac_: (s, k) =>
       crypto.createHmac("sha256", k).update(String(s)).digest("hex"),
@@ -78,7 +78,7 @@ test("workshop/machine/device/checklist CRUD validates dependencies and duplicat
       danhMucCanKiemTra: "Nhiệt độ",
       boPhanDanhGia: "Điện",
       loai: "Bảo dưỡng",
-      tanSuat: "7 ngày",
+      tanSuatThamSo: "7 ngày",
       thamSoCanKiemTra: "< 60°C",
       chiTieuDanhGia1: "Đánh giá 1 ".repeat(60),
       chiTieuDanhGia2: "Không rung",
@@ -87,11 +87,11 @@ test("workshop/machine/device/checklist CRUD validates dependencies and duplicat
   });
   assert.equal(tables.DanhMucCanKiemTra.length, 1);
   assert.equal(tables.DanhMucCanKiemTra[0].boPhanDanhGia,"Điện");
-  assert.equal(tables.DanhMucCanKiemTra[0].loai,"Bảo dưỡng");assert.equal(tables.DanhMucCanKiemTra[0].tanSuat,"7 ngày");
+  assert.equal(tables.DanhMucCanKiemTra[0].loai,"Bảo dưỡng");assert.equal(tables.DanhMucCanKiemTra[0].tanSuatThamSo,"7 ngày");
   const typeCheck=c.publicAdminRow_("DanhMucCanKiemTra",tables.DanhMucCanKiemTra[0]);
   assert.throws(()=>c.saveAdminData_("DanhMucCanKiemTra",{...typeCheck,values:{boPhanDanhGia:"Khác"}}),/Điện|Cơ khí/);
   assert.throws(()=>c.saveAdminData_("DanhMucCanKiemTra",{...typeCheck,values:{loai:"Tự nhập"}}),/ThamSoHeThong/);
-  assert.throws(()=>c.saveAdminData_("DanhMucCanKiemTra",{...typeCheck,values:{tanSuat:"3 giờ"}}),/ThamSoHeThong/);
+  assert.throws(()=>c.saveAdminData_("DanhMucCanKiemTra",{...typeCheck,values:{tanSuatThamSo:"3 giờ"}}),/ThamSoHeThong/);
   assert.equal(tables.DanhMucCanKiemTra[0].chiTieuDanhGia1,"Đánh giá 1 ".repeat(60).trim());
   const criterion=c.publicAdminRow_("DanhMucCanKiemTra",tables.DanhMucCanKiemTra[0]);
   c.saveAdminData_("DanhMucCanKiemTra",{...criterion,values:{chiTieuDanhGia2:"Không tiếng ồn"}});

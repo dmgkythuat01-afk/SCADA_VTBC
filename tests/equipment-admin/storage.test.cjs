@@ -45,7 +45,7 @@ test("all six menus receive physical header order even when sheets have no data 
   vm.runInContext(fs.readFileSync("QuanLyThietBi/admin/Schema.js", "utf8"), c);
   const schemas = vm.runInContext("ADMIN_TABLES", c);
   c.adminNow_ = () => "";
-  c.equipmentSystemParameters_ = () => ({loai:[],tanSuat:[]});
+  c.equipmentSystemParameters_ = () => ({loai:[],tanSuatThamSo:[]});
   c.adminSheet_ = (name) => {
     const headers = Object.keys(schemas[name].columns).reverse();
     return {

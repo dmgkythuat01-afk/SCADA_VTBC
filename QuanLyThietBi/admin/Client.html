@@ -378,7 +378,7 @@
       $("save").textContent = "Lưu thông tin";
       const fieldOrder = orderedColumns().slice();
       if (S.table === "DanhMucCanKiemTra") {
-        const dependent=["boPhanDanhGia","loai","tanSuat"].filter(k=>fieldOrder.includes(k));
+        const dependent=["boPhanDanhGia","loai","tanSuatThamSo"].filter(k=>fieldOrder.includes(k));
         dependent.forEach(k=>fieldOrder.splice(fieldOrder.indexOf(k),1));
         fieldOrder.splice(fieldOrder.indexOf("tenThietBi")+1,0,...dependent);
       }
@@ -387,7 +387,7 @@
         .map(([k, label]) => {
           const required = spec().required.includes(k),
             value = k === "matKhau" ? "" : row?.[k] || "";
-          if (isRelation(k) || ["chucVu", "dangSuDung", "boPhanDanhGia", "loai", "tanSuat"].includes(k))
+          if (isRelation(k) || ["chucVu", "dangSuDung", "boPhanDanhGia", "loai", "tanSuatThamSo"].includes(k))
             return selectField(k, label, required);
           const type = [
             "ThongSoKyThuat",
@@ -572,7 +572,7 @@
     }
     function setFormOptions(values) {
       const f = $("editorForm");
-      for (const key of ["loai","tanSuat"]) {
+      for (const key of ["loai","tanSuatThamSo"]) {
         if (f.elements[key]) setOptions(key,S.data.systemParameters?.[key] || [],values[key]);
       }
       if (f.elements.boPhanDanhGia) setOptions("boPhanDanhGia",["Điện","Cơ khí"],["Điện","Cơ khí"].includes(values.boPhanDanhGia) ? values.boPhanDanhGia : "");
