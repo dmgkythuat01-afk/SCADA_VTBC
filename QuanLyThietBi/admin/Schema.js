@@ -75,7 +75,7 @@ const ADMIN_TABLES = {
   DanhMucCanKiemTra: {
     label: "Danh mục kiểm tra",
     icon: "☑",
-    key: ["tenXuong", "tenMay", "maThietBi", "danhMucCanKiemTra"],
+    key: ["tenXuong", "tenMay", "maThietBi", "tenThietBi", "boPhanDanhGia", "loai", "tanSuatThamSo", "danhMucCanKiemTra", "thamSoCanKiemTra"],
     required: ["tenXuong", "tenMay", "maThietBi", "boPhanDanhGia", "loai", "tanSuatThamSo", "danhMucCanKiemTra"],
     filters: ["tenXuong", "tenMay", "maThietBi", "boPhanDanhGia", "loai", "tanSuatThamSo"],
     columns: {

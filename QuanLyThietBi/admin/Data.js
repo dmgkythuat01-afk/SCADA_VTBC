@@ -103,6 +103,15 @@ function prepareAdminData_(name, p, read = readAdminRows_) {
     if (!row[k])
       throw Error("Vui lòng nhập " + spec.columns[k].toLowerCase() + ".");
   });
+  if (name === "DanhMucCanKiemTra") {
+    const matches = read("DanhMucThietBi").filter((r) =>
+      adminSame_(r, row, ["tenXuong", "tenMay", "maThietBi"]),
+    );
+    if (matches.length !== 1)
+      throw Error("Thiết bị không thuộc xưởng/máy đã chọn.");
+    row.maThietBi = matches[0].maThietBi;
+    row.tenThietBi = matches[0].tenThietBi || "";
+  }
   const all = read(name);
   if (name === "DanhMucCanKiemTra" && !["Điện", "Cơ khí"].includes(row.boPhanDanhGia))
     throw Error("Bộ phận đánh giá chỉ được chọn Điện hoặc Cơ khí.");
@@ -209,15 +218,6 @@ function prepareAdminData_(name, p, read = readAdminRows_) {
       row.tenBoPhanQuanLy = matches[0].tenBoPhanQuanLy;
     }
     row.ThoiGianCapNhat = adminNow_();
-  }
-  if (name === "DanhMucCanKiemTra") {
-    const matches = read("DanhMucThietBi").filter((r) =>
-      adminSame_(r, row, ["tenXuong", "tenMay", "maThietBi"]),
-    );
-    if (matches.length !== 1)
-      throw Error("Thiết bị không thuộc xưởng/máy đã chọn.");
-    row.maThietBi = matches[0].maThietBi;
-    row.tenThietBi = matches[0].tenThietBi || "";
   }
   return row;
 }

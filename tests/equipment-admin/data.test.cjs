@@ -316,3 +316,18 @@ test("checklist batch validates all rows before writing and derives equipment na
  c.saveAdminBatch_("DanhMucCanKiemTra",[first,{...first,danhMucCanKiemTra:"Rung"}]);
  assert.equal(writes,1);assert.equal(tables.DanhMucCanKiemTra.length,2);assert.equal(tables.DanhMucCanKiemTra[0].tenThietBi,"Động cơ");
 });
+
+test("checklist duplicates require every form field through parameter to match",()=>{
+ const {c,tables}=setup();tables.DanhMucXuong.push({_row:2,tenXuong:"A"});tables.DanhMucMay.push({_row:2,tenXuong:"A",tenMay:"M"});
+ tables.DanhMucThietBi.push({_row:2,tenXuong:"A",tenMay:"M",maThietBi:"T1",tenThietBi:"Động cơ"});
+ const first={tenXuong:"A",tenMay:"M",maThietBi:"T1",tenThietBi:"Động cơ",danhMucCanKiemTra:"Nhiệt độ",thamSoCanKiemTra:"60°C",boPhanDanhGia:"Điện",loai:"Bảo dưỡng",tanSuatThamSo:"7 ngày"};
+ c.saveAdminData_("DanhMucCanKiemTra",{values:first});
+ for(const [key,value] of Object.entries({thamSoCanKiemTra:"70°C",boPhanDanhGia:"Cơ khí",loai:"Vệ sinh",tanSuatThamSo:"6 tháng"})) {
+  c.saveAdminData_("DanhMucCanKiemTra",{values:{...first,[key]:value}});
+ }
+ assert.equal(tables.DanhMucCanKiemTra.length,5);
+ assert.throws(()=>c.saveAdminData_("DanhMucCanKiemTra",{values:{...first,chiTieuDanhGia1:"Khác"}}),/đã tồn tại/);
+ assert.throws(()=>c.saveAdminData_("DanhMucCanKiemTra",{values:{...first,thamSoCanKiemTra:" 60°c "}}),/đã tồn tại/);
+ let writes=0;c.writeAdminBatch_=(name,rows)=>{writes++;tables[name].push(...rows);};
+ c.saveAdminBatch_("DanhMucCanKiemTra",[{...first,thamSoCanKiemTra:"80°C"},{...first,thamSoCanKiemTra:"90°C"}]);assert.equal(writes,1);
+});
