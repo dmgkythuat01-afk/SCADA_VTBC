@@ -1628,6 +1628,7 @@
         input.type === "password" ? "Hiện" : "Ẩn";
     };
     $("mobileRefresh").onclick = () => {
+      if (M.page === "maintenance") { PlannedMaintenance.load(); return; }
       if (!M.busy) load().catch(error);
     };
     $("mobileBrand").onclick = (e) => {
