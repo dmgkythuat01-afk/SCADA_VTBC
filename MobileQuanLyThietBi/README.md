@@ -101,3 +101,15 @@ Dưới1024px giữ giao diện điện thoại, menu dưới và bộ lọc ng�
 Form tạo phiếu có ngày đề nghị hoàn thành, lưu vào PhieuYeuCau.ngayDeNghiHoanThanh. Hiển thị trên card và chi tiết cho các vai trò được xem phiếu. Có thể để trống; ngày hợp lệ lưu ISO và hiển thị dd/mm/yyyy. Trường này độc lập với ngày thực tế hoàn thành; không làm đổi lịch bảo dưỡng. Cột bổ sung đã đối chiếu nguyên vẹn các ô cũ của14sheet, không tạo phiếu mẫu.
 
 Ngày đề nghị hoàn thành dùng cùng bộ chọn ngày gọn như Từ ngày/Đến ngày: hiển thị dd/mm/yyyy chữ14px, giữ inputdate gốc và tên trườngngayDeNghiHoanThanh, không tràn form trên điện thoại.
+
+## Bảo dưỡng theo tham số — 12/11/2026
+
+Menu Bảo dưỡng gồm Cần bảo dưỡng / Tạo phiếu / Lịch sử. Backend nằm trong PlannedMaintenance*.js; giao diện/bridge ở các file PlannedMaintenance* riêng. Chỉ thêm điểm nối nav/render và include vào file cũ. Tài khoản kỹ thuật/admin ghi; các tài khoản đăng nhập khác xem lịch và phiếu hoàn thành. Phiếu nháp chỉ người tạo sửa.
+
+Sheet PhieuBaoDuong: một dòng mỗi phiếu, chiTiet là JSON snapshot các tham số đã chọn, danhSachAnh là metadata ảnh Drive riêng tư. Mã PBDddMMyyyyHHmmssSSS cấp ở lần lưu đầu; phiếu nháp sửa giữ mã, Hoàn thành giữ nguyên lịch sử. Các lần lưu có khóa chống lặp và kiểm tra phiên bản. Không cần làm đủ checklist; chỉ tham số có kết quả mới ghi và cập nhật lịch khi hoàn thành. Hiện chưa có bước phê duyệt riêng cho phiếu bảo dưỡng.
+
+Tần suất tham số ưu tiên; trống thì dùng tần suất danh mục cùng nhóm. Mốc = ngày thực tế hoàn thành gần nhất hoặc ngày lắp đặt lần đầu; thiếu mốc/tần suất hiện rõ, không tự đoán hạn. Quá hạn giữ đỏ đến khi tham số được thực hiện. Tần suất tháng/năm theo lịch, giới hạn cuối tháng. Bộ lọc đến danh mục kiểm tra; lịch sử lọc theo ngày thực hiện, mặc định 7 ngày gần nhất. Lịch sử mới nằm riêng PhieuBaoDuong, không gộp lại lịch sử bảo dưỡng từ luồng yêu cầu cũ. Chưa thêm in/PDF và không khôi phục email bảo dưỡng cũ.
+
+Ảnh tối đa12/phiếu, JPEG thu nhỏ tối đa1600px, lưu trong thư mục BAODUONG_PHOTO_FOLDER hiện có; không chia sẻ công khai. Chọn/chụp ảnh bằng input file, không gọi camera trong iframe.
+
+Kiểm tra: node --test tests/equipment-admin/*.test.cjs; kiểm tra trình duyệt ở320/390/768/1440px gồm lưu một phần, giữ lựa chọn khi lọc, mở lại phiếu nháp, hoàn thành cùng mã và cập nhật riêng mục đã chọn. Setup chỉ tạo PhieuBaoDuong, đối chiếu giữ nguyên15sheet có sẵn, không tạo phiếu mẫu/tài khoản hay gửi email.

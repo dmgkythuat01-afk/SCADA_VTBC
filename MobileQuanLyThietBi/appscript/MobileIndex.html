@@ -263,6 +263,8 @@
       ><img id="mobileFullPhoto" alt="Ảnh kết quả khắc phục" />
     </dialog>
     <div id="mobileToast" class="m-toast" role="status" hidden></div>
+    <?!= HtmlService.createHtmlOutputFromFile('PlannedMaintenanceStyles').getContent(); ?>
+    <?!= HtmlService.createHtmlOutputFromFile('PlannedMaintenanceClient').getContent(); ?>
     <?!= HtmlService.createHtmlOutputFromFile('MobileDateRange').getContent();
     ?> <?!= HtmlService.createHtmlOutputFromFile('PrintQr').getContent();
     ?> <?!= HtmlService.createHtmlOutputFromFile('EquipmentPrint').getContent();

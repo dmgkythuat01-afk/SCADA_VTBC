@@ -446,6 +446,7 @@
                 "check",
               ],
             ];
+      items.push(["maintenance", "Bảo dưỡng", "check"]);
       $("mobileNav").innerHTML = items
         .map(
           ([page, label, icon]) =>
@@ -474,6 +475,7 @@
       $("mobileContent").dataset.page = M.page;
       renderDateFilter();
       nav();
+      if (M.page === "maintenance") { PlannedMaintenance.open(); return; }
       (
         ({
           tickets: tickets,
