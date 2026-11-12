@@ -1,12 +1,12 @@
 const test=require('node:test'),a=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
 const {setup:mobileSetup}=require('./mobile-work-fixture.cjs');
 function setup(){
- const f=mobileSetup(),c=f.c;for(const n of ['PlannedMaintenanceDomain','PlannedMaintenanceStore','PlannedMaintenanceService','PlannedMaintenancePhotos'])vm.runInContext(fs.readFileSync('QuanLyThietBi/admin/'+n+'.js','utf8'),c);
+ const f=mobileSetup(),c=f.c;for(const n of ['PlannedMaintenanceDomain','PlannedMaintenanceStore','PlannedMaintenanceService','PlannedMaintenancePhotos','PlannedMaintenanceConfirmation'])vm.runInContext(fs.readFileSync('QuanLyThietBi/admin/'+n+'.js','utf8'),c);
  const rows=[],criteria=[1,2,3].map(i=>{const row={tenXuong:'A',tenMay:'M',maThietBi:'TB'+i,tenThietBi:'Thiết bị '+i,danhMucCanKiemTra:'Trục',thamSoCanKiemTra:'Tham số '+i,boPhanDanhGia:'Cơ khí',loai:'Kiểm tra',tanSuatThamSo:'1 tháng',tanSuatDanhMuc:'',ngayLapDat:'2026-09-30',options:['TỐT','TRUNG BÌNH','KÉM'],version:'version'+i};row.key=c.pbdKey_(row);return row;});
  c.pbdGrid_=()=>({rows});let writes=0;c.pbdWrite_=(_,row)=>{writes++;const old=rows.findIndex(r=>r.maPhieuBaoDuong===row.maPhieuBaoDuong);if(old<0)rows.push(structuredClone(row));else rows[old]=structuredClone(row);};c.pbdCriteria_=()=>structuredClone(criteria);c.maintenanceToday_=()=> '2026-11-12';
  let seq=0;c.mobileWorkDocumentId_=prefix=>prefix+'12112026123456'+String(++seq).padStart(3,'0');
  const user={email:'worker',name:'Kỹ thuật',position:'KyThuat',role:'technical'};
- const payload=(extra={})=>({requestId:'req-'+(++seq),status:'Hoàn thành',workshop:'A',machine:'M',performedDate:'2026-11-12',note:'Ghi chú',results:[{key:criteria[0].key,version:criteria[0].version,ketQua:'TỐT',ghiChu:'Đã kiểm tra'}],photos:[],...extra});
+ const payload=(extra={})=>({requestId:'req-'+(++seq),status:'Chờ xác nhận',reviewerId:'truongca',workshop:'A',machine:'M',performedDate:'2026-11-12',note:'Ghi chú',results:[{key:criteria[0].key,version:criteria[0].version,ketQua:'TỐT',ghiChu:'Đã kiểm tra'}],photos:[],...extra});
  return {...f,c,rows,criteria,user,payload,get writes(){return writes;}};
 }
 test('partial completion saves one of many parameters, PBD ID allocated on save and replay does not write twice',()=>{
@@ -21,6 +21,7 @@ test('draft edit keeps same PBD ID, protects creator/revision, retries old creat
  a.throws(()=>f.c.pbdSave_(f.user,f.payload({id:r.maPhieuBaoDuong,revision:0})),/thay đổi/);
  const final=f.c.pbdSave_(f.user,f.payload({id:r.maPhieuBaoDuong,revision:1}));a.equal(final.maPhieuBaoDuong,r.maPhieuBaoDuong);a.equal(f.rows.length,1);
  f.c.pbdSave_(f.user,p);a.equal(f.rows.length,1);a.equal(f.writes,2);
+ f.c.pbdReview_({email:'truongca',name:'Trưởng ca'}, {id:final.maPhieuBaoDuong,revision:final.phienBan,requestId:'accept',decision:'accept',note:''});
  projection=f.c.pbdProjection_(f.criteria,f.rows,'2026-11-12');a.equal(projection[0].ngayDenHan,'2026-12-12');a.equal(projection[1].ngayGanNhat,'');
 });
 test('invalid results, stale checklist, mixed machines, duplicate rows, forged photos and future dates reject without writes',()=>{
@@ -37,7 +38,7 @@ test('calendar frequency uses parameter before category fallback, clamps month/y
 test('API rejects missing session and snapshot hides other users drafts while preserving completed history',()=>{
  const f=setup();a.throws(()=>f.c.plannedMaintenanceApi('bad','snapshot'),/Phiên/);
  f.c.pbdSave_(f.user,f.payload({status:'Nháp'}));const other={...f.user,email:'second'};f.c.pbdSave_(other,f.payload());
- const snapshot=f.c.pbdSnapshot_(other);a.equal(snapshot.records.length,1);a.equal(snapshot.records[0].trangThai,'Hoàn thành');a.equal(snapshot.records[0].nhatKyLuu,undefined);
+ const snapshot=f.c.pbdSnapshot_(other);a.equal(snapshot.records.length,1);a.equal(snapshot.records[0].trangThai,'Chờ xác nhận');a.equal(snapshot.records[0].nhatKyLuu,undefined);
 });
 test('photo save only accepts attachments issued to actor or already in own draft',()=>{
  const f=setup();a.throws(()=>f.c.pbdResolvePhotos_(f.user,[{id:'wrong',uploadKey:'x'}],null),/Ảnh chờ/);
@@ -67,4 +68,21 @@ test('photo upload retries return same private file and reads require membership
  a.match(f.c.pbdPhoto_(f.user,{id:saved.maPhieuBaoDuong,fileId:meta.id}).dataUrl,/^data:image\/jpeg;base64,/);
  a.throws(()=>f.c.pbdPhoto_(f.user,{id:saved.maPhieuBaoDuong,fileId:'other'}),/không thuộc/);
  a.throws(()=>f.c.pbdUpload_(f.user,{...p,uploadKey:'invalid',dataUrl:'data:image/jpeg;base64,YQ=='}),/không hợp lệ/);
+});
+
+test('selected reviewer alone can confirm; pending/rejected records do not advance schedules; rework keeps ID and all review audit',()=>{
+ const f=setup(),r=f.c.pbdSave_(f.user,f.payload());
+ a.equal(r.trangThai,'Chờ xác nhận');a.equal(r.nguoiXacNhan,'truongca');
+ a.equal(f.c.pbdProjection_(f.criteria,f.rows,'2026-11-12')[0].ngayGanNhat,'');
+ const action={id:r.maPhieuBaoDuong,revision:r.phienBan,requestId:'review-1',decision:'reject',note:'Chưa rõ kết quả'},reviewer={email:'truongca',name:'Trưởng ca'};
+ a.throws(()=>f.c.pbdReview_(f.user,action),/Chỉ người/);a.throws(()=>f.c.pbdReview_(reviewer,{...action,note:''}),/lý do/);
+ const rejected=f.c.pbdReview_(reviewer,action);a.equal(rejected.trangThai,'Cần làm lại');a.equal(f.c.pbdReview_(reviewer,action).phienBan,rejected.phienBan);
+ a.throws(()=>f.c.pbdReview_(reviewer,{...action,note:'Khác'}),/nội dung khác/);
+ const again=f.c.pbdSave_(f.user,f.payload({id:r.maPhieuBaoDuong,revision:rejected.phienBan}));a.equal(again.trangThai,'Chờ xác nhận');a.equal(again.maPhieuBaoDuong,r.maPhieuBaoDuong);
+ a.throws(()=>f.c.pbdReview_(reviewer,{...action,requestId:'stale',decision:'accept'}),/thay đổi/);
+ const accepted=f.c.pbdReview_(reviewer,{id:r.maPhieuBaoDuong,revision:again.phienBan,requestId:'review-2',decision:'accept',note:'Đạt'});a.equal(accepted.trangThai,'Hoàn thành');a.equal(JSON.parse(accepted.nhatKyXacNhan).length,2);
+ a.equal(f.c.pbdProjection_(f.criteria,f.rows,'2026-11-12')[0].ngayDenHan,'2026-12-12');
+});
+test('submission requires an active reviewer and cannot forge completion status',()=>{
+ const f=setup();for(const extra of [{reviewerId:''},{reviewerId:'missing'},{status:'Hoàn thành'}])a.throws(()=>f.c.pbdSave_(f.user,f.payload(extra)));a.equal(f.writes,0);
 });

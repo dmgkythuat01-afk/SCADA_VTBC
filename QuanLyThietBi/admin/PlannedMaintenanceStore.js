@@ -1,7 +1,9 @@
-const PBD_COLUMNS=["maPhieuBaoDuong","tenXuong","tenMay","ngayThucHien","trangThai","nguoiTao","tenNguoiTao","nguoiThucHien","tenNguoiThucHien","thoiGianTao","thoiGianCapNhat","phienBan","ghiChu","chiTiet","danhSachAnh","maChongLap","dauVanTay","nhatKyLuu"];
+const PBD_COLUMNS=["maPhieuBaoDuong","tenXuong","tenMay","ngayThucHien","trangThai","nguoiTao","tenNguoiTao","nguoiThucHien","tenNguoiThucHien","thoiGianTao","thoiGianCapNhat","phienBan","ghiChu","chiTiet","danhSachAnh","maChongLap","dauVanTay","nhatKyLuu","nguoiXacNhan","tenNguoiXacNhan","thoiGianXacNhan","noiDungXacNhan","nhatKyXacNhan"];
 function pbdSetup_() {
   const ss=SpreadsheetApp.openById(ADMIN_SHEET_ID);let sheet=ss.getSheetByName("PhieuBaoDuong");
   if(!sheet){sheet=ss.insertSheet("PhieuBaoDuong");sheet.getRange(1,1,1,PBD_COLUMNS.length).setValues([PBD_COLUMNS]).setFontWeight("bold").setBackground("#dcefe6");sheet.setFrozenRows(1);}
+  const headers=sheet.getRange(1,1,1,sheet.getLastColumn()).getValues()[0].map(v=>String(v).trim()),missing=PBD_COLUMNS.filter(k=>!headers.includes(k));
+  if(missing.length){const start=headers.length+1,needed=headers.length+missing.length-sheet.getMaxColumns();if(needed>0)sheet.insertColumnsAfter(sheet.getMaxColumns(),needed);sheet.getRange(1,start,1,missing.length).setValues([missing]).setFontWeight("bold").setBackground("#dcefe6");SpreadsheetApp.flush();}
   pbdGrid_();return {success:true,sheet:"PhieuBaoDuong",columns:PBD_COLUMNS};
 }
 function pbdGrid_() {
