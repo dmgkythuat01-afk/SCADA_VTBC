@@ -1,9 +1,9 @@
 const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
 test('system parameters use independent sparse columns, trim and deduplicate without pairing rows',()=>{
  const c={};vm.createContext(c);const source=fs.readFileSync('QuanLyThietBi/admin/EquipmentParameters.js','utf8');vm.runInContext(source,c);
- const values=[['tanSuat','loai'],['7 ngày','Bảo dưỡng'],['6 tháng','Vệ sinh'],['1 năm',''],[' 7 ngày ','Bảo dưỡng']];
+ const values=[['tanSuat','loai','chiTieu'],['7 ngày','Bảo dưỡng',' TỐT '],['6 tháng','Vệ sinh','CÓ'],['1 năm','',''],[' 7 ngày ','Bảo dưỡng','TỐT']];
  const result=c.equipmentSystemParameters_({getDataRange:()=>({getValues:()=>values})});
- assert.deepEqual(JSON.parse(JSON.stringify(result)),{loai:['Bảo dưỡng','Vệ sinh'],tanSuatThamSo:['7 ngày','6 tháng','1 năm']});
+ assert.deepEqual(JSON.parse(JSON.stringify(result)),{loai:['Bảo dưỡng','Vệ sinh'],tanSuatThamSo:['7 ngày','6 tháng','1 năm'],chiTieu:['TỐT','CÓ']});
  assert.throws(()=>c.equipmentSystemParameters_({getDataRange:()=>({getValues:()=>[['loai','loai','tanSuat']]})}),/trùng/);
 });
 test('live device schema no longer requires deleted cycle column and criterion has renamed department plus parameter fields',()=>{

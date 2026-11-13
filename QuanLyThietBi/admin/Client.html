@@ -387,7 +387,7 @@
         .map(([k, label]) => {
           const required = spec().required.includes(k),
             value = k === "matKhau" ? "" : row?.[k] || "";
-          if (isRelation(k) || ["chucVu", "dangSuDung", "boPhanDanhGia", "loai", "tanSuatThamSo"].includes(k))
+          if (isRelation(k) || ["chucVu", "dangSuDung", "boPhanDanhGia", "loai", "tanSuatThamSo", "chiTieuDanhGia1", "chiTieuDanhGia2", "chiTieuDanhGia3"].includes(k))
             return selectField(k, label, required);
           const type = [
             "ThongSoKyThuat",
@@ -576,6 +576,9 @@
     }
     function setFormOptions(values) {
       const f = $("editorForm");
+      for (const key of ["chiTieuDanhGia1", "chiTieuDanhGia2", "chiTieuDanhGia3"]) {
+        if (f.elements[key]) setOptions(key,S.data.systemParameters?.chiTieu || [],values[key]);
+      }
       for (const key of ["loai","tanSuatThamSo"]) {
         if (f.elements[key]) setOptions(key,S.data.systemParameters?.[key] || [],values[key]);
       }
