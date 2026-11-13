@@ -108,10 +108,22 @@ Menu Bảo dưỡng gồm Cần bảo dưỡng / Tạo phiếu / Lịch sử. Ba
 
 Sheet PhieuBaoDuong: một dòng mỗi phiếu, chiTiet là JSON snapshot các tham số đã chọn, danhSachAnh là metadata ảnh Drive riêng tư. Mã PBDddMMyyyyHHmmssSSS cấp ở lần lưu đầu; phiếu nháp sửa giữ mã, Hoàn thành giữ nguyên lịch sử. Các lần lưu có khóa chống lặp và kiểm tra phiên bản. Không cần làm đủ checklist; chỉ tham số có kết quả mới ghi và cập nhật lịch khi hoàn thành. Phiếu gửi đến người xác nhận được chọn từ TaiKhoan; chỉ người đó được đồng ý hoặc trả lại. Chỉ khi đồng ý mới Hoàn thành và cập nhật lịch; trả lại cần lý do và người tạo có thể bổ sung/gửi lại cùng mã PBD. Toàn bộ lần xác nhận giữ trong nhatKyXacNhan. Phiếu hoàn thành từ trước nâng cấp giữ nguyên trạng thái.
 
-Tần suất tham số ưu tiên; trống thì dùng tần suất danh mục cùng nhóm. Mốc = ngày thực tế hoàn thành gần nhất hoặc ngày lắp đặt lần đầu; thiếu mốc/tần suất hiện rõ, không tự đoán hạn. Quá hạn giữ đỏ đến khi tham số được thực hiện. Tần suất tháng/năm theo lịch, giới hạn cuối tháng. Bộ lọc đến danh mục kiểm tra; lịch sử lọc theo ngày thực hiện, mặc định 7 ngày gần nhất. Lịch sử mới nằm riêng PhieuBaoDuong, không gộp lại lịch sử bảo dưỡng từ luồng yêu cầu cũ. Chưa thêm in/PDF và không khôi phục email bảo dưỡng cũ.
+Tần suất tham số ưu tiên; trống thì dùng tần suất danh mục cùng nhóm. Mốc = ngày thực tế hoàn thành gần nhất hoặc ngày lắp đặt lần đầu; thiếu mốc/tần suất hiện rõ, không tự đoán hạn. Quá hạn giữ đỏ đến khi tham số được thực hiện. Tần suất tháng/năm theo lịch, giới hạn cuối tháng. Bộ lọc đến danh mục kiểm tra; lịch sử lọc theo ngày thực hiện, mặc định 7 ngày gần nhất. Lịch sử mới nằm riêng PhieuBaoDuong, không gộp lại lịch sử bảo dưỡng từ luồng yêu cầu cũ. Có nút In/Xuất PDF trong phần xem phiếu; không khôi phục email bảo dưỡng cũ.
 
 Ảnh tối đa12/phiếu, JPEG thu nhỏ tối đa1600px, lưu trong thư mục BAODUONG_PHOTO_FOLDER hiện có; không chia sẻ công khai. Chọn/chụp ảnh bằng input file, không gọi camera trong iframe.
 
 Kiểm tra: node --test tests/equipment-admin/*.test.cjs; kiểm tra trình duyệt ở320/390/768/1440px gồm lưu một phần, giữ lựa chọn khi lọc, mở lại phiếu nháp, hoàn thành cùng mã và cập nhật riêng mục đã chọn. Setup chỉ tạo PhieuBaoDuong, đối chiếu giữ nguyên15sheet có sẵn, không tạo phiếu mẫu/tài khoản hay gửi email.
 
 Cập nhật tạo phiếu: mỗi thiết bị một card riêng theo mã thiết bị trong xưởng/máy; trong card chia danhMucCanKiemTra rồi tới các tham số. Không gộp danh mục giống tên giữa hai thiết bị. Bộ chọn nằm trong card tạo phiếu theo thứ tự Xưởng → Máy → Bộ phận đánh giá → Thiết bị → Danh mục → Phạm vi. Người xác nhận ở cuối có gõ tìm theo tên, username phân biệt người trùng tên. Lịch sử có card Chờ tôi xác nhận độc lập khoảng ngày lọc. PhieuBaoDuong thêm nguoiXacNhan,tenNguoiXacNhan,thoiGianXacNhan,noiDungXacNhan,nhatKyXacNhan; dữ liệu cũ giữ nguyên.
+
+## In biên bản kiểm tra định kỳ — 13/11/2026
+
+Mỗi phiếu chỉ một bộ phận Cơ khí hoặc Điện. Hai trường Đánh giá công tác vệ sinh / Đánh giá tình trạng hoạt động nằm ngay trước người xác nhận, chọn ĐẠT hoặc KHÔNG ĐẠT; lưu nháp có thể chưa chọn, gửi xác nhận phải đủ cả hai. Không được gửi chung hai bộ phận.
+
+PlannedMaintenancePrint.js trả dữ liệu bản in qua phiên hiện hành; PlannedMaintenancePrint.html dựng mẫu A4 dọc, logo DMC, tiêu đề (CƠ)/(ĐIỆN), toàn bộ thiết bị/danh mục/tham số của máy trong bộ phận đã chọn. Chỉ những kết quả đã ghi trên phiếu được tích, các mục khác để trống. Nút mở cửa sổ in đồng bộ theo thao tác người dùng rồi nạp dữ liệu, tự gọi hộp thoại in và có nút In/Lưu PDF để thử lại. Không tạo file Drive công khai.
+
+PhieuBaoDuong thêm boPhanDanhGia,danhGiaVeSinh,danhGiaHoatDong,danhMucIn,thoiGianGui. DanhMucIn là snapshot đầy đủ tại lần lưu/gửi gần nhất, lưu JSON hoặc gzip/base64 nếu dài; không trả toàn bộ snapshot vào danh sách mobile. Phiếu cũ thiếu snapshot lấy danh mục hiện tại và giữ các kết quả đã lưu, thông báo nguồn trong thanh công cụ in. Hai đánh giá của phiếu cũ chưa có dữ liệu sẽ để ô trống, không suy đoán.
+
+Chữ ký BỘ PHẬN KIỂM TRA là người tạo với thời gian gửi (phiếu nháp chưa ký). BỘ PHẬN SẢN XUẤT là người được chọn, chỉ hiện đã ký duyệt khi trạng thái Hoàn thành có thời gian xác nhận; phiếu chờ/trả lại để chỗ ký tay. Không giả chữ ký khi chưa duyệt.
+
+QA: đầy đủ checklist dù chỉ kiểm tra một tham số; snapshot không đổi theo danh mục sửa sau đó; quyền xem bản nháp và chữ ký theo trạng thái; trường hợp Điện/Cơ khí; bản PDF minh họa44tham số ra2trang và132tham số ra4trang A4, lề không tràn, phần đánh giá/chữ ký không bị tách. Dữ liệu cũ trong16sheet được đối chiếu giữ nguyên khi thêm cột, không tạo phiếu mẫu và không gửi email.

@@ -1,4 +1,4 @@
-const PBD_COLUMNS=["maPhieuBaoDuong","tenXuong","tenMay","ngayThucHien","trangThai","nguoiTao","tenNguoiTao","nguoiThucHien","tenNguoiThucHien","thoiGianTao","thoiGianCapNhat","phienBan","ghiChu","chiTiet","danhSachAnh","maChongLap","dauVanTay","nhatKyLuu","nguoiXacNhan","tenNguoiXacNhan","thoiGianXacNhan","noiDungXacNhan","nhatKyXacNhan"];
+const PBD_COLUMNS=["maPhieuBaoDuong","tenXuong","tenMay","ngayThucHien","trangThai","nguoiTao","tenNguoiTao","nguoiThucHien","tenNguoiThucHien","thoiGianTao","thoiGianCapNhat","phienBan","ghiChu","chiTiet","danhSachAnh","maChongLap","dauVanTay","nhatKyLuu","nguoiXacNhan","tenNguoiXacNhan","thoiGianXacNhan","noiDungXacNhan","nhatKyXacNhan","boPhanDanhGia","danhGiaVeSinh","danhGiaHoatDong","danhMucIn","thoiGianGui"];
 function pbdSetup_() {
   const ss=SpreadsheetApp.openById(ADMIN_SHEET_ID);let sheet=ss.getSheetByName("PhieuBaoDuong");
   if(!sheet){sheet=ss.insertSheet("PhieuBaoDuong");sheet.getRange(1,1,1,PBD_COLUMNS.length).setValues([PBD_COLUMNS]).setFontWeight("bold").setBackground("#dcefe6");sheet.setFrozenRows(1);}
@@ -17,8 +17,8 @@ function pbdWrite_(grid,row) {
   PBD_COLUMNS.forEach(k=>{let v=String(row[k]??"");cells[grid.map[k]]=/^[=+\-@]/.test(v)?"'"+v:v;});
   grid.sheet.getRange(row._row || Math.max(2,grid.sheet.getLastRow()+1),1,1,cells.length).setNumberFormat("@").setValues([cells]);SpreadsheetApp.flush();
 }
-function pbdCriteria_() {
-  const devices=readAdminRows_("DanhMucThietBi").filter(maintenanceActive_),sheet=SpreadsheetApp.openById(ADMIN_SHEET_ID).getSheetByName("DanhMucCanKiemTra"),values=sheet.getDataRange().getValues(),headers=values[0].map(v=>String(v).trim());
+function pbdCriteria_(includeInactive) {
+  const devices=readAdminRows_("DanhMucThietBi").filter(d=>includeInactive || maintenanceActive_(d)),sheet=SpreadsheetApp.openById(ADMIN_SHEET_ID).getSheetByName("DanhMucCanKiemTra"),values=sheet.getDataRange().getValues(),headers=values[0].map(v=>String(v).trim());
   const keys=["tenXuong","tenMay","maThietBi","danhMucCanKiemTra","thamSoCanKiemTra","chiTieuDanhGia1","chiTieuDanhGia2","chiTieuDanhGia3","boPhanDanhGia","loai","tanSuatThamSo"];
   keys.forEach(k=>{if(headers.filter(h=>h===k).length!==1)throw Error("DanhMucCanKiemTra thiếu hoặc trùng cột "+k);});
   const result=[],seen=new Set();

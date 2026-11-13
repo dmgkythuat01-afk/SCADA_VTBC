@@ -1,5 +1,5 @@
 function pbdPublic_(r) {
-  const copy={...r};delete copy._row;delete copy.maChongLap;delete copy.dauVanTay;delete copy.nhatKyLuu;
+  const copy={...r};delete copy._row;delete copy.maChongLap;delete copy.dauVanTay;delete copy.nhatKyLuu;delete copy.danhMucIn;
   copy.chiTiet=pbdParse_(r.chiTiet,[]);copy.danhSachAnh=pbdParse_(r.danhSachAnh,[]);return copy;
 }
 function pbdSnapshot_(user) {
@@ -8,7 +8,7 @@ function pbdSnapshot_(user) {
 }
 function pbdSave_(user,p) {
   mobileWorkRequireTechnical_(user);
-  const grid=pbdGrid_(),request=mobileWorkRequired_(p.requestId,"mã thao tác",100),fingerprint=adminHash_(JSON.stringify([user.email,p.id,p.revision,p.status,p.workshop,p.machine,p.performedDate,p.note,p.results,p.photos,p.reviewerId]));
+  const grid=pbdGrid_(),request=mobileWorkRequired_(p.requestId,"mã thao tác",100),fingerprint=adminHash_(JSON.stringify([user.email,p.id,p.revision,p.status,p.workshop,p.machine,p.performedDate,p.note,p.results,p.photos,p.reviewerId,p.hygiene,p.operation]));
   const previous=grid.rows.find(r=>r.nguoiTao===user.email && pbdParse_(r.nhatKyLuu,[]).some(o=>o.id===request));
   if(previous){if(pbdParse_(previous.nhatKyLuu,[]).find(o=>o.id===request).fingerprint!==fingerprint)throw Error("Mã thao tác đã dùng cho nội dung khác.");return pbdPublic_(previous);}
   const old=p.id?grid.rows.find(r=>r.maPhieuBaoDuong===p.id):null;
@@ -26,10 +26,12 @@ function pbdSave_(user,p) {
     if(!c.options.includes(item.ketQua))throw Error("Kết quả phải chọn đúng chỉ tiêu của tham số.");
     return {...c,ketQua:item.ketQua,ghiChu:adminText_(item.ghiChu,2000)};
   });
+  const department=pbdDepartment_(details),hygiene=pbdAssessment_(p.hygiene,p.status!=="Nháp"),operation=pbdAssessment_(p.operation,p.status!=="Nháp");
   const reviewer=pbdReviewer_(p.reviewerId,p.status!=="Nháp");
   const photos=pbdResolvePhotos_(user,p.photos || [],old),now=adminNow_();
   const row={...(old || {}),maPhieuBaoDuong:old?.maPhieuBaoDuong || mobileWorkDocumentId_("PBD"),tenXuong:workshop,tenMay:machine,ngayThucHien:day,trangThai:p.status,
     nguoiTao:old?.nguoiTao || user.email,tenNguoiTao:old?.tenNguoiTao || user.name,nguoiThucHien:user.email,tenNguoiThucHien:user.name,thoiGianTao:old?.thoiGianTao || now,thoiGianCapNhat:now,
+    boPhanDanhGia:department,danhGiaVeSinh:hygiene,danhGiaHoatDong:operation,thoiGianGui:p.status==="Chờ xác nhận"?now:(old?.thoiGianGui || ""),danhMucIn:pbdPrintCatalogEncode_(pbdCriteria_(true).filter(c=>c.tenXuong===workshop&&c.tenMay===machine&&maintenanceNorm_(c.boPhanDanhGia)===maintenanceNorm_(department))),
     nguoiXacNhan:reviewer.id,tenNguoiXacNhan:reviewer.name,thoiGianXacNhan:"",noiDungXacNhan:"",nhatKyXacNhan:old?.nhatKyXacNhan || "[]",
     phienBan:String(Number(old?.phienBan || 0)+1),ghiChu:adminText_(p.note,5000),chiTiet:JSON.stringify(details),danhSachAnh:JSON.stringify(photos),maChongLap:request,dauVanTay:fingerprint,nhatKyLuu:JSON.stringify([...pbdParse_(old?.nhatKyLuu,[]),{id:request,fingerprint}])};
   if(row.chiTiet.length>45000)throw Error("Phiếu quá dài. Hãy tách thành nhiều phiếu nhỏ hơn.");
@@ -43,6 +45,7 @@ function plannedMaintenanceApi(token,action,payload) {
     if(action==="review")return pbdReview_(user,p);
     if(action==="upload")return pbdUpload_(user,p);
     if(action==="photo")return pbdPhoto_(user,p);
+    if(action==="print")return pbdPrintPayload_(user,p);
     throw Error("Thao tác bảo dưỡng không hợp lệ.");
   }finally{lock.releaseLock();}
 }
