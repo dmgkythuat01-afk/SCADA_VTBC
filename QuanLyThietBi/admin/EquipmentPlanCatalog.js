@@ -8,6 +8,7 @@ function equipmentPlanCatalogValidate_(row,read) {
   if(!['Cả 2','Thay mới','Bảo dưỡng'].includes(row.loaiSoKHDB)||!(p.loaiSoKHDB||[]).includes(row.loaiSoKHDB))throw Error('Loại sổ kế hoạch phải chọn từ ThamSoHeThong.loaiSoKHDB.');
   for(const key of ['tanSuatThayMoi','tanSuatBaoDuong']){
     const required=row.loaiSoKHDB==='Cả 2'||row.loaiSoKHDB===(key==='tanSuatThayMoi'?'Thay mới':'Bảo dưỡng');
-    if((required||row[key])&&!p.tanSuatThamSo.includes(row[key]))throw Error((key==='tanSuatThayMoi'?'Tần suất thay mới':'Tần suất bảo dưỡng')+' phải chọn từ ThamSoHeThong.tanSuat.');
+    if(!required){row[key]='';continue;}
+    if(!p.tanSuatThamSo.includes(row[key]))throw Error((key==='tanSuatThayMoi'?'Tần suất thay mới':'Tần suất bảo dưỡng')+' phải chọn từ ThamSoHeThong.tanSuat.');
   }
 }

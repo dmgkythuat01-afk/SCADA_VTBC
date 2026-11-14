@@ -677,7 +677,13 @@
     }
     function setPlanFrequencyRequired(){
       const f=$("editorForm"),type=f.elements.loaiSoKHDB?.value;
-      for(const [key,label]of [["tanSuatThayMoi","Thay mới"],["tanSuatBaoDuong","Bảo dưỡng"]])if(f.elements[key])f.elements[key].required=type==="Cả 2"||type===label;
+      for(const [key,label]of [["tanSuatThayMoi","Thay mới"],["tanSuatBaoDuong","Bảo dưỡng"]]){
+        const input=f.elements[key];if(!input)continue;
+        const enabled=type==="Cả 2"||type===label;
+        input.required=enabled;input.disabled=!enabled;
+        input.closest('label').classList.toggle('inactive-field',!enabled);
+        if(!enabled)input.value='';
+      }
     }
     function editorChange(e) {
       const name = e.target.name,
