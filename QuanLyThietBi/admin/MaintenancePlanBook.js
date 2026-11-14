@@ -57,7 +57,7 @@ function khbdSave_(user,p) {
 function maintenancePlanBookApi(token,action,payload) {
   const lock=LockService.getScriptLock();lock.waitLock(30000);mobileWorkResetContext_();
   try{const user=mobileWorkIdentity_(token),p=payload||{};
-    if(action==='options')return {workshops:readAdminRows_('DanhMucXuong').map(r=>r.tenXuong).filter(Boolean),year:Number(maintenanceToday_().slice(0,4))};
+    if(action==='options')return {workshops:readAdminRows_('DanhMucXuong').map(r=>r.tenXuong).filter(Boolean),machines:readAdminRows_('DanhMucMay').map(r=>({workshop:r.tenXuong,machine:r.tenMay})),year:Number(maintenanceToday_().slice(0,4))};
     if(action==='load')return khbdPayload_(user,p);
     if(action==='save')return khbdSave_(user,p);
     throw Error('Thao tác sổ kế hoạch không hợp lệ.');

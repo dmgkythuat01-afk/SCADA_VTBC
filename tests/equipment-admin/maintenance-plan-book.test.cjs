@@ -12,6 +12,15 @@ function fixture(){
  return {c,devices,source,stored,user,p};
 }
 module.exports={fixture};
+test('line filter preserves edits, renders one book per line and prints separate signed sections with restarted STT',()=>{
+ const f=fixture(),data=f.c.khbdPayload_(f.user,f.p),handlers={},c={window:{addEventListener(){}},document:{addEventListener:(type,fn)=>handlers[type]=fn},Date,Mobile:{state:{token:'t'}},PlannedMaintenance:{render(){}},queueMicrotask(){}};vm.createContext(c);
+ for(const file of ['MaintenancePlanBook','MaintenancePlanBookPrint'])vm.runInContext(fs.readFileSync('MobileQuanLyThietBi/appscript/'+file+'.html','utf8').match(/<script>([\s\S]*?)<\/script>/)[1],c);
+ const book=c.window.MaintenancePlanBook;Object.assign(book.state,{token:'t',options:{workshops:['X'],machines:[{workshop:'X',machine:'M1'},{workshop:'Y',machine:'Other'}]},data,dirty:true});
+ let html=book.html();assert.equal((html.match(/class="khbd-book"/g)||[]).length,2);assert.equal((html.match(/class="khbd-confirm"/g)||[]).length,2);assert.equal((html.match(/class="khbd-stt">1<\/td>/g)||[]).length,2);assert.doesNotMatch(html,/value="Other"/);
+ handlers.change({target:{dataset:{khbdFilter:'machine'},value:'M2'}});assert.equal(book.state.dirty,true);assert.equal(book.state.data.groups.length,2);assert.equal(book.selected().groups.length,1);assert.equal(book.selected().groups[0].machine,'M2');
+ html=c.window.MaintenancePlanBookPrint.documentHtml(book.selected(),book.table);assert.equal((html.match(/<main class="paper">/g)||[]).length,1);assert.match(html,/KHU VỰC: M2/);assert.match(html,/NGƯỜI LẬP/);assert.match(html,/BAN GIÁM ĐỐC/);assert.match(html,/XÁC NHẬN/);
+ book.state.machine='';html=c.window.MaintenancePlanBookPrint.documentHtml(book.selected(),book.table);assert.equal((html.match(/<main class="paper">/g)||[]).length,2);assert.equal((html.match(/class="khbd-signatures"/g)||[]).length,2);assert.match(html,/break-before:page/);
+});
 test('loading or saving locks book filters and rejects selection changes until response settles',()=>{
  const handlers={},c={window:{addEventListener(){}},document:{addEventListener:(type,fn)=>handlers[type]=fn},Date,Mobile:{state:{token:'t'}},queueMicrotask(){}};vm.createContext(c);vm.runInContext(fs.readFileSync('MobileQuanLyThietBi/appscript/MaintenancePlanBook.html','utf8').match(/<script>([\s\S]*?)<\/script>/)[1],c);
  const book=c.window.MaintenancePlanBook;Object.assign(book.state,{token:'t',options:{workshops:['X']},year:2026,loading:true});assert.match(book.html(),/<fieldset[^>]*disabled/);const target={dataset:{khbdFilter:'year'},value:'2027'};handlers.change({target});assert.equal(book.state.year,2026);assert.equal(target.value,2026);book.state.loading=false;book.state.busy=true;assert.match(book.html(),/<fieldset[^>]*disabled/);handlers.change({target:{dataset:{khbdFilter:'department'},value:'Điện'}});assert.equal(book.state.department,'Cơ khí');

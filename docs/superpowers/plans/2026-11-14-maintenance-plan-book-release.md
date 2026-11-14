@@ -9,3 +9,8 @@
 - Existing actual maintenance, reviewer and repair flows remain separate.
 
 Validation: 99 Node tests, browser checks at 320/390/768/1440/1920px, month save/reload, three-page print PDF with repeated headings/footer, source seed preserving all prior sheet data. Backend v76; mobile v52.
+
+
+## Per-line books update
+
+Each machine/production-line is a separate visible/printed book. Filter Xưởng → Dây chuyền (or all) → department. All prints start each line on a new page, restart equipment STT at 1, and append XÁC NHẬN plus unsigned NGƯỜI LẬP / BAN GIÁM ĐỐC sections. STT is centered. Switching the line filter preserves unsaved edits; existing month storage remains compatible and keyed by device/category, without migrating or overwriting saved data. Backend v77; mobile v53. Validation: 100 tests and responsive browser/4-page print checks.
