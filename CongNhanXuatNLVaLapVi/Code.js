@@ -34,6 +34,7 @@ function doGet(e) {
   const template = HtmlService.createTemplateFromFile("index");
 
   template.webAppUrl = ScriptApp.getService().getUrl();
+  template.mobileManualExportUrl = getMobileManualExportUrl_();
   template.qr = e && e.parameter && e.parameter.qr ? e.parameter.qr : "";
   template.lineId = e && e.parameter && e.parameter.lineId ? e.parameter.lineId : "";
 
@@ -7344,11 +7345,7 @@ function getApprovedExportRequestsByDate(token, selectedDate) {
 /** Open the manual-export app as the currently authenticated worker. */
 function createMobileManualExportLaunch(token) {
   const user = requireWorker_(token);
-  const url = normalizeText_(PropertiesService.getScriptProperties().getProperty("MOBILE_MANUAL_EXPORT_URL")) ||
-    "https://script.google.com/macros/s/AKfycbzlC4ObGARRKBzoQnHO0sMklkFkVdnTCKpySoG2vySYtW7xY6nK_KGzE3smmmWWmddM/exec";
-  if (!/^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec$/.test(url)) {
-    throw new Error("Chưa cấu hình URL trang Xuất kho TC. Đặt Script Property MOBILE_MANUAL_EXPORT_URL bằng URL Web App /exec của MobileXuatKhoThuCong.");
-  }
+  const url = getMobileManualExportUrl_();
   const lock = LockService.getScriptLock();
   lock.waitLock(10000);
   try {
@@ -7365,4 +7362,13 @@ function createMobileManualExportLaunch(token) {
   } finally {
     lock.releaseLock();
   }
+}
+
+function getMobileManualExportUrl_() {
+  const url = normalizeText_(PropertiesService.getScriptProperties().getProperty("MOBILE_MANUAL_EXPORT_URL")) ||
+    "https://script.google.com/macros/s/AKfycbzlC4ObGARRKBzoQnHO0sMklkFkVdnTCKpySoG2vySYtW7xY6nK_KGzE3smmmWWmddM/exec";
+  if (!/^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec$/.test(url)) {
+    throw new Error("Chưa cấu hình URL trang Xuất kho TC. Đặt Script Property MOBILE_MANUAL_EXPORT_URL bằng URL Web App /exec của MobileXuatKhoThuCong.");
+  }
+  return url;
 }

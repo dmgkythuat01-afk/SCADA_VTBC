@@ -1544,6 +1544,10 @@
         </button>
       </div>
     </div>
+    <div style="padding:0 16px 12px;">
+      <div id="manualExportStatus" role="status" aria-live="polite"></div>
+      <a id="manualExportFallback" target="_blank" rel="noopener noreferrer" hidden>Mở trang Xuất kho TC</a>
+    </div>
 
     
     <div id="tabExport" class="tab-panel">
@@ -1919,34 +1923,47 @@
   <script>
     const SCANNER_URL = "https://dmgpcnviengiat-wq.github.io/qr-scan/scan.html";
 
+    const MOBILE_MANUAL_EXPORT_URL = <?!= JSON.stringify(mobileManualExportUrl || "") ?>;
     const WEB_APP_URL = <?!= JSON.stringify(webAppUrl || "") ?>;
     const RETURNED_QR = <?!= JSON.stringify(qr || "") ?>;
     const RETURNED_LINE_ID = <?!= JSON.stringify(lineId || "") ?>;
 
     function openMobileManualExport() {
       const button = document.getElementById("tabXuatKhoTCBtn");
+      const status = document.getElementById("manualExportStatus");
+      const fallback = document.getElementById("manualExportFallback");
       if (!sessionToken || button.disabled) return;
-      // Open synchronously with the click so browsers do not block the new tab.
-      const targetTab = window.open("about:blank", "_blank");
-      if (!targetTab) {
-        alert("Trình duyệt đang chặn tab mới. Vui lòng cho phép cửa sổ bật lên rồi thử lại.");
-        return;
-      }
-      targetTab.opener = null;
+      fallback.hidden = true;
+      fallback.removeAttribute && fallback.removeAttribute("href");
+      status.textContent = "Đang chuyển đăng nhập sang Xuất kho TC...";
       button.disabled = true;
-      google.script.run.withSuccessHandler(function(result) {
+      // Open a real page while the click still has browser user activation.
+      // Do not modify opener: Apps Script sandbox may reject that access.
+      let targetTab = null;
+      try { targetTab = window.open(MOBILE_MANUAL_EXPORT_URL + "?pendingSso=1", "_blank"); }
+      catch (error) { /* The returned link below also works if popups are blocked. */ }
+      function failed(error) {
         button.disabled = false;
-        if (!result || !result.success || !/^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec\?sso=/.test(result.url)) {
-          targetTab.close();
-          alert("Không tạo được liên kết Xuất kho TC.");
-          return;
-        }
-        if (!targetTab.closed) targetTab.location.href = result.url;
-      }).withFailureHandler(function(error) {
-        button.disabled = false;
-        targetTab.close();
-        alert(error.message || "Không mở được trang Xuất kho TC.");
-      }).createMobileManualExportLaunch(sessionToken);
+        status.textContent = (error && error.message) || "Không mở được trang Xuất kho TC. Vui lòng thử lại.";
+        try { if (targetTab) targetTab.close(); } catch (ignored) {}
+      }
+      try {
+        google.script.run.withSuccessHandler(function(result) {
+          button.disabled = false;
+          if (!result || !result.success || !/^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec\?sso=/.test(result.url)) {
+            failed({message: "Không tạo được liên kết Xuất kho TC."});
+            return;
+          }
+          fallback.href = result.url;
+          fallback.hidden = false;
+          status.textContent = "Đã sẵn sàng. Nếu tab mới chưa chuyển, bấm liên kết bên dưới.";
+          try {
+            if (targetTab && !targetTab.closed) targetTab.location.href = result.url;
+          } catch (error) {
+            status.textContent = "Trình duyệt không cho tự chuyển tab. Bấm liên kết bên dưới để mở Xuất kho TC.";
+          }
+        }).withFailureHandler(failed).createMobileManualExportLaunch(sessionToken);
+      } catch (error) { failed(error); }
     }
 
     let sessionToken = "";

@@ -1884,6 +1884,7 @@ html{font-size:17px}body{margin:0;background:radial-gradient(ellipse at top left
 
 <script>
 
+  const WORKER_SSO_PENDING = <?!= JSON.stringify(waitingForSso || false) ?>;
   const WORKER_SSO_TICKET = "<?= ssoTicket ?>";
 
   function loginFromWorkerApp(ticket) {
@@ -1957,6 +1958,14 @@ html{font-size:17px}body{margin:0;background:radial-gradient(ellipse at top left
 
       if (WORKER_SSO_TICKET) {
         loginFromWorkerApp(WORKER_SSO_TICKET);
+        return;
+      }
+      if (WORKER_SSO_PENDING) {
+        showLoading("Đang chuyển đăng nhập", "Đang chờ trang công nhân xác nhận tài khoản...");
+        setTimeout(function() {
+          hideLoading();
+          showMessage("loginMessage", "info", "Nếu chưa tự đăng nhập, quay lại trang công nhân và bấm liên kết Mở trang Xuất kho TC.");
+        }, 30000);
         return;
       }
 
