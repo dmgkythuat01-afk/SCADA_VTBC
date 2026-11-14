@@ -12,6 +12,11 @@ function fixture(){
  return {c,devices,source,stored,user,p};
 }
 module.exports={fixture};
+test('print repeats a full-width closing border at every table page break',()=>{
+ const c={window:{}};vm.createContext(c);vm.runInContext(fs.readFileSync('MobileQuanLyThietBi/appscript/MaintenancePlanBookPrint.html','utf8').match(/<script>([\s\S]*?)<\/script>/)[1],c);
+ const print=c.window.MaintenancePlanBookPrint,html=print.documentHtml({year:2026,workshop:'X',department:'Điện',groups:[{machine:'M1'},{machine:'M2'}]},()=>'<table><tbody><tr><td>Example</td></tr></tbody></table>');
+ assert.equal((html.match(/<tfoot><tr><td colspan="16"><\/td><\/tr><\/tfoot>/g)||[]).length,2);assert.match(print.styles,/tfoot\{display:table-footer-group\}/);assert.match(print.styles,/tfoot td\{[^}]*border-top:1px solid #000/);
+});
 test('line filter preserves edits, renders one book per line and prints separate signed sections with restarted STT',()=>{
  const f=fixture(),data=f.c.khbdPayload_(f.user,f.p),handlers={},c={window:{addEventListener(){}},document:{addEventListener:(type,fn)=>handlers[type]=fn},Date,Mobile:{state:{token:'t'}},PlannedMaintenance:{render(){}},queueMicrotask(){}};vm.createContext(c);
  for(const file of ['MaintenancePlanBook','MaintenancePlanBookPrint'])vm.runInContext(fs.readFileSync('MobileQuanLyThietBi/appscript/'+file+'.html','utf8').match(/<script>([\s\S]*?)<\/script>/)[1],c);
