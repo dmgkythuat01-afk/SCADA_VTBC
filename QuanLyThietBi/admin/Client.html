@@ -853,11 +853,12 @@
           "loginAdmin",
           $("username").value,
           $("password").value,
+          true,
         );
         S.token = r.token;
         sessionStorage.setItem("dmgAdminDataSession", r.token);
         $("password").value = "";
-        await load();
+        if(r.data){S.data=r.data;showData();}else await load();
       } catch (e) {
         $("loginError").textContent = e.message;
       } finally {

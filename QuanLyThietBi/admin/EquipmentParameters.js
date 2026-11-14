@@ -1,6 +1,6 @@
 // Read-only lookup. Each column is its own list; blank cells do not pair rows.
 function equipmentSystemParameters_(sheet) {
-  sheet=sheet || SpreadsheetApp.openById(ADMIN_SHEET_ID).getSheetByName("ThamSoHeThong");
+  sheet=sheet || adminWorkbook_().getSheetByName("ThamSoHeThong");
   if(!sheet)throw Error("Không tìm thấy sheet ThamSoHeThong.");
   const values=sheet.getDataRange().getValues(),headers=(values[0] || []).map(v=>String(v).trim()),result={};
   ["loai","tanSuatThamSo","chiTieu"].forEach(key=>{

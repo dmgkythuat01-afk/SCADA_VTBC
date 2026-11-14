@@ -1,5 +1,5 @@
 function equipmentPlanCategories_(sheet) {
-  sheet=sheet||SpreadsheetApp.openById(ADMIN_SHEET_ID).getSheetByName('DanhMucSoKH');
+  if(!sheet){const keys=['tenXuong','tenMay','maThietBi','danhMucCanKiemTra','boPhanDanhGia','tanSuatBaoDuong'];return readAdminRows_('DanhMucSoKH').map(r=>Object.fromEntries(keys.map(k=>[k,String(r[k]??'').trim()]))).filter(r=>r.maThietBi&&r.danhMucCanKiemTra);}
   if(!sheet)throw Error('Không tìm thấy sheet DanhMucSoKH.');
   const keys=['tenXuong','tenMay','maThietBi','danhMucCanKiemTra','boPhanDanhGia','tanSuatBaoDuong'],values=sheet.getDataRange().getValues(),headers=(values[0]||[]).map(v=>String(v).trim());
   keys.forEach(k=>{if(headers.filter(h=>h===k).length!==1)throw Error('DanhMucSoKH thiếu hoặc trùng cột '+k);});

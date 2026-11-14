@@ -1,4 +1,9 @@
 const ADMIN_SHEET_ID = "1GyLKh_9gwPeAzTMuowR3OE8eYnSSnoMPMLnWcUYxpoI";
+let ADMIN_REQUEST_CONTEXT;
+function adminBeginRequest_(){ADMIN_REQUEST_CONTEXT={workbook:null,secret:null,rows:{}};}
+function adminRequestContext_(){if(!ADMIN_REQUEST_CONTEXT)adminBeginRequest_();return ADMIN_REQUEST_CONTEXT;}
+function adminWorkbook_(){const c=adminRequestContext_();return c.workbook||(c.workbook=SpreadsheetApp.openById(ADMIN_SHEET_ID));}
+function adminInvalidateRows_(name){delete adminRequestContext_().rows[name];}
 const ADMIN_TABLES = {
   DanhMucSoKH: {
     label:'Danh mục sổ kế hoạch',icon:'▤',
@@ -128,7 +133,7 @@ function adminNow_() {
 }
 function adminSheet_(name) {
   adminSpec_(name);
-  const s = SpreadsheetApp.openById(ADMIN_SHEET_ID).getSheetByName(name);
+  const s = adminWorkbook_().getSheetByName(name);
   if (!s) throw Error("Không tìm thấy sheet " + name + ".");
   return s;
 }
@@ -149,6 +154,14 @@ function adminHeader_(name, sheet) {
   return { headers, map };
 }
 function readAdminRows_(name, columnOrders) {
+  adminSpec_(name);
+  const context=adminRequestContext_();
+  if(!context.rows[name]){const orders={};context.rows[name]={rows:readAdminRowsFresh_(name,orders),order:orders[name]};}
+  const cached=context.rows[name];
+  if(columnOrders)columnOrders[name]=cached.order.slice();
+  return cached.rows.map(r=>({...r}));
+}
+function readAdminRowsFresh_(name, columnOrders) {
   const sheet = adminSheet_(name),
     { headers, map } = adminHeader_(name, sheet);
   if (columnOrders)
@@ -201,11 +214,13 @@ function writeAdminRow_(name, row, index) {
     i = end;
   }
   SpreadsheetApp.flush();
+  adminInvalidateRows_(name);
   return row;
 }
 function deleteAdminRow_(name, index) {
   adminSheet_(name).deleteRow(index);
   SpreadsheetApp.flush();
+  adminInvalidateRows_(name);
 }
 function writeAdminBatch_(name, rows) {
   const sheet = adminSheet_(name),
@@ -227,6 +242,7 @@ function writeAdminBatch_(name, rows) {
     .setNumberFormat("@")
     .setValues(matrix);
   SpreadsheetApp.flush();
+  adminInvalidateRows_(name);
 }
 function adminRowVersion_(name, row) {
   return adminHmac_(

@@ -1,10 +1,13 @@
 function adminSecret_() {
+  const context=adminRequestContext_();
+  if(context.secret)return context.secret;
   const p = PropertiesService.getScriptProperties();
   let s = p.getProperty("AUTH_SECRET");
   if (!s) {
     s = Utilities.getUuid() + Utilities.getUuid();
     p.setProperty("AUTH_SECRET", s);
   }
+  context.secret=s;
   return s;
 }
 function adminHmac_(v, key) {
@@ -54,7 +57,8 @@ function adminUser_(row) {
     employeeId: row.maNhanVien,
   };
 }
-function loginAdmin(username, password) {
+function loginAdmin(username, password, includeData) {
+  adminBeginRequest_();
   const lock = LockService.getScriptLock();
   lock.waitLock(30000);
   try {
@@ -85,7 +89,8 @@ function loginAdmin(username, password) {
       JSON.stringify({ username: key, version: adminAuthVersion_(r) }),
       21600,
     );
-    return { token, user: adminUser_(r) };
+    const user=adminUser_(r);
+    return {token,user,...(includeData===true?{data:adminSnapshot_(user)}:{})};
   } finally {
     lock.releaseLock();
   }
@@ -127,6 +132,7 @@ function doGet() {
     );
 }
 function adminApi(token, action, payload) {
+  adminBeginRequest_();
   const lock = LockService.getScriptLock();
   lock.waitLock(30000);
   try {
