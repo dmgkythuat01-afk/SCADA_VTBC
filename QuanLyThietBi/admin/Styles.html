@@ -437,7 +437,9 @@
   table {
     border-collapse: separate;
     border-spacing: 0;
-    width: 100%;
+    width: max-content;
+    min-width: 100%;
+    table-layout: auto;
     font-size: 12px;
   }
   th,
@@ -459,9 +461,10 @@
     letter-spacing: 0.15px;
   }
   td {
-    max-width: 350px;
+    max-width: none;
     min-width: 145px;
     line-height: 1.7;
+    white-space: nowrap;
   }
   td.number,
   th.number {
@@ -474,11 +477,9 @@
     background: #fafcf9;
   }
   .cell-text {
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    white-space: pre-line;
+    display: block;
+    overflow: visible;
+    white-space: nowrap;
   }
   .row-actions {
     white-space: nowrap;
