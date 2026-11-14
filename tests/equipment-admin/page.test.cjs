@@ -18,7 +18,7 @@ test("new admin composes only current data-entry UI and exact live headers", () 
   const c = {};
   vm.createContext(c);
   vm.runInContext(fs.readFileSync(root + "Schema.js", "utf8"), c);
-  assert.equal(vm.runInContext("Object.keys(ADMIN_TABLES).length", c), 6);
+  assert.equal(vm.runInContext("Object.keys(ADMIN_TABLES).length", c), 7);
   assert.equal(
     vm.runInContext("ADMIN_TABLES.DanhMucThietBi.columns.ThongSoKyThuat", c),
     "Thông số kỹ thuật",

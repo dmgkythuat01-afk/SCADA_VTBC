@@ -1,4 +1,5 @@
 const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
+test('plan types are independent options from loaiSoKHDB, preserving sparse rows and deduplicating',()=>{const c={};vm.createContext(c);vm.runInContext(fs.readFileSync('QuanLyThietBi/admin/EquipmentParameters.js','utf8'),c);const values=[['loai','tanSuat','chiTieu','loaiSoKHDB'],['Bảo dưỡng','1 tháng','TỐT','Cả 2'],['','','','Bảo dưỡng'],['','2 năm','','Thay mới'],['','','',' Cả 2 ']];assert.deepEqual(Array.from(c.equipmentSystemParameters_({getDataRange:()=>({getValues:()=>values})}).loaiSoKHDB),['Cả 2','Bảo dưỡng','Thay mới']);});
 test('system parameters use independent sparse columns, trim and deduplicate without pairing rows',()=>{
  const c={};vm.createContext(c);const source=fs.readFileSync('QuanLyThietBi/admin/EquipmentParameters.js','utf8');vm.runInContext(source,c);
  const values=[['tanSuat','loai','chiTieu'],['7 ngày','Bảo dưỡng',' TỐT '],['6 tháng','Vệ sinh','CÓ'],['1 năm','',''],[' 7 ngày ','Bảo dưỡng','TỐT']];

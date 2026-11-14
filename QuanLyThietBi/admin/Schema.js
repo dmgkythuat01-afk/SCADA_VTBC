@@ -1,5 +1,12 @@
 const ADMIN_SHEET_ID = "1GyLKh_9gwPeAzTMuowR3OE8eYnSSnoMPMLnWcUYxpoI";
 const ADMIN_TABLES = {
+  DanhMucSoKH: {
+    label:'Danh mục sổ kế hoạch',icon:'▤',
+    key:['tenXuong','tenMay','maThietBi','tenThietBi','danhMucCanKiemTra','boPhanDanhGia'],
+    required:['tenXuong','tenMay','maThietBi','tenThietBi','danhMucCanKiemTra','boPhanDanhGia','loaiSoKHDB'],
+    filters:['tenXuong','tenMay','maThietBi','boPhanDanhGia','loaiSoKHDB'],
+    columns:{tenXuong:'Tên xưởng',tenMay:'Tên máy',maThietBi:'Mã thiết bị',tenThietBi:'Tên thiết bị',danhMucCanKiemTra:'Danh mục cần kiểm tra',tanSuatThayMoi:'Tần suất thay mới',tanSuatBaoDuong:'Tần suất bảo dưỡng',boPhanDanhGia:'Bộ phận đánh giá',loaiSoKHDB:'Loại sổ kế hoạch'},
+  },
   TaiKhoan: {
     label: "Tài khoản",
     icon: "♙",

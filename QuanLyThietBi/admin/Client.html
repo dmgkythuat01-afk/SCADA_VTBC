@@ -28,6 +28,7 @@
       requestId: "",
     };
     const descriptions = {
+      DanhMucSoKH:"Danh mục và tần suất công việc dùng lập sổ kế hoạch bảo dưỡng.",
       TaiKhoan: "Tài khoản đăng nhập và thông tin nhân viên.",
       DanhMucBoPhan: "Các phòng ban và bộ phận quản lý trong công ty.",
       DanhMucXuong: "Danh sách xưởng dùng để liên kết máy và thiết bị.",
@@ -37,6 +38,7 @@
         "Các chỉ tiêu và thông số tiêu chuẩn của từng thiết bị.",
     };
     const hints = {
+      DanhMucSoKH:"Chọn xưởng → máy → thiết bị. Tần suất và loại sổ lấy từ ThamSoHeThong; danh mục cần kiểm tra được nhập tại đây.",
       TaiKhoan:
         "Điền mã nhân viên để tài khoản xuất hiện trong lựa chọn người quản lý thiết bị. Mật khẩu không hiển thị trên bảng.",
       DanhMucBoPhan: "Tên bộ phận quản lý được dùng trong danh mục thiết bị.",
@@ -145,6 +147,7 @@
         "DanhMucMay",
         "DanhMucThietBi",
         "DanhMucCanKiemTra",
+        "DanhMucSoKH",
       ]
         .map((key) => [key, S.data.schema[key]])
         .map(
@@ -361,7 +364,7 @@
           S.table !== "DanhMucXuong" &&
           !(S.table === "DanhMucMay" && k === "tenMay") &&
           !(S.table === "DanhMucBoPhan" && k === "tenBoPhanQuanLy")) ||
-        (S.table === "DanhMucCanKiemTra" && k === "tenThietBi")
+        (["DanhMucCanKiemTra","DanhMucSoKH"].includes(S.table) && ["tenThietBi","maThietBi"].includes(k) && (k!=="maThietBi"||S.table==="DanhMucSoKH"))
       );
     }
     function openEditor(row) {
@@ -381,13 +384,18 @@
         const order=["tenXuong","tenMay","tenThietBi","maThietBi","boPhanDanhGia","danhMucCanKiemTra","loai","tanSuatThamSo","thamSoCanKiemTra","chiTieuDanhGia1","chiTieuDanhGia2","chiTieuDanhGia3"];
         fieldOrder.sort((a,b)=>(order.indexOf(a)<0?999:order.indexOf(a))-(order.indexOf(b)<0?999:order.indexOf(b)));
       }
+      if(S.table==="DanhMucSoKH"){
+        const order=["tenXuong","tenMay","tenThietBi","maThietBi","boPhanDanhGia","loaiSoKHDB","danhMucCanKiemTra","tanSuatThayMoi","tanSuatBaoDuong"];
+        fieldOrder.sort((a,b)=>order.indexOf(a)-order.indexOf(b));
+      }
+      $("editorFields").classList.toggle("plan-catalog-form",S.table==="DanhMucSoKH");
       $("editorFields").classList.toggle("criteria-form",S.table === "DanhMucCanKiemTra");
       $("editorFields").innerHTML = fieldOrder
         .map((key) => [key, spec().columns[key]])
         .map(([k, label]) => {
           const required = spec().required.includes(k),
             value = k === "matKhau" ? "" : row?.[k] || "";
-          if ((S.table === "DanhMucCanKiemTra" && k === "danhMucCanKiemTra") || isRelation(k) || ["chucVu", "dangSuDung", "boPhanDanhGia", "loai", "chiTieuDanhGia1", "chiTieuDanhGia2", "chiTieuDanhGia3"].includes(k))
+          if ((S.table === "DanhMucCanKiemTra" && k === "danhMucCanKiemTra") || isRelation(k) || ["chucVu", "dangSuDung", "boPhanDanhGia", "loai", "tanSuatThayMoi", "tanSuatBaoDuong", "loaiSoKHDB", "chiTieuDanhGia1", "chiTieuDanhGia2", "chiTieuDanhGia3"].includes(k))
             return selectField(k, label, required);
           const type = [
             "ThongSoKyThuat",
@@ -442,7 +450,7 @@
       $("editor").showModal();
     }
     function equipmentBatchMode() {
-      return ["DanhMucThietBi", "DanhMucCanKiemTra"].includes(S.table) && !S.editing;
+      return ["DanhMucThietBi", "DanhMucCanKiemTra", "DanhMucSoKH"].includes(S.table) && !S.editing;
     }
     function equipmentFormValues() {
       const values = Object.fromEntries(new FormData($("editorForm")));
@@ -450,7 +458,7 @@
         (a) => a.maNhanVien === values.maNguoiQuanLy,
       );
       if (S.table === "DanhMucThietBi") values.tenNguoiQuanLy = person?.hoTen || "";
-      if (S.table === "DanhMucCanKiemTra") {
+      if (["DanhMucCanKiemTra","DanhMucSoKH"].includes(S.table)) {
         const device=rows("DanhMucThietBi").find(r=>r.tenXuong===values.tenXuong && r.tenMay===values.tenMay && r.maThietBi===values.maThietBi);
         values.tenThietBi=device?.tenThietBi || "";
       }
@@ -608,11 +616,17 @@
             .map((r) => r.tenMay),
           values.tenMay,
         );
-      if (S.table === "DanhMucCanKiemTra") {
+      if (["DanhMucCanKiemTra","DanhMucSoKH"].includes(S.table)) {
         const devices=rows("DanhMucThietBi").filter(r=>r.tenXuong===f.elements.tenXuong.value && r.tenMay===f.elements.tenMay.value);
         setOptions("tenThietBi",devices.map(r=>[r.maThietBi,(r.tenThietBi || "Chưa có tên")+" · "+r.maThietBi]),values.maThietBi);
         f.elements.maThietBi.value=values.maThietBi || "";
-        setCriterionPlanOptions(values);
+        if(S.table==="DanhMucCanKiemTra")setCriterionPlanOptions(values);
+        else {
+          setOptions("maThietBi",devices.map(r=>[r.maThietBi,r.maThietBi+" · "+r.tenThietBi]),values.maThietBi);
+          for(const key of ["tanSuatThayMoi","tanSuatBaoDuong"])setOptions(key,S.data.systemParameters?.tanSuatThamSo||[],values[key]);
+          setOptions("loaiSoKHDB",S.data.systemParameters?.loaiSoKHDB||[],values.loaiSoKHDB);
+          setPlanFrequencyRequired();
+        }
       }
       if (S.table === "DanhMucThietBi") {
         const people = rows("TaiKhoan").filter((a) => a.maNhanVien);
@@ -661,6 +675,10 @@
           values.dangSuDung === undefined ? "Có" : values.dangSuDung,
         );
     }
+    function setPlanFrequencyRequired(){
+      const f=$("editorForm"),type=f.elements.loaiSoKHDB?.value;
+      for(const [key,label]of [["tanSuatThayMoi","Thay mới"],["tanSuatBaoDuong","Bảo dưỡng"]])if(f.elements[key])f.elements[key].required=type==="Cả 2"||type===label;
+    }
     function editorChange(e) {
       const name = e.target.name,
         f = $("editorForm"),
@@ -674,6 +692,10 @@
         v.danhMucCanKiemTra="";v.tanSuatThamSo="";
         v.maThietBi = "";
         setFormOptions(v);
+      } else if (S.table === "DanhMucSoKH" && ["tenThietBi","maThietBi"].includes(name)) {
+        v.maThietBi=e.target.value;setFormOptions(v);
+      } else if (S.table === "DanhMucSoKH" && name === "loaiSoKHDB") {
+        setPlanFrequencyRequired();
       } else if (S.table === "DanhMucCanKiemTra" && name === "tenThietBi") {
         v.maThietBi=e.target.value;v.danhMucCanKiemTra="";v.tanSuatThamSo="";setFormOptions(v);
       } else if (S.table === "DanhMucCanKiemTra" && name === "boPhanDanhGia") {
@@ -691,7 +713,7 @@
       if (S.busy) return;
       if (equipmentBatchMode()) return saveEquipmentBatch();
       const values = Object.fromEntries(new FormData($("editorForm")));
-      if (S.table === "DanhMucCanKiemTra") {
+      if (["DanhMucCanKiemTra","DanhMucSoKH"].includes(S.table)) {
         const device=rows("DanhMucThietBi").find(r=>r.tenXuong===values.tenXuong && r.tenMay===values.tenMay && r.maThietBi===values.maThietBi);
         values.tenThietBi=device?.tenThietBi || "";
       }

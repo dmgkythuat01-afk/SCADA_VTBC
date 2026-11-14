@@ -44,17 +44,17 @@ function adminReference_(name, row) {
       (r) => adminNorm_(r.tenBoPhanQuanLy) === adminNorm_(row.tenBoPhanQuanLy),
     );
   if (name === "DanhMucXuong")
-    used = ["DanhMucMay", "DanhMucThietBi", "DanhMucCanKiemTra"].flatMap((n) =>
+    used = ["DanhMucMay", "DanhMucThietBi", "DanhMucCanKiemTra", "DanhMucSoKH"].flatMap((n) =>
       readAdminRows_(n).filter((r) => adminSame_(r, row, ["tenXuong"])),
     );
   if (name === "DanhMucMay")
-    used = ["DanhMucThietBi", "DanhMucCanKiemTra"].flatMap((n) =>
+    used = ["DanhMucThietBi", "DanhMucCanKiemTra", "DanhMucSoKH"].flatMap((n) =>
       readAdminRows_(n).filter((r) =>
         adminSame_(r, row, ["tenXuong", "tenMay"]),
       ),
     );
   if (name === "DanhMucThietBi")
-    used = readAdminRows_("DanhMucCanKiemTra").filter((r) =>
+    used = ["DanhMucCanKiemTra","DanhMucSoKH"].flatMap(n=>readAdminRows_(n)).filter((r) =>
       adminSame_(r, row, ["tenXuong", "tenMay", "maThietBi"]),
     );
   if (used.length)
@@ -112,6 +112,7 @@ function prepareAdminData_(name, p, read = readAdminRows_, plans) {
     row.maThietBi = matches[0].maThietBi;
     row.tenThietBi = matches[0].tenThietBi || "";
   }
+  if(name==='DanhMucSoKH')equipmentPlanCatalogValidate_(row,read);
   const all = read(name);
   if (name === "DanhMucCanKiemTra" && !["Điện", "Cơ khí"].includes(row.boPhanDanhGia))
     throw Error("Bộ phận đánh giá chỉ được chọn Điện hoặc Cơ khí.");
@@ -171,7 +172,7 @@ function prepareAdminData_(name, p, read = readAdminRows_, plans) {
     adminChanged_(old, row, spec.key)
   )
     adminReference_(name, old);
-  if (["DanhMucMay", "DanhMucThietBi", "DanhMucCanKiemTra"].includes(name)) {
+  if (["DanhMucMay", "DanhMucThietBi", "DanhMucCanKiemTra", "DanhMucSoKH"].includes(name)) {
     const matches = read("DanhMucXuong").filter(
       (r) => adminNorm_(r.tenXuong) === adminNorm_(row.tenXuong),
     );
@@ -179,7 +180,7 @@ function prepareAdminData_(name, p, read = readAdminRows_, plans) {
       throw Error("Vui lòng chọn xưởng có trong danh mục.");
     row.tenXuong = matches[0].tenXuong;
   }
-  if (["DanhMucThietBi", "DanhMucCanKiemTra"].includes(name)) {
+  if (["DanhMucThietBi", "DanhMucCanKiemTra", "DanhMucSoKH"].includes(name)) {
     const matches = read("DanhMucMay").filter((r) =>
       adminSame_(r, row, ["tenXuong", "tenMay"]),
     );
@@ -228,7 +229,7 @@ function saveAdminData_(name, p) {
   return row;
 }
 function saveAdminBatch_(name, values) {
-  if (!["DanhMucThietBi", "DanhMucCanKiemTra"].includes(name))
+  if (!["DanhMucThietBi", "DanhMucCanKiemTra", "DanhMucSoKH"].includes(name))
     throw Error("Chỉ hỗ trợ thêm danh sách thiết bị hoặc danh mục kiểm tra.");
   if (!Array.isArray(values) || values.length < 1 || values.length > 100)
     throw Error("Danh sách cần có từ 1 đến 100 dòng.");

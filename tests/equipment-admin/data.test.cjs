@@ -19,6 +19,7 @@ function setup() {
       "DanhMucMay",
       "DanhMucThietBi",
       "DanhMucCanKiemTra",
+      "DanhMucSoKH",
     ].map((k) => [k, []]),
   );
   Object.assign(c, {

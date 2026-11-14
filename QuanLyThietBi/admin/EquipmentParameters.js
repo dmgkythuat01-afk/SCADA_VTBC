@@ -8,5 +8,8 @@ function equipmentSystemParameters_(sheet) {
     if(positions.length!==1)throw Error("ThamSoHeThong: thiếu hoặc trùng cột "+key+".");
     result[key]=[...new Set(values.slice(1).map(row=>String(row[positions[0]] ?? "").trim()).filter(Boolean))];
   });
+  const types=headers.map((h,i)=>h==='loaiSoKHDB'?i:-1).filter(i=>i>=0);
+  if(types.length>1)throw Error('ThamSoHeThong: trùng cột loaiSoKHDB.');
+  if(types.length)result.loaiSoKHDB=[...new Set(values.slice(1).map(r=>String(r[types[0]]??'').trim()).filter(Boolean))];
   return result;
 }
