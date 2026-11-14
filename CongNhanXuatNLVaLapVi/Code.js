@@ -7340,3 +7340,29 @@ function getApprovedExportRequestsByDate(token, selectedDate) {
     items: items
   };
 }
+
+/** Open the manual-export app as the currently authenticated worker. */
+function createMobileManualExportLaunch(token) {
+  const user = requireWorker_(token);
+  const url = normalizeText_(PropertiesService.getScriptProperties().getProperty("MOBILE_MANUAL_EXPORT_URL")) ||
+    "https://script.google.com/macros/s/AKfycbzlC4ObGARRKBzoQnHO0sMklkFkVdnTCKpySoG2vySYtW7xY6nK_KGzE3smmmWWmddM/exec";
+  if (!/^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec$/.test(url)) {
+    throw new Error("Chưa cấu hình URL trang Xuất kho TC. Đặt Script Property MOBILE_MANUAL_EXPORT_URL bằng URL Web App /exec của MobileXuatKhoThuCong.");
+  }
+  const lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    const sheet = getOrCreateSheet_("WorkerAppLoginTickets", ["ticket", "audience", "useName", "expiresAt", "consumed"]);
+    const ticket = Utilities.getUuid();
+    const now = Date.now();
+    const record = [ticket, "MobileXuatKhoThuCong", user.useName, now + 120000, ""];
+    const rows = sheet.getDataRange().getValues();
+    const reusable = rows.findIndex((row, index) => index > 0 &&
+      (Number(row[3]) <= now || String(row[4]) === "used"));
+    if (reusable > 0) sheet.getRange(reusable + 1, 1, 1, record.length).setValues([record]);
+    else sheet.appendRow(record);
+    return {success: true, url: url + "?sso=" + encodeURIComponent(ticket)};
+  } finally {
+    lock.releaseLock();
+  }
+}

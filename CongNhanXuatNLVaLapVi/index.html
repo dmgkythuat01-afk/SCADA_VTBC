@@ -1538,6 +1538,10 @@
           <span class="tab-icon">📦</span>
           <span>Đóng thùng</span>
         </button>
+        <button id="tabXuatKhoTCBtn" class="tab-btn" onclick="openMobileManualExport()">
+          <span class="tab-icon">🚚</span>
+          <span>Xuất kho TC</span>
+        </button>
       </div>
     </div>
 
@@ -1918,6 +1922,32 @@
     const WEB_APP_URL = <?!= JSON.stringify(webAppUrl || "") ?>;
     const RETURNED_QR = <?!= JSON.stringify(qr || "") ?>;
     const RETURNED_LINE_ID = <?!= JSON.stringify(lineId || "") ?>;
+
+    function openMobileManualExport() {
+      const button = document.getElementById("tabXuatKhoTCBtn");
+      if (!sessionToken || button.disabled) return;
+      // Open synchronously with the click so browsers do not block the new tab.
+      const targetTab = window.open("about:blank", "_blank");
+      if (!targetTab) {
+        alert("Trình duyệt đang chặn tab mới. Vui lòng cho phép cửa sổ bật lên rồi thử lại.");
+        return;
+      }
+      targetTab.opener = null;
+      button.disabled = true;
+      google.script.run.withSuccessHandler(function(result) {
+        button.disabled = false;
+        if (!result || !result.success || !/^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec\?sso=/.test(result.url)) {
+          targetTab.close();
+          alert("Không tạo được liên kết Xuất kho TC.");
+          return;
+        }
+        if (!targetTab.closed) targetTab.location.href = result.url;
+      }).withFailureHandler(function(error) {
+        button.disabled = false;
+        targetTab.close();
+        alert(error.message || "Không mở được trang Xuất kho TC.");
+      }).createMobileManualExportLaunch(sessionToken);
+    }
 
     let sessionToken = "";
     let currentUser = null;

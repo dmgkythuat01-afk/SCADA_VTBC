@@ -1884,6 +1884,33 @@ html{font-size:17px}body{margin:0;background:radial-gradient(ellipse at top left
 
 <script>
 
+  const WORKER_SSO_TICKET = "<?= ssoTicket ?>";
+
+  function loginFromWorkerApp(ticket) {
+    // A handoff explicitly selects the source account, overriding any old local session.
+    localStorage.removeItem("MOBILE_WORKER_MANUAL_EXPORT_TOKEN");
+    sessionToken = "";
+    currentUser = null;
+    showLoading("Đang đăng nhập", "Đang mở tài khoản từ trang công nhân...");
+    google.script.run.withSuccessHandler(function(result) {
+      hideLoading();
+      google.script.history.replace({}, {}, "");
+      if (!result || !result.success || !result.token) {
+        showMessage("loginMessage", "error", "Không thể chuyển đăng nhập. Vui lòng mở lại từ trang công nhân.");
+        return;
+      }
+      sessionToken = result.token;
+      currentUser = result.user;
+      localStorage.setItem("MOBILE_WORKER_MANUAL_EXPORT_TOKEN", sessionToken);
+      showApp();
+      loadInitialData(false);
+    }).withFailureHandler(function(error) {
+      hideLoading();
+      google.script.history.replace({}, {}, "");
+      showMessage("loginMessage", "error", error.message || "Không chuyển được đăng nhập.");
+    }).loginWithWorkerTicket(ticket);
+  }
+
   let sessionToken = "";
 
   let currentUser = null;
@@ -1927,6 +1954,11 @@ html{font-size:17px}body{margin:0;background:radial-gradient(ellipse at top left
       renderHistory();
 
 
+
+      if (WORKER_SSO_TICKET) {
+        loginFromWorkerApp(WORKER_SSO_TICKET);
+        return;
+      }
 
       const token =
 

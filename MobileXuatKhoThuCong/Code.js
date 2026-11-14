@@ -31,11 +31,12 @@ const SESSION_TTL_SECONDS = 6 * 60 * 60;
 
 
 
-function doGet() {
+function doGet(e) {
+  const template = HtmlService.createTemplateFromFile("index");
+  const ticket = normalizeText_(e && e.parameter && e.parameter.sso);
+  template.ssoTicket = /^[a-f0-9-]{36}$/i.test(ticket) ? ticket : "";
 
-  return HtmlService
-
-    .createTemplateFromFile("index").evaluate()
+  return template.evaluate()
     .addMetaTag("viewport", "width=device-width, initial-scale=1, viewport-fit=cover")
 
     .setTitle("Mobile Xuất Kho Thủ Công")
@@ -3605,4 +3606,40 @@ function getWorkerManualExportHistory_(
 
     });
 
+}
+
+/** Consume a short-lived handoff issued by the worker app in the shared spreadsheet. */
+function loginWithWorkerTicket(ticket) {
+  ticket = normalizeText_(ticket);
+  if (!/^[a-f0-9-]{36}$/i.test(ticket)) throw new Error("Mã đăng nhập chuyển trang không hợp lệ.");
+  const lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    const sheet = getSpreadsheet_().getSheetByName("WorkerAppLoginTickets");
+    if (!sheet) throw new Error("Không tìm thấy mã chuyển đăng nhập. Vui lòng mở lại từ trang công nhân.");
+    const rows = sheet.getDataRange().getValues();
+    const index = rows.findIndex((row, i) => i > 0 && String(row[0]) === ticket);
+    if (index < 1) throw new Error("Mã chuyển đăng nhập không tồn tại.");
+    const record = rows[index];
+    const expiresAt = Number(record[3]);
+    if (String(record[1]) !== "MobileXuatKhoThuCong" || !Number.isFinite(expiresAt) ||
+        expiresAt <= Date.now() || String(record[4]) === "used") {
+      throw new Error("Mã chuyển đăng nhập đã hết hạn hoặc đã sử dụng. Vui lòng mở lại từ trang công nhân.");
+    }
+    const values = getSheet_(SHEET_ACCOUNT).getDataRange().getValues();
+    const headers = (values[0] || []).map(normalizeText_);
+    const nameIndex = findRequiredHeaderIndex_(headers, ["useName"]);
+    const roleIndex = findRequiredHeaderIndex_(headers, ["role"]);
+    const departmentIndex = findOptionalHeaderIndex_(headers, ["department"]);
+    const account = values.slice(1).find(row => normalizeText_(row[nameIndex]) === normalizeText_(record[2]));
+    if (!account || lowerText_(account[roleIndex]) !== REQUIRED_ROLE) {
+      throw new Error("Tài khoản không còn quyền sử dụng trang xuất kho công nhân.");
+    }
+    const user = {useName: normalizeText_(account[nameIndex]), role: lowerText_(account[roleIndex]),
+      department: departmentIndex < 0 ? "" : normalizeText_(account[departmentIndex])};
+    sheet.getRange(index + 1, 5).setValue("used");
+    return {success: true, token: saveSession_(user), user: user};
+  } finally {
+    lock.releaseLock();
+  }
 }
