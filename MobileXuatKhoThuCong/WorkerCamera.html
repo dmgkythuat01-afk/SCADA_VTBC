@@ -23,7 +23,6 @@ const WorkerCamera=(function(){
  function planKey(item){return 'plan:'+JSON.stringify([selectedPlan?.Id||'',item.STT,item.maNguyenLieu,item.MaKeToan||''].map(v=>String(v??'').trim()));}
  function stop(){if(stream)stream.getTracks().forEach(track=>track.stop());stream=null;const video=el('workerCameraVideo');if(video)video.srcObject=null;}
  function close(){if(transfer?.popup&&!transfer.popup.closed)transfer.popup.close();transfer=null;generation++;stop();el('workerCameraModal').hidden=true;pending='';if(previousFocus?.focus)previousFocus.focus();}
- function policyBlocked(){const policy=document.permissionsPolicy||document.featurePolicy;try{return !!policy&&typeof policy.allowsFeature==='function'&&!policy.allowsFeature('camera');}catch(error){return false;}}
  function external(){
   const url=window.WORKER_CAMERA_HELPER_URL||'';
   if(!url){el('workerCameraStatus').textContent='Google Apps Script \u0111ang ch\u1eb7n camera trong khung nh\u00fang. C\u1ea7n c\u1ea5u h\u00ecnh trang camera HTTPS ri\u00eang; c\u1ea5p l\u1ea1i quy\u1ec1n tr\u00ecnh duy\u1ec7t kh\u00f4ng kh\u1eafc ph\u1ee5c \u0111\u01b0\u1ee3c l\u1ed7i n\u00e0y.';return;}
@@ -31,7 +30,8 @@ const WorkerCamera=(function(){
   const nonce=Array.from(crypto.getRandomValues(new Uint8Array(16)),v=>v.toString(16).padStart(2,'0')).join('');
   destination.hash=new URLSearchParams({nonce:nonce,origin:location.origin}).toString();
   if(transfer?.popup&&!transfer.popup.closed)transfer.popup.close();
-  const popup=window.open(destination.href,'_blank');
+  let popup=null;
+  try{popup=window.open(destination.href,'_blank');}catch(error){/* Show the retry button and popup guidance below. */}
   transfer=popup?{popup:popup,origin:destination.origin,nonce:nonce,key:activeKey}:null;
   el('workerCameraStatus').textContent=popup?'Camera \u0111ang m\u1edf \u1edf c\u1eeda s\u1ed5 ri\u00eang. Sau khi ch\u1ee5p, b\u1ea5m D\u00f9ng \u1ea3nh n\u00e0y \u0111\u1ec3 tr\u1edf v\u1ec1 phi\u1ebfu.':'Tr\u00ecnh duy\u1ec7t \u0111ang ch\u1eb7n c\u1eeda s\u1ed5 m\u1edbi. H\u00e3y cho ph\u00e9p v\u00e0 b\u1ea5m n\u00fat m\u1edf camera b\u00ean tr\u00ean.';
  }
@@ -40,20 +40,15 @@ const WorkerCamera=(function(){
   if(event.data.type==='worker-camera-photo'&&valid(event.data.dataUrl)){const key=transfer.key;set(key,event.data.dataUrl);close();}
   else if(event.data.type==='worker-camera-cancel')close();
  });
- async function open(key){
-  generation++;const request=generation;stop();activeKey=key;pending='';previousFocus=document.activeElement;
-  el('workerCameraModal').hidden=false;el('workerCameraVideo').hidden=false;el('workerCameraStill').hidden=true;el('workerCameraShoot').hidden=false;el('workerCameraShoot').disabled=true;el('workerCameraSwitch').hidden=false;el('workerCameraRetake').hidden=true;el('workerCameraUse').hidden=true;
-  el('workerCameraTitle').textContent='Ch\u1ee5p \u1ea3nh xu\u1ea5t kho';
-  el('workerCameraExternal').hidden=true;
-  el('workerCameraStatus').textContent='\u0110ang m\u1edf camera...';
-  if(policyBlocked()){el('workerCameraVideo').hidden=true;el('workerCameraShoot').hidden=true;el('workerCameraSwitch').hidden=true;el('workerCameraExternal').hidden=false;external();return;}
-  try{
-   if(!navigator.mediaDevices?.getUserMedia)throw Error('Tr\u00ecnh duy\u1ec7t ch\u01b0a h\u1ed7 tr\u1ee3 camera. H\u00e3y m\u1edf trang b\u1eb1ng Chrome ho\u1eb7c Safari v\u00e0 c\u1ea5p quy\u1ec1n camera.');
-   const media=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:facing},width:{ideal:1600},height:{ideal:1200}},audio:false});
-   if(request!==generation){media.getTracks().forEach(t=>t.stop());return;}
-   stream=media;el('workerCameraVideo').srcObject=stream;await el('workerCameraVideo').play();
-   el('workerCameraShoot').disabled=false;el('workerCameraStatus').textContent='\u0110\u01b0a nguy\u00ean li\u1ec7u v\u00e0 nh\u00e3n l\u00f4 v\u00e0o khung, r\u1ed3i b\u1ea5m Ch\u1ee5p \u1ea3nh.';
-  }catch(error){if(request!==generation)return;stop();if(policyBlocked()){el('workerCameraExternal').hidden=false;el('workerCameraStatus').textContent='Google Apps Script \u0111ang ch\u1eb7n camera trong khung nh\u00fang. H\u00e3y m\u1edf camera \u1edf c\u1eeda s\u1ed5 ri\u00eang.';}else el('workerCameraStatus').textContent=(error.name==='NotAllowedError'?'B\u1ea1n c\u1ea7n cho ph\u00e9p trang s\u1eed d\u1ee5ng camera. ': '')+(error.message||'Kh\u00f4ng m\u1edf \u0111\u01b0\u1ee3c camera.');}
+ function open(key){
+  generation++;stop();activeKey=key;pending='';previousFocus=document.activeElement;
+  el('workerCameraModal').hidden=false;el('workerCameraVideo').hidden=true;el('workerCameraStill').hidden=true;
+  ['Switch','Shoot','Retake','Use'].forEach(name=>el('workerCamera'+name).hidden=true);
+  el('workerCameraTitle').textContent='Chụp ảnh xuất kho';
+  el('workerCameraExternal').hidden=false;
+  // Open synchronously from the click. Apps Script iframe policy detection is
+  // not reliable on all browsers, so always use the configured GitHub camera.
+  external();
  }
  function capture(){const video=el('workerCameraVideo');if(!stream||!video.videoWidth)return;const canvas=document.createElement('canvas'),scale=Math.min(1,1280/Math.max(video.videoWidth,video.videoHeight));canvas.width=Math.round(video.videoWidth*scale);canvas.height=Math.round(video.videoHeight*scale);canvas.getContext('2d').drawImage(video,0,0,canvas.width,canvas.height);pending=canvas.toDataURL('image/jpeg',.78);if(!valid(pending))return;stop();el('workerCameraStill').src=pending;el('workerCameraStill').hidden=false;video.hidden=true;el('workerCameraShoot').hidden=true;el('workerCameraSwitch').hidden=true;el('workerCameraRetake').hidden=false;el('workerCameraUse').hidden=false;el('workerCameraStatus').textContent='Ki\u1ec3m tra \u1ea3nh, ch\u1ecdn D\u00f9ng \u1ea3nh n\u00e0y ho\u1eb7c Ch\u1ee5p l\u1ea1i.';}
  function use(){if(!valid(pending))return;set(activeKey,pending);close();}
