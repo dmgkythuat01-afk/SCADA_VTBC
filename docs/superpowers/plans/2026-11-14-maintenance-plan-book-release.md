@@ -14,3 +14,8 @@ Validation: 99 Node tests, browser checks at 320/390/768/1440/1920px, month save
 ## Per-line books update
 
 Each machine/production-line is a separate visible/printed book. Filter Xưởng → Dây chuyền (or all) → department. All prints start each line on a new page, restart equipment STT at 1, and append XÁC NHẬN plus unsigned NGƯỜI LẬP / BAN GIÁM ĐỐC sections. STT is centered. Switching the line filter preserves unsaved edits; existing month storage remains compatible and keyed by device/category, without migrating or overwriting saved data. Backend v77; mobile v54. Validation: 100 tests and responsive browser/4-page print checks.
+
+
+## Hierarchical STT and action selection
+
+STT now uses equipment number 1, 2, etc., with category numbers 1.1, 1.2, etc. Category STT/name span only its one or two action rows. DanhMucSoKH.loaiSoKHDB selects Cả 2 / Bảo dưỡng / Thay mới, validated against ThamSoHeThong.loaiSoKHDB. Blank legacy values retain both actions. Action keys remain stable; changing type hides unwanted rows but preserves their saved month data for re-enabling later. No sheet data changed by this release. Backend v78/mobile v58; 103 tests passed, responsive browser and multi-page PDF border/stamp checks passed.

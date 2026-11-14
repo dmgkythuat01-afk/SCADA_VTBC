@@ -7,11 +7,24 @@ function fixture(){
  c.readAdminRows_=name=>name==='DanhMucXuong'?[{tenXuong:'X'}]:name==='DanhMucMay'?[{tenXuong:'X',tenMay:'M1'},{tenXuong:'X',tenMay:'M2'}]:devices;
  vm.createContext(c);vm.runInContext(fs.readFileSync('QuanLyThietBi/admin/MaintenancePlanBook.js','utf8'),c);
  const columns=vm.runInContext('KHBD_COLUMNS',c),sheet={getLastRow:()=>stored.length+1,getRange(row){return {getValues:()=>[columns.map(k=>stored[row-2]?.[k]||'')],setNumberFormat(){return this;},setValues(cells){stored[row-2]=Object.fromEntries(columns.map((k,i)=>[k,cells[0][i]]));return this;}}}};
- c.khbdRead_=(name)=>name==='DanhMucSoKH'?{rows:source}:{rows:stored.map((r,i)=>({...r,_row:i+2})),headers:columns,sheet};
+ c.khbdRead_=(name)=>name==='DanhMucSoKH'?{rows:source}:name==='ThamSoHeThong'?{rows:['Cả 2','Thay mới','Bảo dưỡng'].map(loaiSoKHDB=>({loaiSoKHDB}))}:{rows:stored.map((r,i)=>({...r,_row:i+2})),headers:columns,sheet};
  const user={email:'tech',name:'Kỹ thuật',role:'technical'},p={year:2026,workshop:'X',department:'Cơ khí'};
  return {c,devices,source,stored,user,p};
 }
 module.exports={fixture};
+test('loaiSoKHDB selects both, maintenance-only or replacement-only while preserving hidden month values',()=>{
+ const f=fixture(),row=f.source[0];row.loaiSoKHDB='Cả 2';const before=f.c.khbdPayload_(f.user,f.p),category=before.groups[0].devices[0].categories[0],key=category.actions[0].key;
+ f.c.khbdSave_(f.user,{...f.p,revision:0,version:before.version,requestId:'initial',values:{[key]:Array(12).fill('Existing replacement plan')}});
+ row.loaiSoKHDB='Bảo dưỡng';let data=f.c.khbdPayload_(f.user,f.p);assert.deepEqual(Array.from(data.groups[0].devices[0].categories[0].actions,a=>a.name),['Bảo dưỡng']);assert.equal(data.values[key][0],'Existing replacement plan');
+ f.c.khbdSave_(f.user,{...f.p,revision:1,version:data.version,requestId:'keep',values:data.values});
+ row.loaiSoKHDB='Thay mới';data=f.c.khbdPayload_(f.user,f.p);assert.deepEqual(Array.from(data.groups[0].devices[0].categories[0].actions,a=>a.name),['Thay mới']);assert.equal(data.groups[0].devices[0].categories[0].actions[0].key,key);assert.equal(data.values[key][0],'Existing replacement plan');
+ row.loaiSoKHDB='Invalid';assert.throws(()=>f.c.khbdPayload_(f.user,f.p),/loaiSoKHDB/);row.loaiSoKHDB='';assert.equal(f.c.khbdPayload_(f.user,f.p).groups[0].devices[0].categories[0].actions.length,2);
+});
+test('hierarchical STT numbers each category once with rowspans matching its selected action count',()=>{
+ const f=fixture();f.source[0].loaiSoKHDB='Cả 2';f.source.push({...f.source[0],danhMucCanKiemTra:'Cánh',loaiSoKHDB:'Bảo dưỡng'},{...f.source[0],danhMucCanKiemTra:'Gối bi',loaiSoKHDB:'Thay mới'});
+ const p=f.c.khbdPayload_(f.user,f.p),c={window:{addEventListener(){}},document:{addEventListener(){}},Date,Mobile:{state:{token:'t'}}};vm.createContext(c);vm.runInContext(fs.readFileSync('MobileQuanLyThietBi/appscript/MaintenancePlanBook.html','utf8').match(/<script>([\s\S]*?)<\/script>/)[1],c);
+ const html=c.window.MaintenancePlanBook.table({...p,groups:[p.groups[0]]},false);assert.match(html,/class="khbd-stt">1<\/td>/);assert.match(html,/rowspan="2">1\.1<\/td>/);assert.match(html,/rowspan="1">1\.2<\/td>/);assert.match(html,/rowspan="1">1\.3<\/td>/);assert.equal((html.match(/1\.1<\/td>/g)||[]).length,1);
+});
 test('print repeats a full-width closing border at every table page break',()=>{
  const c={window:{}};vm.createContext(c);vm.runInContext(fs.readFileSync('MobileQuanLyThietBi/appscript/MaintenancePlanBookPrint.html','utf8').match(/<script>([\s\S]*?)<\/script>/)[1],c);
  const print=c.window.MaintenancePlanBookPrint,html=print.documentHtml({year:2026,workshop:'X',department:'Điện',groups:[{machine:'M1'},{machine:'M2'}]},()=>'<table><tbody><tr><td>Example</td></tr></tbody></table>');
@@ -22,7 +35,7 @@ test('line filter preserves edits, renders one book per line and prints separate
  for(const file of ['MaintenancePlanBook','MaintenancePlanBookPrint'])vm.runInContext(fs.readFileSync('MobileQuanLyThietBi/appscript/'+file+'.html','utf8').match(/<script>([\s\S]*?)<\/script>/)[1],c);
  const book=c.window.MaintenancePlanBook;Object.assign(book.state,{token:'t',options:{workshops:['X'],machines:[{workshop:'X',machine:'M1'},{workshop:'Y',machine:'Other'}]},data,dirty:true});
  let html=book.html();assert.equal((html.match(/class="khbd-book"/g)||[]).length,2);assert.equal((html.match(/class="khbd-confirm"/g)||[]).length,2);assert.equal((html.match(/class="khbd-stt"[^>]*>1<\/td>/g)||[]).length,2);assert.doesNotMatch(html,/value="Other"/);
- handlers.change({target:{dataset:{khbdFilter:'machine'},value:'M2'}});assert.match(book.table(data,false),/class="khbd-stt" rowspan="3">1/);assert.match(book.table(data,false),/class="khbd-stt" rowspan="2">2/);assert.equal(book.state.dirty,true);assert.equal(book.state.data.groups.length,2);assert.equal(book.selected().groups.length,1);assert.equal(book.selected().groups[0].machine,'M2');
+ handlers.change({target:{dataset:{khbdFilter:'machine'},value:'M2'}});assert.match(book.table(data,false),/class="khbd-stt">1<\/td>/);assert.match(book.table(data,false),/class="khbd-stt" rowspan="2">1\.1/);assert.doesNotMatch(book.table(data,false),/class="khbd-stt" rowspan="3">1/);assert.equal(book.state.dirty,true);assert.equal(book.state.data.groups.length,2);assert.equal(book.selected().groups.length,1);assert.equal(book.selected().groups[0].machine,'M2');
  html=c.window.MaintenancePlanBookPrint.documentHtml(book.selected(),book.table);assert.equal((html.match(/<main class="paper">/g)||[]).length,1);assert.match(html,/KHU VỰC: M2/);assert.match(html,/NGƯỜI LẬP/);assert.match(html,/BAN GIÁM ĐỐC/);assert.match(html,/XÁC NHẬN/);
  book.state.machine='';html=c.window.MaintenancePlanBookPrint.documentHtml(book.selected(),book.table);assert.equal((html.match(/<main class="paper">/g)||[]).length,2);assert.equal((html.match(/class="khbd-signatures"/g)||[]).length,2);assert.match(html,/break-before:page/);
 });

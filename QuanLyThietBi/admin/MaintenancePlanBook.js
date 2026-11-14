@@ -1,4 +1,4 @@
-const KHBD_SOURCE_COLUMNS=['tenXuong','tenMay','maThietBi','tenThietBi','danhMucCanKiemTra','tanSuatThayMoi','tanSuatBaoDuong','boPhanDanhGia'];
+const KHBD_SOURCE_COLUMNS=['tenXuong','tenMay','maThietBi','tenThietBi','danhMucCanKiemTra','tanSuatThayMoi','tanSuatBaoDuong','boPhanDanhGia','loaiSoKHDB'];
 const KHBD_COLUMNS=['maSo','nam','tenXuong','boPhanDanhGia','phienBan','noiDungThang','nguoiCapNhat','thoiGianCapNhat','maThaoTac'];
 function khbdRead_(name,columns,create) {
   const ss=SpreadsheetApp.openById(ADMIN_SHEET_ID);let sheet=ss.getSheetByName(name);
@@ -15,6 +15,7 @@ function khbdSelection_(p) {
   return {year,workshop,department,id:adminHash_(JSON.stringify([year,workshop,department]))};
 }
 function khbdCatalog_(s) {
+  const configuredTypes=new Set(khbdRead_('ThamSoHeThong',['loaiSoKHDB']).rows.map(r=>maintenanceNorm_(r.loaiSoKHDB)).filter(Boolean));
   const source=khbdRead_('DanhMucSoKH',KHBD_SOURCE_COLUMNS).rows.filter(r=>r.tenXuong===s.workshop&&maintenanceNorm_(r.boPhanDanhGia)===maintenanceNorm_(s.department)),devices=readAdminRows_('DanhMucThietBi').filter(r=>r.tenXuong===s.workshop),machines=readAdminRows_('DanhMucMay').filter(r=>r.tenXuong===s.workshop).map(r=>r.tenMay);
   devices.forEach(d=>{if(!machines.includes(d.tenMay))machines.push(d.tenMay);});
   const seen=new Set(),groups=machines.map(machine=>({machine,devices:devices.filter(d=>d.tenMay===machine).map(d=>{
@@ -22,7 +23,12 @@ function khbdCatalog_(s) {
     const categories=[],categoryKeys=new Set();source.filter(r=>maintenanceDeviceKey_(r)===deviceKey).forEach(r=>{
       if(!r.danhMucCanKiemTra)return;const key=adminHash_(JSON.stringify([deviceKey,maintenanceNorm_(r.danhMucCanKiemTra)]));
       if(categoryKeys.has(key))throw Error('DanhMucSoKH trùng danh mục: '+d.maThietBi+' / '+r.danhMucCanKiemTra);categoryKeys.add(key);
-      categories.push({key,name:r.danhMucCanKiemTra,actions:[{key:key+':replace',name:'Thay mới',frequency:r.tanSuatThayMoi},{key:key+':maintain',name:'Bảo dưỡng',frequency:r.tanSuatBaoDuong}]});
+      const type=maintenanceNorm_(r.loaiSoKHDB||'Cả 2');
+      if(!['ca 2','thay moi','bao duong'].includes(type)||(r.loaiSoKHDB&&!configuredTypes.has(type)))throw Error('loaiSoKHDB không hợp lệ hoặc chưa có trong ThamSoHeThong: '+d.maThietBi+' / '+r.danhMucCanKiemTra);
+      const actions=[];
+      if(type!=='bao duong')actions.push({key:key+':replace',name:'Thay mới',frequency:r.tanSuatThayMoi});
+      if(type!=='thay moi')actions.push({key:key+':maintain',name:'Bảo dưỡng',frequency:r.tanSuatBaoDuong});
+      categories.push({key,name:r.danhMucCanKiemTra,loaiSoKHDB:r.loaiSoKHDB||'Cả 2',actions});
     });return {code:d.maThietBi,name:d.tenThietBi,categories};
   })}));
   return {groups,version:adminHash_(JSON.stringify(groups)),sourceCount:source.length};
