@@ -75,7 +75,7 @@ function protectLastAdmin_(old, next) {
   )
     throw Error("Phải giữ ít nhất một tài khoản quản trị.");
 }
-function prepareAdminData_(name, p, read = readAdminRows_) {
+function prepareAdminData_(name, p, read = readAdminRows_, plans) {
   const spec = adminSpec_(name),
     old = currentAdminRow_(name, p),
     values = p.values || {},
@@ -117,9 +117,10 @@ function prepareAdminData_(name, p, read = readAdminRows_) {
     throw Error("Bộ phận đánh giá chỉ được chọn Điện hoặc Cơ khí.");
   if (name === "DanhMucCanKiemTra") {
     const parameters=equipmentSystemParameters_();
-    for (const key of ["loai","tanSuatThamSo"]) {
+    for (const key of ["loai"]) {
       if (!parameters[key].includes(row[key])) throw Error(spec.columns[key]+" phải chọn từ sheet ThamSoHeThong hiện tại.");
     }
+    row.tanSuatThamSo=equipmentPlanSelection_(row,old,plans);
   }
   if (
     all.some(
@@ -233,13 +234,14 @@ function saveAdminBatch_(name, values) {
     throw Error("Danh sách cần có từ 1 đến 100 dòng.");
   const tables = {},
     prepared = [];
+  const plans=name==='DanhMucCanKiemTra'?equipmentPlanCategories_():undefined;
   const read = (table) =>
     tables[table] || (tables[table] = readAdminRows_(table));
   values.forEach((item, index) => {
     try {
       if (!item || typeof item !== "object" || Array.isArray(item))
         throw Error("Dữ liệu không hợp lệ.");
-      const row = prepareAdminData_(name, { values: item }, read);
+      const row = prepareAdminData_(name, { values: item }, read, plans);
       prepared.push(row);
       read(name).push({ ...row, _row: -(index + 1) });
     } catch (error) {

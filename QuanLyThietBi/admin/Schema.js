@@ -262,6 +262,7 @@ function adminSnapshot_(user) {
     schema: ADMIN_TABLES,
     columnOrders,
     systemParameters: equipmentSystemParameters_(),
+    planCategories: equipmentPlanCategories_(),
     updatedAt: adminNow_(),
   };
 }

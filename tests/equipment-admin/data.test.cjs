@@ -23,6 +23,8 @@ function setup() {
   );
   Object.assign(c, {
     equipmentColumnOrder_: () => [],
+    equipmentPlanCategories_: () => [],
+    equipmentPlanSelection_: row => {if(!["7 ngày","6 tháng"].includes(row.tanSuatThamSo))throw Error("ThamSoHeThong");return row.tanSuatThamSo;},
     equipmentSystemParameters_: () => ({loai:["Bảo dưỡng","Vệ sinh"],tanSuatThamSo:["7 ngày","6 tháng"]}),
     adminSecret_: () => "fixture-secret",
     adminHmac_: (s, k) =>

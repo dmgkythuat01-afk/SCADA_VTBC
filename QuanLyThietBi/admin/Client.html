@@ -46,7 +46,7 @@
       DanhMucThietBi:
         "Chọn xưởng → máy; mã và tên người quản lý lấy từ danh mục Tài khoản.",
       DanhMucCanKiemTra:
-        "Chọn xưởng → máy → mã thiết bị để nhập các chỉ tiêu kiểm tra tương ứng.",
+        "Chọn thiết bị → bộ phận đánh giá → danh mục cần kiểm tra. Tần suất tự điền từ tanSuatBaoDuong trong DanhMucSoKH.",
     };
     const norm = (v) =>
       String(v ?? "")
@@ -378,16 +378,16 @@
       $("save").textContent = "Lưu thông tin";
       const fieldOrder = orderedColumns().slice();
       if (S.table === "DanhMucCanKiemTra") {
-        const dependent=["boPhanDanhGia","loai","tanSuatThamSo"].filter(k=>fieldOrder.includes(k));
-        dependent.forEach(k=>fieldOrder.splice(fieldOrder.indexOf(k),1));
-        fieldOrder.splice(fieldOrder.indexOf("tenThietBi")+1,0,...dependent);
+        const order=["tenXuong","tenMay","tenThietBi","maThietBi","boPhanDanhGia","danhMucCanKiemTra","loai","tanSuatThamSo","thamSoCanKiemTra","chiTieuDanhGia1","chiTieuDanhGia2","chiTieuDanhGia3"];
+        fieldOrder.sort((a,b)=>(order.indexOf(a)<0?999:order.indexOf(a))-(order.indexOf(b)<0?999:order.indexOf(b)));
       }
+      $("editorFields").classList.toggle("criteria-form",S.table === "DanhMucCanKiemTra");
       $("editorFields").innerHTML = fieldOrder
         .map((key) => [key, spec().columns[key]])
         .map(([k, label]) => {
           const required = spec().required.includes(k),
             value = k === "matKhau" ? "" : row?.[k] || "";
-          if (isRelation(k) || ["chucVu", "dangSuDung", "boPhanDanhGia", "loai", "tanSuatThamSo", "chiTieuDanhGia1", "chiTieuDanhGia2", "chiTieuDanhGia3"].includes(k))
+          if ((S.table === "DanhMucCanKiemTra" && k === "danhMucCanKiemTra") || isRelation(k) || ["chucVu", "dangSuDung", "boPhanDanhGia", "loai", "chiTieuDanhGia1", "chiTieuDanhGia2", "chiTieuDanhGia3"].includes(k))
             return selectField(k, label, required);
           const type = [
             "ThongSoKyThuat",
@@ -416,7 +416,9 @@
             type,
             value,
             required || (k === "matKhau" && !row),
-            S.table === "DanhMucCanKiemTra" && k === "maThietBi"
+            S.table === "DanhMucCanKiemTra" && k === "tanSuatThamSo"
+              ? 'readonly placeholder="Tự điền từ danh mục cần kiểm tra"'
+              : S.table === "DanhMucCanKiemTra" && k === "maThietBi"
               ? 'readonly placeholder="Tự điền khi chọn tên thiết bị"'
               : k === "ThoiGianCapNhat"
               ? 'readonly placeholder="Tự động khi lưu"'
@@ -574,12 +576,21 @@
           value,
         ) + unique.map(([v, label]) => option(v, label, value)).join("");
     }
+    function setCriterionPlanOptions(values) {
+      const f=$("editorForm"), keys=["tenXuong","tenMay","maThietBi"], norm=v=>String(v||"").trim().toLocaleLowerCase("vi");
+      const plans=(S.data.planCategories||[]).filter(r=>keys.every(k=>norm(r[k])===norm(f.elements[k]?.value))&&(!f.elements.boPhanDanhGia.value||norm(r.boPhanDanhGia)===norm(f.elements.boPhanDanhGia.value)));
+      setOptions("danhMucCanKiemTra",plans.map(r=>r.danhMucCanKiemTra),values.danhMucCanKiemTra);
+      const matches=plans.filter(r=>norm(r.danhMucCanKiemTra)===norm(f.elements.danhMucCanKiemTra.value)),frequencies=[...new Set(matches.map(r=>r.tanSuatBaoDuong))];
+      const legacy=S.editing&&[...keys,"boPhanDanhGia","danhMucCanKiemTra"].every(k=>norm(S.editing[k])===norm(k==="danhMucCanKiemTra"?f.elements[k].value:f.elements[k]?.value));
+      f.elements.tanSuatThamSo.value=frequencies.length===1?frequencies[0]:legacy?values.tanSuatThamSo||"":"";
+      f.elements.tanSuatThamSo.setCustomValidity(frequencies.length>1?"Tần suất không thống nhất trong DanhMucSoKH.":matches.length&&!frequencies[0]?"Chưa có tanSuatBaoDuong trong DanhMucSoKH.":"");
+    }
     function setFormOptions(values) {
       const f = $("editorForm");
       for (const key of ["chiTieuDanhGia1", "chiTieuDanhGia2", "chiTieuDanhGia3"]) {
         if (f.elements[key]) setOptions(key,S.data.systemParameters?.chiTieu || [],values[key]);
       }
-      for (const key of ["loai","tanSuatThamSo"]) {
+      for (const key of ["loai"]) {
         if (f.elements[key]) setOptions(key,S.data.systemParameters?.[key] || [],values[key]);
       }
       if (f.elements.boPhanDanhGia) setOptions("boPhanDanhGia",["Điện","Cơ khí"],["Điện","Cơ khí"].includes(values.boPhanDanhGia) ? values.boPhanDanhGia : "");
@@ -601,6 +612,7 @@
         const devices=rows("DanhMucThietBi").filter(r=>r.tenXuong===f.elements.tenXuong.value && r.tenMay===f.elements.tenMay.value);
         setOptions("tenThietBi",devices.map(r=>[r.maThietBi,(r.tenThietBi || "Chưa có tên")+" · "+r.maThietBi]),values.maThietBi);
         f.elements.maThietBi.value=values.maThietBi || "";
+        setCriterionPlanOptions(values);
       }
       if (S.table === "DanhMucThietBi") {
         const people = rows("TaiKhoan").filter((a) => a.maNhanVien);
@@ -654,14 +666,20 @@
         f = $("editorForm"),
         v = Object.fromEntries(new FormData(f));
       if (name === "tenXuong") {
+        v.danhMucCanKiemTra="";v.tanSuatThamSo="";
         v.tenMay = "";
         v.maThietBi = "";
         setFormOptions(v);
       } else if (name === "tenMay") {
+        v.danhMucCanKiemTra="";v.tanSuatThamSo="";
         v.maThietBi = "";
         setFormOptions(v);
       } else if (S.table === "DanhMucCanKiemTra" && name === "tenThietBi") {
-        f.elements.maThietBi.value=e.target.value;
+        v.maThietBi=e.target.value;v.danhMucCanKiemTra="";v.tanSuatThamSo="";setFormOptions(v);
+      } else if (S.table === "DanhMucCanKiemTra" && name === "boPhanDanhGia") {
+        v.danhMucCanKiemTra="";v.tanSuatThamSo="";setCriterionPlanOptions(v);
+      } else if (S.table === "DanhMucCanKiemTra" && name === "danhMucCanKiemTra") {
+        setCriterionPlanOptions(v);
       } else if (name === "maNguoiQuanLy" || name === "tenNguoiQuanLy") {
         const id = e.target.value;
         f.elements.maNguoiQuanLy.value = id;

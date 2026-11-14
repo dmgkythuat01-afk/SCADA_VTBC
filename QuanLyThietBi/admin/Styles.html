@@ -895,4 +895,10 @@
       gap: 12px;
     }
   }
+  #editorFields.criteria-form {grid-template-columns:repeat(6,minmax(0,1fr));gap:18px 20px}
+  #editorFields.criteria-form label {grid-column:span 3;min-width:0}
+  #editorFields.criteria-form label:has([name="thamSoCanKiemTra"]) {grid-column:1/-1}
+  #editorFields.criteria-form label:has([name^="chiTieuDanhGia"]) {grid-column:span 2}
+  #editorFields.criteria-form input[readonly] {background:#f1f6f3;color:#526c5f}
+  @media(max-width:700px){#editorFields.criteria-form{grid-template-columns:repeat(2,minmax(0,1fr))}#editorFields.criteria-form label,#editorFields.criteria-form label:has([name^="chiTieuDanhGia"]){grid-column:1/-1}}
 </style>
