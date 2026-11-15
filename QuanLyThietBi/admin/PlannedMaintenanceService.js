@@ -4,7 +4,7 @@ function pbdPublic_(r) {
 }
 function pbdSnapshot_(user) {
   const grid=pbdGrid_(),criteria=pbdCriteria_(),today=maintenanceToday_();
-  return {today,user,reviewers:pbdReviewers_(),canWrite:mobileWorkCapabilities_(user).technical,criteria:pbdProjection_(criteria,grid.rows,today),records:grid.rows.filter(r=>r.trangThai!=="Nháp" || r.nguoiTao===user.email || mobileWorkCapabilities_(user).admin).map(pbdPublic_).sort((a,b)=>b.thoiGianTao.localeCompare(a.thoiGianTao))};
+  return {today,user,reviewers:pbdReviewers_(),canWrite:mobileWorkCapabilities_(user).technical,criteria:pbdProjection_(criteria,grid.rows,today),planDue:typeof pbdPlanDue_==='function'?pbdPlanDue_(grid.rows,today):{rows:[],warnings:[]},records:grid.rows.filter(r=>r.trangThai!=="Nháp" || r.nguoiTao===user.email || mobileWorkCapabilities_(user).admin).map(pbdPublic_).sort((a,b)=>b.thoiGianTao.localeCompare(a.thoiGianTao))};
 }
 function pbdSave_(user,p) {
   mobileWorkRequireTechnical_(user);
@@ -38,7 +38,7 @@ function pbdSave_(user,p) {
   pbdWrite_(grid,row);return pbdPublic_(row);
 }
 function plannedMaintenanceApi(token,action,payload) {
-  const lock=LockService.getScriptLock();lock.waitLock(30000);mobileWorkResetContext_();
+  const lock=LockService.getScriptLock();lock.waitLock(30000);adminBeginRequest_();mobileWorkResetContext_();
   try {const user=mobileWorkIdentity_(token),p=payload || {};
     if(action==="snapshot")return pbdSnapshot_(user);
     if(action==="save")return pbdSave_(user,p);
