@@ -13,7 +13,12 @@ function khbdAutoSyncSelection_(user,p,source){
   const writes=khbdAutoPersist_(grid,[master,...details,...obsolete]);
   return {...selection,...catalog,values,revision,updatedBy:master.nguoiCapNhat,updatedAt:now,canWrite:false,automatic:true,warnings:input.warnings,writes};
 }
-function khbdAutoLoad_(user,p){return khbdAutoSyncSelection_(user,p);}
+function khbdAutoLoad_(user,p){
+  const selection=khbdSelection_(p),catalog=khbdCatalog_(selection),grid=khbdRead_('SoKeHoachBaoDuong',khbdAutoColumns_()),matches=grid.rows.filter(r=>r.maSo===selection.id);
+  if(matches.length>1)throw Error('Trùng mã sổ trong SoKeHoachBaoDuong.');
+  const row=matches[0];
+  return {...selection,...catalog,values:khbdAutoDecode_(row?.noiDungThang,{}),revision:Number(row?.phienBan||0),updatedBy:row?.nguoiCapNhat||'',updatedAt:row?.thoiGianCapNhat||'',canWrite:false,automatic:true,warnings:[],writes:{added:0,updated:0}};
+}
 function khbdAutoSyncAll_(){
   const source=khbdAutoSource_(),grid=khbdRead_('SoKeHoachBaoDuong',khbdAutoColumns_()),years=new Set([Number(maintenanceToday_().slice(0,4))]);
   grid.rows.filter(r=>r.loaiBanGhi!=='ChiTiet').forEach(r=>{const year=Number(r.nam);if(Number.isInteger(year)&&year>=2000&&year<=2100)years.add(year);});
@@ -27,12 +32,7 @@ function khbdAutoAfterRecord_(record){
   const year=Number(String(record.ngayThucHien).slice(0,4)),departments=[...new Set(pbdParse_(record.chiTiet,[]).map(c=>c.boPhanDanhGia||record.boPhanDanhGia).filter(Boolean))],source=khbdAutoSource_();
   departments.forEach(department=>khbdAutoSyncSelection_(null,{year,workshop:record.tenXuong,department},source));
 }
-function khbdAutoInstallTrigger_(){
-  const name='dongBoSoKeHoachBaoDuongTuDong_',existing=ScriptApp.getProjectTriggers().filter(t=>t.getHandlerFunction()===name);
-  if(!existing.length)ScriptApp.newTrigger(name).timeBased().everyMinutes(15).create();
-  return {handler:name,intervalMinutes:15,created:!existing.length};
-}
-function dongBoSoKeHoachBaoDuongTuDong_(){
-  const lock=LockService.getScriptLock();if(!lock.tryLock(1000))return {skipped:true};
-  try{adminBeginRequest_();mobileWorkResetContext_();return khbdAutoSyncAll_();}finally{lock.releaseLock();}
+function khbdAutoRemovePeriodicTrigger_(){
+  const triggers=ScriptApp.getProjectTriggers().filter(t=>t.getHandlerFunction()==='dongBoSoKeHoachBaoDuongTuDong_');
+  triggers.forEach(t=>ScriptApp.deleteTrigger(t));return {removed:triggers.length,remaining:ScriptApp.getProjectTriggers().filter(t=>t.getHandlerFunction()==='dongBoSoKeHoachBaoDuongTuDong_').length};
 }
