@@ -1,4 +1,4 @@
-const KHBD_SOURCE_COLUMNS=['tenXuong','tenMay','maThietBi','tenThietBi','danhMucCanKiemTra','tanSuatThayMoi','tanSuatBaoDuong','boPhanDanhGia','loaiSoKHDB'];
+const KHBD_SOURCE_COLUMNS=['tenXuong','tenMay','maThietBi','tenThietBi','danhMucCanKiemTra','tanSuatThayMoi','tanSuatBaoDuong','boPhanDanhGia','loaiSoKHDB','ngayBaoDuongGanNhat','ngayThayMoiGanNhat'];
 const KHBD_COLUMNS=['maSo','nam','tenXuong','boPhanDanhGia','phienBan','noiDungThang','nguoiCapNhat','thoiGianCapNhat','maThaoTac'];
 function khbdRead_(name,columns,create) {
   const ss=adminWorkbook_();let sheet=ss.getSheetByName(name);
@@ -6,7 +6,7 @@ function khbdRead_(name,columns,create) {
   if(!sheet)throw Error('Không tìm thấy sheet '+name);
   const values=sheet.getDataRange().getValues(),headers=values[0].map(v=>String(v).trim());
   columns.forEach(k=>{if(headers.filter(h=>h===k).length!==1)throw Error(name+' thiếu hoặc trùng cột '+k);});
-  return {sheet,headers,matrix:values,rows:values.slice(1).map((cells,i)=>Object.assign({_row:i+2},Object.fromEntries(columns.map(k=>[k,String(cells[headers.indexOf(k)]??'').trim()])))).filter(r=>columns.some(k=>r[k]))};
+  return {sheet,headers,matrix:values,rows:values.slice(1).map((cells,i)=>Object.assign({_row:i+2},Object.fromEntries(columns.map(k=>[k,['ngayBaoDuongGanNhat','ngayThayMoiGanNhat'].includes(k)?khbdHistoryDate_(cells[headers.indexOf(k)]):String(cells[headers.indexOf(k)]??'').trim()])))).filter(r=>columns.some(k=>r[k]))};
 }
 function khbdSelection_(p) {
   const year=Number(p.year),workshop=adminText_(p.workshop,500),department=maintenanceNorm_(p.department)==='co khi'?'Cơ khí':maintenanceNorm_(p.department)==='dien'?'Điện':'';
@@ -26,8 +26,8 @@ function khbdCatalog_(s) {
       const type=maintenanceNorm_(r.loaiSoKHDB||'Cả 2');
       if(!['ca 2','thay moi','bao duong'].includes(type)||(r.loaiSoKHDB&&!configuredTypes.has(type)))throw Error('loaiSoKHDB không hợp lệ hoặc chưa có trong ThamSoHeThong: '+d.maThietBi+' / '+r.danhMucCanKiemTra);
       const actions=[];
-      if(type!=='bao duong')actions.push({key:key+':replace',name:'Thay mới',frequency:r.tanSuatThayMoi});
-      if(type!=='thay moi')actions.push({key:key+':maintain',name:'Bảo dưỡng',frequency:r.tanSuatBaoDuong});
+      if(type!=='bao duong')actions.push({key:key+':replace',name:'Thay mới',frequency:r.tanSuatThayMoi,historyDate:khbdHistoryDate_(r.ngayThayMoiGanNhat)});
+      if(type!=='thay moi')actions.push({key:key+':maintain',name:'Bảo dưỡng',frequency:r.tanSuatBaoDuong,historyDate:khbdHistoryDate_(r.ngayBaoDuongGanNhat)});
       categories.push({key,name:r.danhMucCanKiemTra,loaiSoKHDB:r.loaiSoKHDB||'Cả 2',actions});
     });return {code:d.maThietBi,name:d.tenThietBi,categories};
   })}));

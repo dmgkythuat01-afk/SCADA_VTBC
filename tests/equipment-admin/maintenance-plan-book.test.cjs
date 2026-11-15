@@ -1,6 +1,6 @@
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
 function fixture(){
- const c={Set,Map,JSON,Number,String,Object,Array,Error,SpreadsheetApp:{flush(){}},adminText_:v=>String(v||'').trim(),adminHash_:v=>require('node:crypto').createHash('sha256').update(v).digest('hex'),maintenanceNorm_:v=>String(v||'').normalize('NFD').replace(/\p{Diacritic}/gu,'').replace(/đ/g,'d').toLowerCase().trim(),adminNow_:()=> '2026-11-14 12:00:00',mobileWorkRequired_:(v)=>{if(!v)throw Error('required');return v;},mobileWorkCapabilities_:u=>({technical:u.role==='technical'}),mobileWorkRequireTechnical_:u=>{if(u.role!=='technical')throw Error('forbidden');}};
+ const c={maintenanceToday_:()=> '2026-11-15',Set,Map,JSON,Number,String,Object,Array,Error,SpreadsheetApp:{flush(){}},adminText_:v=>String(v||'').trim(),adminHash_:v=>require('node:crypto').createHash('sha256').update(v).digest('hex'),maintenanceNorm_:v=>String(v||'').normalize('NFD').replace(/\p{Diacritic}/gu,'').replace(/đ/g,'d').toLowerCase().trim(),adminNow_:()=> '2026-11-14 12:00:00',mobileWorkRequired_:(v)=>{if(!v)throw Error('required');return v;},mobileWorkCapabilities_:u=>({technical:u.role==='technical'}),mobileWorkRequireTechnical_:u=>{if(u.role!=='technical')throw Error('forbidden');}};
  c.adminNorm_=v=>String(v??'').trim().toLowerCase();
  const norm=c.maintenanceNorm_;c.maintenanceNorm_=v=>norm(String(v||'').toLowerCase());
  c.maintenanceDeviceKey_=r=>JSON.stringify([r.tenXuong,r.tenMay,r.maThietBi]);

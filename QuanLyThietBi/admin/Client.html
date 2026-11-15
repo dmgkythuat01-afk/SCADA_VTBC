@@ -217,7 +217,7 @@
         .join("");
     }
     function formatCell(key, value) {
-      if (key === "ngayLapDat" && /^\d{4}-\d{2}-\d{2}$/.test(value))
+      if (["ngayLapDat","ngayBaoDuongGanNhat","ngayThayMoiGanNhat"].includes(key) && /^\d{4}-\d{2}-\d{2}$/.test(value))
         return value.split("-").reverse().join("/");
       if (key === "ThoiGianCapNhat" && /^\d{4}-\d{2}-\d{2}/.test(value))
         return (
@@ -385,7 +385,7 @@
         fieldOrder.sort((a,b)=>(order.indexOf(a)<0?999:order.indexOf(a))-(order.indexOf(b)<0?999:order.indexOf(b)));
       }
       if(S.table==="DanhMucSoKH"){
-        const order=["tenXuong","tenMay","tenThietBi","maThietBi","boPhanDanhGia","loaiSoKHDB","danhMucCanKiemTra","tanSuatThayMoi","tanSuatBaoDuong"];
+        const order=["tenXuong","tenMay","tenThietBi","maThietBi","boPhanDanhGia","loaiSoKHDB","danhMucCanKiemTra","tanSuatThayMoi","tanSuatBaoDuong","ngayBaoDuongGanNhat","ngayThayMoiGanNhat"];
         fieldOrder.sort((a,b)=>order.indexOf(a)-order.indexOf(b));
       }
       $("editorFields").classList.toggle("plan-catalog-form",S.table==="DanhMucSoKH");
@@ -411,7 +411,7 @@
               ? "password"
               : k === "email"
                 ? "email"
-                : k === "ngayLapDat"
+                : ["ngayLapDat","ngayBaoDuongGanNhat","ngayThayMoiGanNhat"].includes(k)
                   ? "date"
                   : ["soLuong"].includes(k)
                     ? "number"

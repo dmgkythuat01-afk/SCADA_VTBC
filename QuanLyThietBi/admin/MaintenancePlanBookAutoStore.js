@@ -1,4 +1,4 @@
-const KHBD_AUTO_EXTRA=['loaiBanGhi','maSoCha','tenMay','maThietBi','tenThietBi','danhMucCanKiemTra','congViec','tanSuat',...Array.from({length:12},(_,i)=>'thang'+(i+1)),'danhMucSo','duLieuThuCongCu','nguonDongBo','trangThaiDong'];
+const KHBD_AUTO_EXTRA=['loaiBanGhi','maSoCha','tenMay','maThietBi','tenThietBi','danhMucCanKiemTra','congViec','tanSuat',...Array.from({length:12},(_,i)=>'thang'+(i+1)),'danhMucSo','duLieuThuCongCu','nguonDongBo','trangThaiDong','ngayLichSuBanDau','mocLichSuBanDau'];
 function khbdAutoColumns_(){return KHBD_COLUMNS.concat(KHBD_AUTO_EXTRA);}
 function khbdAutoSetup_(){
   const ss=adminWorkbook_();let sheet=ss.getSheetByName('SoKeHoachBaoDuong');
@@ -13,10 +13,10 @@ function khbdAutoEncode_(value){
   if(packed.length>45000)throw Error('Dữ liệu sổ vượt giới hạn lưu trữ.');return packed;
 }
 function khbdAutoDecode_(value,fallback){const raw=String(value||'');if(!raw)return fallback;return JSON.parse(raw.startsWith('gz:')?Utilities.ungzip(Utilities.newBlob(Utilities.base64Decode(raw.slice(3)))).getDataAsString('UTF-8'):raw);}
-function khbdAutoDetailRows_(selection,catalog,values){
+function khbdAutoDetailRows_(selection,catalog,values,seeds){
   const rows=[];
   catalog.groups.forEach(g=>g.devices.forEach(d=>{
-    const add=(c,a)=>{const key=a?a.key:adminHash_(JSON.stringify([g.machine,d.code,'empty'])),months=a?values[a.key]:Array(12).fill('');rows.push({maSo:'CTKHBD:'+adminHash_(JSON.stringify([selection.id,key])),loaiBanGhi:'ChiTiet',maSoCha:selection.id,nam:String(selection.year),tenXuong:selection.workshop,boPhanDanhGia:selection.department,tenMay:g.machine,maThietBi:d.code,tenThietBi:d.name,danhMucCanKiemTra:c?c.name:'',congViec:a?a.name:'',tanSuat:a?a.frequency:'',noiDungThang:JSON.stringify(months),...Object.fromEntries(months.map((v,i)=>['thang'+(i+1),v])),nguonDongBo:'PhieuBaoDuong',trangThaiDong:'Đang dùng'});};
+    const add=(c,a)=>{const key=a?a.key:adminHash_(JSON.stringify([g.machine,d.code,'empty'])),months=a?values[a.key]:Array(12).fill('');rows.push({maSo:'CTKHBD:'+adminHash_(JSON.stringify([selection.id,key])),loaiBanGhi:'ChiTiet',maSoCha:selection.id,nam:String(selection.year),tenXuong:selection.workshop,boPhanDanhGia:selection.department,tenMay:g.machine,maThietBi:d.code,tenThietBi:d.name,danhMucCanKiemTra:c?c.name:'',congViec:a?a.name:'',tanSuat:a?a.frequency:'',ngayLichSuBanDau:a?(seeds?.[a.key]||''):'',noiDungThang:JSON.stringify(months),...Object.fromEntries(months.map((v,i)=>['thang'+(i+1),v])),nguonDongBo:'PhieuBaoDuong',trangThaiDong:'Đang dùng'});};
     if(!d.categories.length)add(null,null);else d.categories.forEach(c=>c.actions.forEach(a=>add(c,a)));
   }));return rows;
 }

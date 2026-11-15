@@ -10,7 +10,7 @@ const ADMIN_TABLES = {
     key:['tenXuong','tenMay','maThietBi','tenThietBi','danhMucCanKiemTra','boPhanDanhGia'],
     required:['tenXuong','tenMay','maThietBi','tenThietBi','danhMucCanKiemTra','boPhanDanhGia','loaiSoKHDB'],
     filters:['tenXuong','tenMay','maThietBi','boPhanDanhGia','loaiSoKHDB'],
-    columns:{tenXuong:'Tên xưởng',tenMay:'Tên máy',maThietBi:'Mã thiết bị',tenThietBi:'Tên thiết bị',danhMucCanKiemTra:'Danh mục cần kiểm tra',tanSuatThayMoi:'Tần suất thay mới',tanSuatBaoDuong:'Tần suất bảo dưỡng',boPhanDanhGia:'Bộ phận đánh giá',loaiSoKHDB:'Loại sổ kế hoạch'},
+    columns:{tenXuong:'Tên xưởng',tenMay:'Tên máy',maThietBi:'Mã thiết bị',tenThietBi:'Tên thiết bị',danhMucCanKiemTra:'Danh mục cần kiểm tra',tanSuatThayMoi:'Tần suất thay mới',tanSuatBaoDuong:'Tần suất bảo dưỡng',boPhanDanhGia:'Bộ phận đánh giá',loaiSoKHDB:'Loại sổ kế hoạch',ngayBaoDuongGanNhat:'Ngày bảo dưỡng gần nhất',ngayThayMoiGanNhat:'Ngày thay mới gần nhất'},
   },
   TaiKhoan: {
     label: "Tài khoản",
@@ -181,7 +181,7 @@ function readAdminRowsFresh_(name, columnOrders) {
             ? Utilities.formatDate(
                 v,
                 "Asia/Ho_Chi_Minh",
-                k === "ngayLapDat" ? "yyyy-MM-dd" : "yyyy-MM-dd HH:mm:ss",
+                ["ngayLapDat","ngayBaoDuongGanNhat","ngayThayMoiGanNhat"].includes(k) ? "yyyy-MM-dd" : "yyyy-MM-dd HH:mm:ss",
               )
             : String(v == null ? "" : v);
       });
