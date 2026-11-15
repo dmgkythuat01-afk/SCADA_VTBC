@@ -158,6 +158,7 @@ function adminApi(token, action, payload) {
     else if (action === "saveBatch") saveAdminBatch_(p.table, p.rows);
     else deleteAdminData_(p.table, p);
     cache.put(receiptKey, fingerprint, 21600);
+    if(['DanhMucSoKH','DanhMucThietBi','DanhMucMay','DanhMucXuong'].includes(p.table)&&typeof khbdAutoSyncAll_==='function')try{khbdAutoSyncAll_();}catch(error){console.error('Sổ KHBD sẽ đồng bộ lại: '+error.message);}
     return adminSnapshot_(user);
   } finally {
     lock.releaseLock();

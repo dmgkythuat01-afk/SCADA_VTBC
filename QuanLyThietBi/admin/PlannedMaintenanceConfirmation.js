@@ -18,5 +18,7 @@ function pbdReview_(user,p) {
   const note=adminText_(p.note,5000);if(p.decision==="reject"&&!note)throw Error("Vui lòng nhập lý do không đồng ý.");
   const now=adminNow_(),row={...record,trangThai:p.decision==="accept"?"Hoàn thành":"Cần làm lại",thoiGianXacNhan:now,noiDungXacNhan:note,phienBan:String(Number(record.phienBan)+1),thoiGianCapNhat:now,
     nhatKyLuu:JSON.stringify([...receipts,{id:key,fingerprint}]),nhatKyXacNhan:JSON.stringify([...pbdParse_(record.nhatKyXacNhan,[]),{id:key,by:user.email,name:user.name,at:now,decision:p.decision,note}])};
-  pbdWrite_(grid,row);return pbdPublic_(row);
+  pbdWrite_(grid,row);
+  if(row.trangThai==='Hoàn thành'&&typeof khbdAutoAfterRecord_==='function')try{khbdAutoAfterRecord_(row);}catch(error){console.error('Sổ KHBD sẽ đồng bộ lại: '+error.message);}
+  return pbdPublic_(row);
 }
