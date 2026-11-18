@@ -106,7 +106,23 @@ const AutoProductionExportHistory = (function() {
     }).withFailureHandler(fail).getAutoProductionExportHistory(token, range);
   }
   function download() {
-    exportRowsToExcel('phieu-xuat-san-xuat-tu-dong_' + loadedRange.fromDate + '_' + loadedRange.toDate + '.xls', headers, filteredRows(), 'autoProductionHistoryMessage');
+    exportRowsToExcel('phieu-xuat-san-xuat-tu-dong_' + loadedRange.fromDate + '_' + loadedRange.toDate + '.xls', headers, excelRows(filteredRows()), 'autoProductionHistoryMessage', {numericColumns: ['Số lượng theo lô']});
+  }
+  function excelRows(sourceRows) {
+    return sourceRows.flatMap(function(row) {
+      const quantities = row._slip?.lotQuantities || [];
+      const lots = String(row._slip?.lots ?? '').split(/\s*,\s*|\r?\n/).map(value => value.trim());
+      const total = Number(row['Số lượng']);
+      const valid = quantities.length > 0 && quantities.length === lots.length && quantities.every(value => typeof value === 'number' && Number.isFinite(value) && value >= 0)
+        && Number.isFinite(total) && Math.abs(quantities.reduce((sum, value) => sum + value, 0) - total) <= 0.000001 * Math.max(1, lots.length);
+      if (!valid) return [{...row, 'Số lượng theo lô': ''}];
+      const warehouses = String(row['Kho'] ?? '').split(/\s*,\s*|\r?\n/).map(value => value.trim());
+      return quantities.map(function(quantity, index) {
+        return {...row, 'Số lượng theo lô': quantity, 'Lot No': lots[index],
+          'Kho': warehouses.length === lots.length ? warehouses[index] : row['Kho'],
+          'Số lượng': index === 0 ? row['Số lượng'] : ''};
+      });
+    });
   }
   document.addEventListener('DOMContentLoaded', function() {
     const parts = new Intl.DateTimeFormat('en-CA', {timeZone: 'Asia/Ho_Chi_Minh', year: 'numeric', month: '2-digit', day: '2-digit'}).formatToParts(new Date());
@@ -114,6 +130,6 @@ const AutoProductionExportHistory = (function() {
     const today = value('year') + '-' + value('month') + '-' + value('day');
     el('autoProductionHistoryFrom').value = today; el('autoProductionHistoryTo').value = today;
   });
-  return {load: load, render: render, download: download};
+  return {load: load, render: render, download: download, excelRows: excelRows};
 })();
 </script>

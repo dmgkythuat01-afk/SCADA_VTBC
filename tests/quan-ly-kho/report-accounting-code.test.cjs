@@ -16,3 +16,4 @@ test('accounting codes remain continuous text while quantities retain numeric fo
 test('Excel forces accounting code cells to text to preserve leading zeros',()=>{
  const state=setup();state.ctx.exportRowsToExcel('report.xls',['Mã kế toán'],[{'Mã kế toán':'00102010'}]);a.ok(state.html.includes('00102010'));a.ok(state.html.includes('mso-number-format'));
 });
+test('opt-in Excel numeric columns use raw numeric cells without Vietnamese thousands separators or units',()=>{const state=setup();state.ctx.exportRowsToExcel('report.xls',['Mã kế toán','Số lượng theo lô'],[{'Mã kế toán':'00102010','Số lượng theo lô':1234.5}],null,{numericColumns:['Số lượng theo lô']});a.ok(state.html.includes('x:num="1234.5"'));a.ok(state.html.includes('>1234.5</td>'));a.ok(!state.html.includes('1.234,5'));a.ok(state.html.includes('00102010'));});

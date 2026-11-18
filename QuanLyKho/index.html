@@ -5425,9 +5425,10 @@
       );
     }
 
-    function exportRowsToExcel(filename, headers, rows, messageBoxId) {
+    function exportRowsToExcel(filename, headers, rows, messageBoxId, options) {
       headers = normalizeReportHeaders(headers);
       rows = rows || [];
+      const numericColumns = new Set(options?.numericColumns || []);
 
       if (!headers.length || !rows.length) {
         if (messageBoxId) showMessage(messageBoxId, "error", "Chưa có dữ liệu để tải Excel.");
@@ -5435,7 +5436,7 @@
       }
 
       let html = `
-        <html>
+        <html xmlns:x="urn:schemas-microsoft-com:office:excel">
         <head>
           <meta charset="UTF-8">
         </head>
@@ -5458,6 +5459,10 @@
       rows.forEach(function(row) {
         html += `<tr>`;
         headers.forEach(function(header) {
+          if (numericColumns.has(header) && typeof row[header] === 'number' && Number.isFinite(row[header])) {
+            html += `<td x:num="${row[header]}" style="mso-number-format:'0.############'">${row[header]}</td>`;
+            return;
+          }
           const cellStyle = isAccountingCodeHeader(header) ? ` style="mso-number-format:'\\@'"` : "";
           html += `<td${cellStyle}>${escapeHtml(formatReportCell(row[header], header))}</td>`;
         });
