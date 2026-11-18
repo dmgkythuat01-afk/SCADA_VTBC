@@ -1344,6 +1344,10 @@
             <span class="side-menu-icon">📥</span>
             <span>Lịch sử nhập nguyên liệu</span>
           </button>
+          <button id="menuMaterialCatalog" class="side-menu-btn" onclick="showFeaturePage('pageMaterialCatalog', this)">
+            <span class="side-menu-icon">🧪</span><span>Nguyên liệu</span>
+          </button>
+
           <button id="menuStock" class="side-menu-btn" onclick="showFeaturePage('pageStock', this)">
             <span class="side-menu-icon">📦</span>
             <span>Tồn kho hiện tại</span>
@@ -2176,6 +2180,7 @@
         </div>
       </div>
         </div>
+        <?!= HtmlService.createHtmlOutputFromFile('MaterialCatalogClient').getContent(); ?>
         <div id="pageStock" class="feature-page">
 <div class="stock-grid">
         <div class="card stock-card">
@@ -2358,6 +2363,7 @@
 
 
     function showFeaturePage(pageId, buttonEl) {
+      if(pageId === "pageMaterialCatalog") MaterialCatalog.open();
       const pages = document.querySelectorAll(".feature-page");
 
       pages.forEach(function(page) {
