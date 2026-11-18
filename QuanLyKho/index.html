@@ -4361,6 +4361,7 @@
         <table>
           <thead>
             <tr>
+              <th>Thao tác</th>
               <th>Id</th>
               <th>Mã NL</th>
               <th>Mã kế toán</th>
@@ -4386,6 +4387,7 @@
 
         html += `
           <tr class="${selectedClass}" onclick="selectStockItem('${escapeJs(item.Id)}')">
+            <td><button type="button" class="btn btn-light" data-stock-edit-id="${escapeHtml(item.Id)}" onclick="event.stopPropagation();CurrentStockEdit.open(this.dataset.stockEditId)">Sửa</button></td>
             <td>${escapeHtml(item.Id)}</td>
             <td>${escapeHtml(item.maNguyenLieu)}</td>
             <td>${escapeHtml(item.MaKeToan || "")}</td>
@@ -7757,5 +7759,6 @@
   </script>
 <?!= HtmlService.createHtmlOutputFromFile('ExportLotSelection').getContent(); ?>
 <?!= HtmlService.createHtmlOutputFromFile('ManualApprovalPhoto').getContent(); ?>
+<?!= HtmlService.createHtmlOutputFromFile('CurrentStockEditClient').getContent(); ?>
 </body>
 </html>
