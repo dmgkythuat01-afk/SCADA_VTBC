@@ -4555,6 +4555,7 @@ function getKetQuaLapViRowsByIdLapVi_(
       ["IdThungBanThanhPham2"]
     );
 
+  const idxDaXuat=headers.indexOf("daXuat");
   const result = [];
 
   for (
@@ -4583,6 +4584,7 @@ function getKetQuaLapViRowsByIdLapVi_(
 
     result.push({
       rowNumber: i + 1,
+      daXuat: idxDaXuat < 0 ? 0 : Number(row[idxDaXuat]) || 0,
 
       IdThungDungVi:
         idThungDungVi,
@@ -5745,6 +5747,7 @@ function saveKetQuaLapViLocations(
         ["vitriKho", "viTriKho"]
       );
 
+    const idxDaXuat=headers.indexOf("daXuat");
     const validMap = {};
 
     for (let i = 1; i < values.length; i++) {
@@ -5768,6 +5771,7 @@ function saveKetQuaLapViLocations(
 
       validMap[idThung] = {
         rowNumber: i + 1,
+        daXuat: idxDaXuat < 0 ? 0 : Number(values[i][idxDaXuat]) || 0,
         soLuongViDaLap:
           Number(
             values[i][idxSoLuong]
@@ -5842,6 +5846,8 @@ function saveKetQuaLapViLocations(
           );
         }
 
+        if(validMap[idThung].daXuat > 0 && soLuong !== validMap[idThung].soLuongViDaLap) throw new Error("Thùng " + idThung + " đã xuất ép màng, không được đổi số lượng tồn. Tải lại dữ liệu.");
+
         updates.push({
           rowNumber:
             validMap[idThung].rowNumber,
@@ -5876,29 +5882,7 @@ function saveKetQuaLapViLocations(
       );
     }
 
-    updates.forEach(
-      function(item) {
-        sheet
-          .getRange(
-            item.rowNumber,
-            idxSoLuong + 1
-          )
-          .setValue(
-            item.soLuongViDaLap
-          );
-
-        sheet
-          .getRange(
-            item.rowNumber,
-            idxVitriKho + 1
-          )
-          .setValue(
-            item.vitriKho
-          );
-      }
-    );
-
-    SpreadsheetApp.flush();
+    saveViStockLocations_(idLapVi, updates);
 
     const locationCount =
       updates.filter(

@@ -6866,7 +6866,7 @@
                 ) || 0;
 
           tongSoViDaLap +=
-            soLuong;
+            soLuong + (Number(item.daXuat) || 0);
         }
       );
 
@@ -7252,7 +7252,7 @@
             </div>
 
             <div class="lapvi-result-summary-item">
-              <span>Tổng các thùng</span>
+              <span>Tổng đã lắp (gồm đã xuất)</span>
 
               <strong
                 id="lapViLocationTotalQty">
@@ -7377,6 +7377,7 @@
 
                     <input
                       id="lapViLocationQty_${index}"
+                      ${Number(item.daXuat) > 0 ? 'disabled title="Đã xuất ép màng, không sửa số lượng tồn"' : ''}
                       class="lapvi-location-qty"
                       type="number"
                       min="0"
@@ -8438,6 +8439,8 @@
         return null;
       }
 
+      if(Number(item.daXuat) > 0) return null;
+
       const planDrafts =
         lapViLocationDrafts[
           selectedLapViResultId
@@ -8485,7 +8488,7 @@
                     item.soLuongViDaLap
                   ) || 0;
 
-            tongSoVi += soLuong;
+            tongSoVi += soLuong + (Number(item.daXuat) || 0);
           }
         );
 

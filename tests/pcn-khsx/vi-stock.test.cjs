@@ -1,0 +1,8 @@
+const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
+function context(){const c={};vm.createContext(c);vm.runInContext(fs.readFileSync('PhongCNTaoKHSX/ViStock.js','utf8'),c);return c;}
+test('stock is remaining only while progress includes exported trays across all dates',()=>{
+ const c=context(),r=c.viStockProjection_([{IdThungDungVi:'T1',IdLapVi:'L1',soLuongViDaLap:0,daXuat:600,ngaySanXuat:'2026-11-01'},{IdThungDungVi:'T2',IdLapVi:'L1',soLuongViDaLap:400,daXuat:0,ngaySanXuat:'2026-11-02'}],[{IdLapVi:'L1',tenSanPham:'SP A',maSanPham:'A',soLuongViKeHoach:1000}]);
+ assert.equal(r.totals[0].tonKho,400);assert.equal(r.progress[0].daLap,1000);assert.equal(r.progress[0].daXuat,600);assert.equal(r.progress[0].conCanLap,0);assert.equal(r.details.length,2);assert.equal(r.details[0].tenSanPham,'SP A');
+});
+test('unknown plans stay visible and different product codes are not combined by name',()=>{const c=context(),r=c.viStockProjection_([{IdThungDungVi:'T',IdLapVi:'missing',soLuongViDaLap:3},{IdThungDungVi:'T2',IdLapVi:'B',soLuongViDaLap:4}],[{IdLapVi:'A',tenSanPham:'Same',maSanPham:'A'},{IdLapVi:'B',tenSanPham:'Same',maSanPham:'B'}]);assert.equal(r.totals.reduce((n,r)=>n+r.tonKho,0),7);assert.equal(r.warnings.length,1);});
+test('ambiguous plan lookup and corrupt stock quantities do not silently produce misleading stock',()=>{const c=context();assert.throws(()=>c.viStockProjection_([],[{IdLapVi:'A',tenSanPham:'A'},{IdLapVi:'A',tenSanPham:'B'}]),/Trùng/);assert.throws(()=>c.viStockProjection_([{IdThungDungVi:'T',soLuongViDaLap:'bad'}],[]),/Số lượng/);});

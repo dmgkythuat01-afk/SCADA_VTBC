@@ -1205,6 +1205,10 @@
             <span>Kho Nguyên liệu</span>
           </button>
 
+          <button id="menuKhoBanThanhPham" class="side-menu-btn" onclick="showFeaturePage('pageKhoBanThanhPham', this)">
+            <span class="side-menu-icon">📦</span><span>Kho bán thành phẩm</span>
+          </button>
+
           <button id="menuMixCreate" class="side-menu-btn" onclick="showFeaturePage('pageMixCreate', this)">
             <span class="side-menu-icon">⚖️</span>
             <span>Tạo bài liệu</span>
@@ -1259,6 +1263,7 @@
       </aside>
 
       <main class="app-content">
+        <div id="pageKhoBanThanhPham" class="feature-page"></div>
         <div id="pagePlan" class="feature-page active">
     <div class="plan-grid">
       <div class="card">
@@ -2437,6 +2442,7 @@
     });
 
     function showFeaturePage(pageId, buttonEl, skipScroll) {
+      if(pageId === "pageKhoBanThanhPham") ViStock.open();
       const pages = document.querySelectorAll(".feature-page");
 
       pages.forEach(function(page) {
@@ -5042,7 +5048,7 @@
       html += `
             </tbody>
           </table>
-        </body>
+</body>
         </html>
       `;
 
@@ -5368,7 +5374,7 @@
       html += `
             </tbody>
           </table>
-        </body>
+</body>
         </html>
       `;
 
@@ -8415,5 +8421,6 @@
     }
 
   </script>
+<?!= HtmlService.createHtmlOutputFromFile('ViStockClient').getContent(); ?>
 </body>
 </html>

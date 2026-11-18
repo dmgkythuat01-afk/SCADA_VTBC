@@ -33,7 +33,7 @@ const SESSION_TTL_SECONDS = 6 * 60 * 60;
 
 function doGet() {
   return HtmlService
-    .createHtmlOutputFromFile("index")
+    .createTemplateFromFile("index").evaluate()
     .setTitle("Quản lý sản xuất")
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
@@ -4372,6 +4372,7 @@ function getTongSoLuongViDaLapTheoIdLapVi_() {
       ["soLuongViDaLap"]
     );
 
+  const idxDaXuat = headers.indexOf("daXuat");
   const result = {};
 
   values
@@ -4419,7 +4420,7 @@ function getTongSoLuongViDaLapTheoIdLapVi_() {
        * Vì vậy phải cộng toàn bộ các dòng.
        */
       result[idLapVi] +=
-        soLuongViDaLap;
+        soLuongViDaLap + (idxDaXuat < 0 ? 0 : Number(row[idxDaXuat]) || 0);
     });
 
   return result;
