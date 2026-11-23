@@ -33,6 +33,7 @@ const SESSION_TTL_SECONDS = 6 * 60 * 60;
 
 function doGet(e) {
   const template = HtmlService.createTemplateFromFile("index");
+  template.manualQrBootJson = buildManualStockQrBoot_(e);
   const ticket = normalizeText_(e && e.parameter && e.parameter.sso);
   template.ssoTicket = /^[a-f0-9-]{36}$/i.test(ticket) ? ticket : "";
   template.waitingForSso = !!(e && e.parameter && e.parameter.pendingSso === "1");
