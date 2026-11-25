@@ -14,13 +14,13 @@
 - [x] Add worker card, fetch/scan validation/confirm APIs, same-tab scanner return route, per-user nonce and revision-bound scan storage, keep scans on server failure and clear on successful export. Show progress and history details.
 - [x] Guard old report API against cancelled and not-yet-exported new plans; share report writer with plan lock where required.
 - [x] Tests: wrong/extra/missing/duplicate scans, cancel/stale plan, inventory change, double submit, partial-write retry, C# after worker no duplicate, PCN edit/export race, account/revision scanner state, compiled page and browser QA.
-- [ ] Verify remote/external baseline, backup and append live columns, set server-only bridge properties, update API/worker/PCN deployments, verify source/render, review, merge/push Git. If Google requests new external-request authorization for PCN, prepare concrete release before asking user to run its helper.
+- [x] Verify remote/external baseline, backup and append live columns, set server-only bridge properties, update API/worker/PCN deployments, verify source/render, review, merge/push Git. If Google requests new external-request authorization for PCN, prepare concrete release before asking user to run its helper.
 
 
-## Release evidence and pending authorization
+## Release evidence
 - 90 PCN/worker Node tests passed. Full Chrome fixture QA passed wrong/correct QR, nonce replay rejection, scans preserved on reload, complete-scan gating, full per-box audit, restored-tab initialization, stale-account callback isolation and 390/1440 overflow checks. Independent review found no remaining blockers.
 - Schema append preserved original values/formulas of KeHoachEpMangIn, ChiTietKeHoachEpMangIn, KetQuaLapVi and EpMangIn. No production export was performed.
 - Shared API version 15 deployed. Runtime smoke rejected three deliberately invalid mutation/export/report requests, read 172 stock rows and confirmed original getSheet_/nowText_ helpers available, with data unchanged.
 - Active external LuuCanBatch_V2_EpMangIn_9Cot.js synchronized to exact combined API source. Original nine-column event append behavior remains intact. All bearer values stay server-side and are excluded from Git.
-- PCN server-only bridge properties configured. Temporary connection test returned Google's actual missing-permission error for https://www.googleapis.com/auth/script.external_request. Owner must run kiemTraKetNoiKeHoachEpMangIn once in PCN editor and authorize it.
-- Existing stable PCN 36 and worker 39 stay in use until authorization succeeds. Both app HEAD sources are prepared; stable app release and merge to main are pending that final step. Temporary setup/probe endpoints are removed; private backups/receipts remain ignored.
+- PCN server-only bridge properties configured. Owner granted external-request authorization; a fresh temporary read-only ping confirmed success before release.
+- Released on existing URLs: PCN version 40, worker version 42, shared API version 15. Exact deployed source and public HTML render verified for both apps. Temporary setup/probe endpoints are removed; private backups/receipts remain ignored.
