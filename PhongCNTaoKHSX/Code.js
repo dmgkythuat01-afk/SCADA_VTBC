@@ -5735,63 +5735,11 @@ function getEpMangInConfig_() {
 }
 
 
-function getKeHoachEpMangIn_() {
-  return getSimplePlans_(
-    getEpMangInConfig_()
-  );
-}
-
-
-function getKeHoachEpMangIn(
-  token
-) {
-  requireAdmin_(
-    token
-  );
-
-  return {
-    success: true,
-
-    plans:
-      getKeHoachEpMangIn_()
-  };
-}
-
-
-function createKeHoachEpMangIn(
-  token,
-  payload
-) {
-  return createSimplePlan_(
-    token,
-    payload,
-    getEpMangInConfig_()
-  );
-}
-
-
-function updateKeHoachEpMangIn(
-  token,
-  payload
-) {
-  return updateSimplePlan_(
-    token,
-    payload,
-    getEpMangInConfig_()
-  );
-}
-
-
-function deleteKeHoachEpMangIn(
-  token,
-  stt
-) {
-  return deleteSimplePlan_(
-    token,
-    stt,
-    getEpMangInConfig_()
-  );
-}
+function getKeHoachEpMangIn_() { return epBoxPlans_(); }
+function getKeHoachEpMangIn(token) { requireAdmin_(token);return {success:true,plans:epBoxPlans_()}; }
+function createKeHoachEpMangIn(token,payload) { return epBoxMutation_(token,payload,'create'); }
+function updateKeHoachEpMangIn(token,payload) { return epBoxMutation_(token,payload,'update'); }
+function deleteKeHoachEpMangIn(token,payload) { return epBoxMutation_(token,payload,'cancel'); }
 
 
 /* =========================================================
