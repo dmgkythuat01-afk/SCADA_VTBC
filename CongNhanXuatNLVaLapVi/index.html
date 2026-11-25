@@ -1752,6 +1752,8 @@
       id="tabEpMangIn"
       class="tab-panel hidden">
 
+      <div class="card" id="workerEpExportCard"></div>
+
       <div class="card">
         <h2>Ép màng in</h2>
 
@@ -2673,6 +2675,7 @@
           setActiveTab(currentTab || "export", true);
           saveCachedApp(res.today || "");
 
+          if(currentTab === 'epMangIn' && !String(RETURNED_LINE_ID||'').startsWith('EMI_EXPORT_QR:')) WorkerEpExport.open();
           if (isReturnedFromQr) {
             handleReturnedQr();
           } else {
@@ -3223,6 +3226,11 @@
       if (!qr || !lineId) {
         hideLoading();
         isHandlingReturnedQr = false;
+        return;
+      }
+
+      if (lineId.indexOf("EMI_EXPORT_QR:") === 0) {
+        WorkerEpExport.returned(qr, lineId);
         return;
       }
 
@@ -4257,6 +4265,8 @@
         )
           ? tabName
           : "export";
+
+      if (currentTab === "epMangIn" && !silent) WorkerEpExport.open();
 
       const panelMap = {
         export:
@@ -9345,6 +9355,7 @@
 
 
     function loadEpMangInWorkerPlans() {
+      WorkerEpExport.load(true);
       const fromInput =
         document.getElementById(
           "epMangInFromDate"
@@ -10584,5 +10595,6 @@
     }
 
   </script>
+<?!= HtmlService.createHtmlOutputFromFile('EpMangInExportClient').getContent(); ?>
 </body>
 </html>

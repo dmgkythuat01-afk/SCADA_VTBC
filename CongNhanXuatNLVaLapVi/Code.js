@@ -393,7 +393,7 @@ function getInitialData(token) {
       todayText_(),
 
     epMangInPlans:
-      getWorkerSimplePlans_(
+      filterWorkerEpReportPlans_(getWorkerSimplePlans_(
         getWorkerEpMangInConfig_(),
         {
           fromDate:
@@ -402,7 +402,7 @@ function getInitialData(token) {
           toDate:
             todayText_()
         }
-      ),
+      )),
 
     epMangInHistory:
       getWorkerSimplePlanHistory_(
@@ -7206,10 +7206,7 @@ function getWorkerEpMangInData(
       dateFilter,
 
     plans:
-      getWorkerSimplePlans_(
-        getWorkerEpMangInConfig_(),
-        dateFilter
-      ),
+      filterWorkerEpReportPlans_(getWorkerSimplePlans_(getWorkerEpMangInConfig_(), dateFilter)),
 
     history:
       getWorkerSimplePlanHistory_(
@@ -7219,17 +7216,7 @@ function getWorkerEpMangInData(
 }
 
 
-function saveWorkerEpMangInReport(
-  token,
-  payload
-) {
-  return saveWorkerSimplePlanReport_(
-    token,
-    payload,
-    getWorkerEpMangInConfig_()
-  );
-}
-
+function saveWorkerEpMangInReport(token,payload) { return saveWorkerEpReportViaApi_(token,payload); }
 
 /* =========================================================
    API ĐÓNG THÙNG

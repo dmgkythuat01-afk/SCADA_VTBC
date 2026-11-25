@@ -1,8 +1,8 @@
 /* PCN film-print plans. Inventory is read-only here; a committed parent revision
  * activates its container reservations. Older detail revisions remain auditable. */
 const EP_BOX_DETAIL_SHEET_ = 'ChiTietKeHoachEpMangIn';
-const EP_BOX_PARENT_EXTRA_ = ['IdEpMangIn','phienBan','maYeuCau','thoiGianCapNhat','nguoiCapNhat','lichSuYeuCau','thoiGianHuy','nguoiHuy'];
-const EP_BOX_DETAIL_HEADERS_ = ['IdEpMangIn','STTKeHoach','phienBan','IdThungDungVi','IdLapVi','maSanPham','tenSanPham','ngaySanXuat','viTriKho','soLuongViKhiChon','trangThaiXuat','soLuongViDaXuat','thoiGianXuat','nguoiXuat','daXuatKhiChon','maYeuCau','noiDungYeuCau'];
+const EP_BOX_PARENT_EXTRA_ = ['IdEpMangIn','phienBan','maYeuCau','thoiGianCapNhat','nguoiCapNhat','lichSuYeuCau','thoiGianHuy','nguoiHuy','IdXuatEpMangIn','thoiGianXuatEpMangIn','nguoiXuatEpMangIn','noiDungLenhXuat'];
+const EP_BOX_DETAIL_HEADERS_ = ['IdEpMangIn','STTKeHoach','phienBan','IdThungDungVi','IdLapVi','maSanPham','tenSanPham','ngaySanXuat','viTriKho','soLuongViKhiChon','trangThaiXuat','soLuongViDaXuat','thoiGianXuat','nguoiXuat','daXuatKhiChon','maYeuCau','noiDungYeuCau','IdXuatEpMangIn'];
 
 function epBoxText_(v) { return String(v == null ? '' : v).trim(); }
 function epBoxRequests_(p) { const history=JSON.parse(p.lichSuYeuCau||'[]');if(!Array.isArray(history))throw Error('Lịch sử yêu cầu kế hoạch không hợp lệ.');return history; }
@@ -68,6 +68,7 @@ function getEpMangInBoxData(token) {
   return {success:true,plans:epBoxPlans_(tables),boxes:epBoxSerialize_(epBoxStock_().filter(s=>s.soLuongViDaLap>0&&s.maSanPham).map(s=>({...s,giuChoKeHoach:holds.get(epBoxText_(s.IdThungDungVi))||''})))};
 }
 function epBoxAssertEditable_(parent,details,stocks) {
+  if(parent.noiDungLenhXuat||parent.IdXuatEpMangIn)throw Error('Kế hoạch đang xuất hoặc đã xuất, không thể sửa/hủy.');
   if(epBoxClosed_(parent))throw Error('Kế hoạch đã hủy hoặc hoàn thành, không thể sửa/hủy.');
   if(parent.soLuongViThucHien!==''&&parent.soLuongViThucHien!=null||epBoxText_(parent.nguoiBaoCao)||parent.ThoiGianBaoCao)throw Error('Kế hoạch đã có báo cáo thực hiện, không thể sửa/hủy.');
   const selected=details.filter(d=>parent.IdEpMangIn&&d.IdEpMangIn===parent.IdEpMangIn&&Number(d.phienBan)===Number(parent.phienBan));
@@ -93,7 +94,10 @@ function epBoxWrite_(table,rowNumber,data) {
   catch(error){completed.reverse().forEach(g=>{try{g.range.setValues(g.before);}catch(rollbackError){console.error('Cannot restore PCN plan fields: '+rollbackError.message);}});throw error;}
 }
 function epBoxMutation_(token,payload,mode) {
-  const session=requireAdmin_(token),lock=LockService.getScriptLock();lock.waitLock(30000);
+  const session=requireAdmin_(token);return callEpPlanApi_('mutateEpMangInPlan',{actor:session.useName,mode,payload});
+}
+function epBoxMutationCore_(session,payload,mode) {
+  const lock=LockService.getScriptLock();lock.waitLock(30000);
   try {
     epBoxSchema_();const pt=epBoxRead_(SHEET_KE_HOACH_EP_MANG_IN,getKeHoachEpMangInHeaders_().concat(EP_BOX_PARENT_EXTRA_)),dt=epBoxRead_(EP_BOX_DETAIL_SHEET_,EP_BOX_DETAIL_HEADERS_),stocks=epBoxStock_();
     payload=payload||{};const request=epBoxText_(payload.maYeuCau);
