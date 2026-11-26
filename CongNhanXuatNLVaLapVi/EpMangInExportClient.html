@@ -1,53 +1,48 @@
 <style>
-#workerEpExportCard{min-width:0;padding:18px;font-size:18px;line-height:1.5;overflow:hidden}
+#workerEpExportCard{min-width:0;padding:18px;font-size:26px;line-height:1.5;overflow:hidden}
 #workerEpExportCard *{box-sizing:border-box}
 #workerEpExportCard .wep-heading{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:start;gap:12px;margin-bottom:8px}
-#workerEpExportCard h2{font-size:24px;line-height:1.3;margin:0;font-weight:800;overflow-wrap:anywhere}
-#workerEpExportCard h3{font-size:18px;line-height:1.4;margin:0 0 12px;font-weight:800}
-#workerEpExportCard .btn{width:auto;max-width:100%;min-width:0;min-height:52px;height:auto;padding:13px 16px;font-size:19px;line-height:1.4;border-radius:12px;white-space:normal;overflow-wrap:anywhere}
-#workerEpExportCard #wepReload{min-height:42px;padding:9px 12px;font-size:16px;white-space:nowrap;background:#edf4ff;color:#2457b9}
+#workerEpExportCard h2{font-size:32px;line-height:1.3;margin:0;font-weight:800;overflow-wrap:anywhere}
+#workerEpExportCard h3{font-size:26px;line-height:1.4;margin:0 0 12px;font-weight:800}
+#workerEpExportCard .btn{width:auto;max-width:100%;min-width:0;min-height:72px;height:auto;padding:13px 16px;font-size:26px;line-height:1.4;border-radius:12px;white-space:normal;overflow-wrap:anywhere}
+#workerEpExportCard #wepReload{min-height:56px;padding:9px 12px;font-size:24px;white-space:nowrap;background:#edf4ff;color:#2457b9}
 #workerEpExportCard .btn:disabled{opacity:.5;cursor:not-allowed}
-#workerEpExportCard .wep-note{font-size:16px;line-height:1.55;color:#61716b;margin:8px 0 16px;overflow-wrap:anywhere}
+#workerEpExportCard .wep-note{font-size:24px;line-height:1.55;color:#61716b;margin:8px 0 16px;overflow-wrap:anywhere}
 #workerEpExportCard .wep-controls{display:grid;grid-template-columns:minmax(0,1fr);gap:8px;padding:14px;background:#f5f8fc;border:1px solid #dfe7f0;border-radius:14px;margin-bottom:16px;min-width:0}
 #workerEpExportCard .wep-controls>div{min-width:0;width:100%}
-#workerEpExportCard label{display:block;margin:0 0 8px;font-size:17px;line-height:1.4;font-weight:700}
-#workerEpExportCard select{display:block;width:100%;min-width:0;max-width:100%;min-height:54px;height:54px;padding:0 32px 0 12px;font-size:17px;line-height:1.5;border:1px solid #cbd5e1;border-radius:10px;background:#fff;color:#172d43;text-overflow:ellipsis}
+#workerEpExportCard label{display:block;margin:0 0 8px;font-size:26px;line-height:1.4;font-weight:700}
+#workerEpExportCard select{display:block;width:100%;min-width:0;max-width:100%;min-height:76px;height:76px;padding:0 32px 0 12px;font-size:26px;line-height:1.5;border:1px solid #cbd5e1;border-radius:10px;background:#fff;color:#172d43;text-overflow:ellipsis}
 #workerEpExportCard .wep-section{padding:16px;border:1px solid #dce7e1;border-radius:14px;margin-top:14px;min-width:0;background:#fff}
-#workerEpExportCard .wep-product{font-size:20px;line-height:1.4;margin:0 0 12px;font-weight:800;color:#164a39;overflow-wrap:anywhere}
-#workerEpExportCard .wep-meta-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;font-size:17px;line-height:1.5}
+#workerEpExportCard .wep-product{font-size:28px;line-height:1.4;margin:0 0 12px;font-weight:800;color:#164a39;overflow-wrap:anywhere}
+#workerEpExportCard .wep-meta-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;font-size:26px;line-height:1.5}
 #workerEpExportCard .wep-meta-grid .wep-wide{grid-column:1/-1}
-#workerEpExportCard .wep-meta-label{display:block;color:#66776f;font-size:14px;margin-bottom:3px;font-weight:500}
-#workerEpExportCard .wep-code{display:block;overflow-wrap:anywhere;word-break:break-word;font-size:16px;line-height:1.6}
-#workerEpExportCard .wep-progress{padding:12px 14px;background:#eaf6ef;border-radius:11px;margin:0 0 14px;font-size:18px;line-height:1.5;font-weight:800;color:#14613f}
+#workerEpExportCard .wep-meta-label{display:block;color:#66776f;font-size:22px;margin-bottom:3px;font-weight:500}
+#workerEpExportCard .wep-code{display:block;overflow-wrap:anywhere;word-break:break-word;font-size:24px;line-height:1.6}
+#workerEpExportCard .wep-progress{padding:12px 14px;background:#eaf6ef;border-radius:11px;margin:0 0 14px;font-size:28px;line-height:1.5;font-weight:800;color:#14613f}
 #workerEpExportCard .wep-table-wrap{width:100%;max-width:100%;overflow-x:auto;margin:0;-webkit-overflow-scrolling:touch}
-#workerEpExportCard .wep-table{width:100%;border-collapse:collapse;white-space:nowrap;font-size:16px;line-height:1.5}
+#workerEpExportCard .wep-table{width:100%;min-width:1100px;border-collapse:collapse;white-space:nowrap;font-size:28px;line-height:1.5}
 #workerEpExportCard .wep-table th,#workerEpExportCard .wep-table td{padding:12px;border:1px solid #d9e5e2;text-align:left}
-#workerEpExportCard .wep-table th{background:#edf6f1;color:#17523d;font-size:15px}
+#workerEpExportCard .wep-table-hint{font-size:22px;line-height:1.5;color:#61716b;margin:10px 0 0}
+#workerEpExportCard .wep-table th{background:#edf6f1;color:#17523d;font-size:24px}
 #workerEpExportCard .wep-ok{color:#067647;font-weight:700}
 #workerEpExportCard .wep-wait{color:#986000;font-weight:600}
-#workerEpExportCard .wep-boxes{display:none}
-#workerEpExportCard .wep-box{padding:14px;border:1px solid #dfe7e3;border-radius:12px;background:#fafcfb;min-width:0}
-#workerEpExportCard .wep-box-top{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:15px;margin-bottom:8px}
-#workerEpExportCard .wep-box-facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:12px;font-size:17px;line-height:1.5}
-#workerEpExportCard .wep-box-facts>div{min-width:0;overflow-wrap:anywhere}
 #workerEpExportCard .wep-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
-#workerEpExportCard .wep-actions .btn{width:100%;font-size:20px;min-height:56px}
+#workerEpExportCard .wep-actions .btn{width:100%;font-size:28px;min-height:76px}
 #workerEpExportCard .wep-action-section{background:#f4faf7}
-#workerEpExportCard .wep-action-section .wep-note{margin:12px 0 0;font-size:14px}
-#workerEpExportCard .message{font-size:16px;line-height:1.6;margin:14px 0 0;padding:12px;overflow-wrap:anywhere}
-#workerEpExportCard .empty{font-size:17px;line-height:1.5;padding:18px 10px}
+#workerEpExportCard .wep-action-section .wep-note{margin:12px 0 0;font-size:22px}
+#workerEpExportCard .message{font-size:24px;line-height:1.6;margin:14px 0 0;padding:12px;overflow-wrap:anywhere}
+#workerEpExportCard .empty{font-size:26px;line-height:1.5;padding:18px 10px}
 #workerEpExportCard .wep-fallback{display:block;width:100%;margin-top:12px;text-decoration:none}
 #workerEpExportCard .wep-fallback[hidden]{display:none!important}
 @media(max-width:700px){
  #workerEpExportCard{padding:14px}
- #workerEpExportCard h2{font-size:22px}
+ #workerEpExportCard h2{font-size:30px}
  #workerEpExportCard .wep-section{padding:12px}
  #workerEpExportCard .wep-controls{padding:12px}
- #workerEpExportCard .wep-table-wrap{display:none}
- #workerEpExportCard .wep-boxes{display:grid;gap:10px}
+ #workerEpExportCard .wep-table-wrap{display:block}
  #workerEpExportCard .wep-actions{grid-template-columns:minmax(0,1fr)}
 }
-@media(max-width:350px){#workerEpExportCard .wep-heading{grid-template-columns:minmax(0,1fr)}#workerEpExportCard #wepReload{justify-self:start}}
+@media(max-width:700px){#workerEpExportCard .wep-heading{grid-template-columns:minmax(0,1fr)}#workerEpExportCard #wepReload{justify-self:start}}
 </style>
 <script>
 const WorkerEpExport=(()=>{
@@ -69,8 +64,7 @@ const WorkerEpExport=(()=>{
     const quantity=d=>esc(formatNumber(exported?d.soLuongViDaXuat:d.tonHienTai??0));
     root.innerHTML=`<section class="wep-section"><div class="wep-product">${esc(p.tenSanPham)}</div><div class="wep-meta-grid"><div class="wep-wide"><span class="wep-meta-label">Mã kế hoạch</span><span class="wep-code">${esc(p.IdEpMangIn)}</span></div><div><span class="wep-meta-label">Số vỉ kế hoạch</span><b>${esc(formatNumber(p.soLuongViKeHoach))} vỉ</b></div><div><span class="wep-meta-label">Thùng được giao</span><b>${p.items.length} thùng</b></div>${exported?`<div class="wep-wide"><span class="wep-meta-label">Đã xuất bởi</span>${esc(p.nguoiXuatEpMangIn)} · ${esc(p.thoiGianXuatEpMangIn)}</div>`:''}</div></section>
     <section class="wep-section"><h3>Danh sách thùng</h3><div class="wep-progress">${exported?'Đã xuất đủ thùng':`Đã quét ${done.length}/${p.items.length} thùng`}</div>
-    <div class="wep-boxes">${p.items.map((d,i)=>`<article class="wep-box"><div class="wep-box-top"><b>Thùng ${i+1}</b><span class="${statusClass(d)}">${status(d)}</span></div><span class="wep-code">${esc(d.IdThungDungVi)}</span><div class="wep-box-facts"><div><span class="wep-meta-label">${exported?'Vỉ đã xuất':'Vỉ còn tồn'}</span><b>${quantity(d)} vỉ</b></div><div><span class="wep-meta-label">Vị trí kho</span>${esc(d.viTriKho||'—')}</div><div><span class="wep-meta-label">Ngày sản xuất</span>${esc(d.ngaySanXuat||'—')}</div></div></article>`).join('')}</div>
-    <div class="wep-table-wrap"><table class="wep-table"><thead><tr><th>STT</th><th>Thùng đựng vỉ</th><th>Ngày sản xuất</th><th>Vị trí kho</th><th>${exported?'Vỉ đã xuất':'Vỉ còn tồn'}</th><th>Trạng thái</th></tr></thead><tbody>${p.items.map((d,i)=>`<tr><td>${i+1}</td><td>${esc(d.IdThungDungVi)}</td><td>${esc(d.ngaySanXuat||'—')}</td><td>${esc(d.viTriKho||'—')}</td><td>${quantity(d)}</td><td class="${statusClass(d)}">${status(d)}</td></tr>`).join('')}</tbody></table></div></section>
+    <div class="wep-table-wrap" tabindex="0" role="region" aria-label="Danh sách thùng, cuộn ngang"><table class="wep-table"><thead><tr><th>STT</th><th>Thùng đựng vỉ</th><th>Ngày sản xuất</th><th>Vị trí kho</th><th>${exported?'Vỉ đã xuất':'Vỉ còn tồn'}</th><th>Trạng thái</th></tr></thead><tbody>${p.items.map((d,i)=>`<tr><td>${i+1}</td><td>${esc(d.IdThungDungVi)}</td><td>${esc(d.ngaySanXuat||'—')}</td><td>${esc(d.viTriKho||'—')}</td><td>${quantity(d)}</td><td class="${statusClass(d)}">${status(d)}</td></tr>`).join('')}</tbody></table></div><p class="wep-table-hint">Vuốt ngang bảng để xem đầy đủ thông tin thùng.</p></section>
     ${exported?'':`<section class="wep-section wep-action-section"><h3>Quét và xác nhận</h3><div class="wep-actions"><button id="wepScan" class="btn btn-primary">Quét QR thùng</button><button id="wepConfirm" class="btn btn-success" ${busy||!p.items.length||done.length!==p.items.length?'disabled':''}>Xác nhận xuất</button></div><p class="wep-note">Chỉ xác nhận khi đã quét đủ thùng. Toàn bộ số vỉ còn tồn được xuất và lưu theo từng thùng.</p></section>`}`;
     if(el('wepScan')){el('wepScan').disabled=busy;el('wepScan').onclick=scan;}if(el('wepConfirm'))el('wepConfirm').onclick=confirmExport;
   }
@@ -89,7 +83,7 @@ const WorkerEpExport=(()=>{
   }catch(error){if(valid(token,user,version)){setActiveTab('epMangIn',true);message('error',error.message);}}
   finally {if(!valid(token,user,version))return;hideLoading();isHandlingReturnedQr=false;if(typeof google!=='undefined'&&google.script?.history?.replace)google.script.history.replace({}, {}, '');}}
   function confirmExport(){syncSession();const p=plan();if(!p||busy||p.IdXuatEpMangIn)return;const ids=scans(p);if(!p.items.length||ids.length!==p.items.length){message('error','Chưa quét đủ thùng.');return;}if(!confirm('Xuất toàn bộ '+p.items.length+' thùng của kế hoạch '+p.IdEpMangIn+'? Tồn các thùng sẽ về 0.'))return;const token=sessionToken,user=owner(),version=epoch;busy=true;render();showLoading('Đang xuất ép màng in','Đang kiểm tra kế hoạch và cập nhật tồn từng thùng…');
-    google.script.run.withSuccessHandler(res=>{if(!valid(token,user,version))return;busy=false;hideLoading();if(!res?.success){message('error','Không xuất được thùng.');render();return;}store(p,[]);plans=res.plans||[];picker();render();message('success',res.message||'Đã xuất thùng.');if(epMangInFromDate&&epMangInToDate)loadEpMangInWorkerPlans();}).withFailureHandler(error=>{if(!valid(token,user,version))return;busy=false;hideLoading();if(valid(token,user,version)){message('error',error.message||'Xuất chưa hoàn tất. Thử lại để tiếp tục, không trừ tồn hai lần.');render();}}).confirmWorkerEpExport(token,{IdEpMangIn:p.IdEpMangIn,phienBan:p.phienBan,scannedIds:ids});
+    google.script.run.withSuccessHandler(res=>{if(!valid(token,user,version))return;busy=false;hideLoading();if(!res?.success){message('error','Không xuất được thùng.');render();return;}store(p,[]);plans=res.plans||[];picker();render();message('success',res.message||'Đã xuất thùng.');}).withFailureHandler(error=>{if(!valid(token,user,version))return;busy=false;hideLoading();if(valid(token,user,version)){message('error',error.message||'Xuất chưa hoàn tất. Thử lại để tiếp tục, không trừ tồn hai lần.');render();}}).confirmWorkerEpExport(token,{IdEpMangIn:p.IdEpMangIn,phienBan:p.phienBan,scannedIds:ids});
   }
   return {open,load,returned};
 })();
