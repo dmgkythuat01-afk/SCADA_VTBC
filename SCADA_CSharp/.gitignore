@@ -1,0 +1,13 @@
+[Bb]in/
+[Oo]bj/
+.vs/
+packages/
+backups/
+*.pfx
+*.user
+*.suo
+*.exe
+*.dll
+.clasp.json
+tests/ep-plan-bin/
+outputs/*_before_update*/

@@ -1,0 +1,18 @@
+﻿const fs=require('fs'),vm=require('vm'),assert=require('assert');
+const file=process.argv[2]||'outputs/LuuCanBatch_V2_EpMangIn_9Cot.js';
+const ctx={console,Utilities:{formatDate:()=> '2026-11-26'}};vm.createContext(ctx);vm.runInContext(fs.readFileSync(file,'utf8'),ctx);
+assert.equal(typeof ctx.getScadaEpMangInPlans_,'function','Missing SCADA plan/date API');
+let tables={parents:[{IdEpMangIn:'P',STT:1,phienBan:2,thoiGianTao:'2026-11-25 10:00:00',IdXuatEpMangIn:'X',trangThai:'Đã xuất'}, {IdEpMangIn:'OLD',STT:2,phienBan:1,thoiGianTao:'2026-11-22',trangThai:'Đã tạo'}, {IdEpMangIn:'CANCEL',STT:3,phienBan:1,thoiGianTao:'2026-11-26',thoiGianHuy:'2026-11-26'}],details:[{IdEpMangIn:'P',phienBan:1,IdThungDungVi:'WRONG_REV',trangThaiXuat:'Đã xuất'}, {IdEpMangIn:'P',phienBan:2,IdThungDungVi:'B',trangThaiXuat:'Đã xuất',IdXuatEpMangIn:'X',soLuongViDaXuat:20},{IdEpMangIn:'P',phienBan:2,IdThungDungVi:'WAIT',trangThaiXuat:'Chờ xuất',soLuongViDaXuat:0}]};
+ctx.epBoxTables_=()=>tables;
+ctx.epBoxRead_=name=>({rows:name==='KetQuaLapVi'?[{IdThungDungVi:'B',IdLapVi:'LV',IdThungBanThanhPham1:'BTP'}]:name==='KeHoachLapViVTBC'?[{IdLapVi:'LV'}]:name==='ChiTietBTPtheoThung'?[{IdThungBanThanhPham:'BTP',ngaySanXuat:'NSX20102026DM1.1'},{IdThungBanThanhPham:'UNRELATED'}]:[]});
+let data=ctx.getScadaEpMangInPlans_('2');assert.equal(data.plans.length,1);assert.equal(data.plans[0].items.length,2);assert.equal(data.plans[0].items[0].daXuat,true);assert.equal(data.plans[0].items[1].daXuat,false);
+assert.equal(ctx.getScadaEpMangInPlans_('5').plans.length,2,'Five days includes Nov 22');
+assert.equal(data.trace.ChiTietBTPTheoThung.length,1,'Load only related BTP, including old production dates');
+ctx.scadaEpAssertIssued_('P',2,['B']);
+assert.throws(()=>ctx.scadaEpAssertIssued_('P',1,['B']));
+assert.throws(()=>ctx.scadaEpAssertIssued_('P',2,['WRONG_REV']));
+assert.throws(()=>ctx.scadaEpAssertIssued_('P',2,['WAIT']));
+assert.throws(()=>ctx.scadaEpAssertIssued_('P',2,['B','B']));
+tables.parents[0].thoiGianHuy='2026-11-26';assert.throws(()=>ctx.scadaEpAssertIssued_('P',2,['B']));
+assert.throws(()=>ctx.scadaEpAssertIssued_('',0,['B']));
+console.log('PASS: date ranges, cancelled plan, latest revision, issued/pending, wrong box, duplicate scan, missing plan and stale revision');
