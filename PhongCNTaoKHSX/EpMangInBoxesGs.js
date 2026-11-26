@@ -5,6 +5,21 @@ const EP_BOX_PARENT_EXTRA_ = ['IdEpMangIn','phienBan','maYeuCau','thoiGianCapNha
 const EP_BOX_DETAIL_HEADERS_ = ['IdEpMangIn','STTKeHoach','phienBan','IdThungDungVi','IdLapVi','maSanPham','tenSanPham','ngaySanXuat','viTriKho','soLuongViKhiChon','trangThaiXuat','soLuongViDaXuat','thoiGianXuat','nguoiXuat','daXuatKhiChon','maYeuCau','noiDungYeuCau','IdXuatEpMangIn'];
 
 function epBoxText_(v) { return String(v == null ? '' : v).trim(); }
+function epBoxProductionDate_(value) {
+  if(Object.prototype.toString.call(value)==='[object Date]')return isNaN(value.getTime())?'':Utilities.formatDate(value,'Asia/Ho_Chi_Minh','yyyy-MM-dd');
+  const text=epBoxText_(value);let iso='';
+  if(/^\d{4}-\d{2}-\d{2}T.*(?:Z|[+-]\d{2}:\d{2})$/i.test(text)){if(!epBoxProductionDate_(text.slice(0,10)))return '';const date=new Date(text);return isNaN(date.getTime())?'':Utilities.formatDate(date,'Asia/Ho_Chi_Minh','yyyy-MM-dd');}
+  const yearFirst=text.match(/^(\d{4}-\d{2}-\d{2})(?:$|[ T])/),dayFirst=text.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})(?:$|\s)/);
+  if(yearFirst)iso=yearFirst[1];else if(dayFirst)iso=dayFirst[3]+'-'+dayFirst[2].padStart(2,'0')+'-'+dayFirst[1].padStart(2,'0');
+  if(!iso)return '';const date=new Date(iso+'T00:00:00Z');return !isNaN(date.getTime())&&date.toISOString().slice(0,10)===iso?iso:'';
+}
+function epBoxAssertFifo_(product,ids,stocks,holds) {
+  const selected=new Set(ids.map(epBoxText_)),available=stocks.filter(s=>epBoxText_(s.maSanPham)===product&&Number(s.soLuongViDaLap)>0&&!holds.has(epBoxText_(s.IdThungDungVi))).map(s=>({...s,date:epBoxProductionDate_(s.ngaySanXuat)}));
+  const unknown=available.find(s=>!s.date);if(unknown)throw Error('Thùng '+unknown.IdThungDungVi+' thiếu hoặc sai ngày sản xuất. Cần cập nhật ngày trước khi chọn theo thứ tự cũ nhất.');
+  const dates=available.filter(s=>selected.has(epBoxText_(s.IdThungDungVi))).map(s=>s.date).sort(),newest=dates[dates.length-1];
+  const older=available.filter(s=>s.date<newest&&!selected.has(epBoxText_(s.IdThungDungVi))).sort((a,b)=>a.date.localeCompare(b.date)||String(a.IdThungDungVi).localeCompare(String(b.IdThungDungVi)));
+  if(older.length){const first=older[0],display=first.date.slice(8,10)+'/'+first.date.slice(5,7)+'/'+first.date.slice(0,4);throw Error('Còn '+older.filter(s=>s.date===first.date).length+' thùng ngày sản xuất '+display+' chưa được chọn (ví dụ '+first.IdThungDungVi+'). Phải chọn hết ngày cũ trước khi thêm ngày mới.');}
+}
 function epBoxRequests_(p) { const history=JSON.parse(p.lichSuYeuCau||'[]');if(!Array.isArray(history))throw Error('Lịch sử yêu cầu kế hoạch không hợp lệ.');return history; }
 function epBoxClosed_(p) { return !!p.thoiGianHuy||/^(Hủy kế hoạch|Đã hủy|Hủy|Hoàn thành|Đã hoàn thành)$/i.test(epBoxText_(p.trangThai)); }
 function epBoxReservations_(parents, details, exceptId) {
@@ -65,7 +80,7 @@ function epBoxPlans_(tables) {
 }
 function getEpMangInBoxData(token) {
   requireAdmin_(token);const tables=epBoxTables_(),holds=epBoxReservations_(tables.parents,tables.details);
-  return {success:true,plans:epBoxPlans_(tables),boxes:epBoxSerialize_(epBoxStock_().filter(s=>s.soLuongViDaLap>0&&s.maSanPham).map(s=>({...s,giuChoKeHoach:holds.get(epBoxText_(s.IdThungDungVi))||''})))};
+  return {success:true,plans:epBoxPlans_(tables),boxes:epBoxSerialize_(epBoxStock_().filter(s=>s.soLuongViDaLap>0&&s.maSanPham).map(s=>({...s,ngaySanXuatSort:epBoxProductionDate_(s.ngaySanXuat),giuChoKeHoach:holds.get(epBoxText_(s.IdThungDungVi))||''})).sort((a,b)=>(a.ngaySanXuatSort||'9999').localeCompare(b.ngaySanXuatSort||'9999')||String(a.IdThungDungVi).localeCompare(String(b.IdThungDungVi))))};
 }
 function epBoxAssertEditable_(parent,details,stocks) {
   if(parent.noiDungLenhXuat||parent.IdXuatEpMangIn)throw Error('Kế hoạch đang xuất hoặc đã xuất, không thể sửa/hủy.');
@@ -119,6 +134,7 @@ function epBoxMutationCore_(session,payload,mode) {
     }
     const product=epBoxText_(payload.maSanPham),qty=Number(payload.soLuongKeHoach),p=getSimplePlanProductByMa_(product);if(!p)throw Error('Không tìm thấy sản phẩm.');
     const selected=epBoxValidate_(product,qty,payload.items,stocks,epBoxReservations_(pt.rows,dt.rows,parent&&parent.IdEpMangIn));
+    epBoxAssertFifo_(product,payload.items,stocks,epBoxReservations_(pt.rows,dt.rows,parent&&parent.IdEpMangIn));
     const id=parent&&parent.IdEpMangIn||'EMI'+Utilities.formatDate(new Date(),'Asia/Ho_Chi_Minh','yyyyMMddHHmmssSSS')+'_'+Utilities.getUuid().slice(0,8);
     const stt=parent?Number(parent.STT):Math.max(0,...pt.rows.map(p=>Number(p.STT)||0))+1;
     // Include inactive orphan revisions after a previous failed write when choosing the next revision.
@@ -131,6 +147,7 @@ function epBoxMutationCore_(session,payload,mode) {
     const freshStock=epBoxStock_(),freshParents=epBoxRead_(SHEET_KE_HOACH_EP_MANG_IN,getKeHoachEpMangInHeaders_()).rows;
     if(parent)epBoxAssertEditable_(epBoxParent_(freshParents,parent.STT),dt.rows,freshStock);
     epBoxValidate_(product,qty,payload.items,freshStock,epBoxReservations_(freshParents,dt.rows,parent&&parent.IdEpMangIn));
+    epBoxAssertFifo_(product,payload.items,freshStock,epBoxReservations_(freshParents,dt.rows,parent&&parent.IdEpMangIn));
     selected.forEach(old=>{const fresh=freshStock.find(s=>s.IdThungDungVi===old.IdThungDungVi);if(Number(fresh.soLuongViDaLap)!==Number(old.soLuongViDaLap)||Number(fresh.daXuat||0)!==Number(old.daXuat||0))throw Error('Tồn thùng '+old.IdThungDungVi+' đã thay đổi. Vui lòng tải lại.');});
     const history=JSON.stringify((parent?epBoxRequests_(parent):[]).concat([{maYeuCau:request,noiDungYeuCau:signature}]));if(history.length>45000)throw Error('Kế hoạch đã có quá nhiều lần sửa. Vui lòng tạo kế hoạch mới.');
     const changes={STT:stt,maSanPham:p.maSanPham,tenSanPham:p.tenSanPham,soLuongViKeHoach:qty,IdEpMangIn:id,phienBan:revision,maYeuCau:request,thoiGianCapNhat:now,nguoiCapNhat:session.useName||'',lichSuYeuCau:history};
