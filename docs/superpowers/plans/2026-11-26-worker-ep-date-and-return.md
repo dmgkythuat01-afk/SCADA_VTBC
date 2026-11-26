@@ -1,0 +1,8 @@
+# Worker film-export date search and QR return
+
+- Add a creation-date From/To filter and Find plans button before the plan selector. Default is yesterday/today in Vietnam timezone; successful ranges persist per worker. Changing dates clears/locks selection until search. Date fields stack on narrow phones and preserve the existing large typography.
+- Server validates real ISO dates, date order and authentication before reading plans. Results include both endpoint dates using Vietnam's creation date. Export validation itself remains independent of the display filter; confirm replies retain the chosen display range.
+- Root cause reproduced: a stale app cache containing the assembly-export tab and a production-date filter sent QR restoration through the old production-date loader. If that loader failed, film QR never ran and the app stayed in assembly export.
+- Film QR now selects its target tab before initial UI restoration and skips that unrelated date-loader branch. Nonce state contains the applied range; return reloads the same range and selects the same plan before validating the QR. Existing scans remain keyed by account/plan/revision.
+- Five date/routing tests, existing worker tests and full browser regression passed. Browser reproduced stale assembly/date cache plus a failed unrelated date request, then verified fixed routing, preserved custom range, scan marking and reload. Geometry checks at 320/390/550/768/1440px found no control overlaps or overflow.
+- Only worker UI/read filtering changed; no stock/plan sheet migration, API credential changes or production inventory writes during QA. Existing worker deployment updated after source/render verification.

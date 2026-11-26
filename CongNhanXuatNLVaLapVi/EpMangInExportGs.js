@@ -11,7 +11,16 @@ function wEpPlans_(){
   return parents.filter(p=>p.IdEpMangIn&&!wEpClosed_(p)).map(p=>({...p,items:details.filter(d=>d.IdEpMangIn===p.IdEpMangIn&&Number(d.phienBan)===Number(p.phienBan)).map(d=>{const found=stock.filter(s=>s.IdThungDungVi===d.IdThungDungVi);return {...d,tonHienTai:found.length===1?found[0].soLuongViDaLap:null};})})).sort((a,b)=>Number(b.STT)-Number(a.STT));
 }
 function wEpVisible_(plans){return wEpSerialize_(plans.map(p=>({STT:p.STT,IdEpMangIn:p.IdEpMangIn,phienBan:p.phienBan,maSanPham:p.maSanPham,tenSanPham:p.tenSanPham,soLuongViKeHoach:p.soLuongViKeHoach,trangThai:p.trangThai,IdXuatEpMangIn:p.IdXuatEpMangIn||'',nguoiXuatEpMangIn:p.nguoiXuatEpMangIn||'',thoiGianXuatEpMangIn:p.thoiGianXuatEpMangIn||'',dangXuat:!!p.noiDungLenhXuat&&!p.IdXuatEpMangIn,items:p.items.map(d=>({IdThungDungVi:d.IdThungDungVi,ngaySanXuat:d.ngaySanXuat,viTriKho:d.viTriKho,tonHienTai:d.tonHienTai,soLuongViDaXuat:d.soLuongViDaXuat,trangThaiXuat:d.trangThaiXuat}))})));}
-function getWorkerEpExportData(token){requireWorker_(token);return {success:true,plans:wEpVisible_(wEpPlans_())};}
+function wEpValidDate_(text){if(!/^\d{4}-\d{2}-\d{2}$/.test(text))return false;const d=new Date(text+'T00:00:00Z');return !isNaN(d.getTime())&&d.toISOString().slice(0,10)===text;}
+function wEpNormalizeFilter_(filter){
+  if(filter==null){const today=Utilities.formatDate(new Date(),'Asia/Ho_Chi_Minh','yyyy-MM-dd'),yesterday=new Date(today+'T00:00:00Z');yesterday.setUTCDate(yesterday.getUTCDate()-1);return {fromDate:yesterday.toISOString().slice(0,10),toDate:today};}
+  const fromDate=String(filter.fromDate||'').trim(),toDate=String(filter.toDate||'').trim();
+  if(!wEpValidDate_(fromDate)||!wEpValidDate_(toDate))throw Error('Vui lòng chọn đầy đủ từ ngày và đến ngày hợp lệ.');
+  if(fromDate>toDate)throw Error('Từ ngày không được lớn hơn đến ngày.');return {fromDate,toDate};
+}
+function wEpCreatedDate_(value){if(Object.prototype.toString.call(value)==='[object Date]')return isNaN(value.getTime())?'':Utilities.formatDate(value,'Asia/Ho_Chi_Minh','yyyy-MM-dd');const text=String(value||'').trim(),iso=text.match(/^(\d{4}-\d{2}-\d{2})(?:$|[ T])/);if(iso)return wEpValidDate_(iso[1])?iso[1]:'';const local=text.match(/^(\d{2})\/(\d{2})\/(\d{4})(?:$|\s)/);if(!local)return '';const date=local[3]+'-'+local[2]+'-'+local[1];return wEpValidDate_(date)?date:'';}
+function wEpFilterPlans_(plans,filter){return plans.filter(p=>{const date=wEpCreatedDate_(p.thoiGianTao);return date&&date>=filter.fromDate&&date<=filter.toDate;});}
+function getWorkerEpExportData(token,filter){requireWorker_(token);const range=wEpNormalizeFilter_(filter);return {success:true,filter:range,plans:wEpVisible_(wEpFilterPlans_(wEpPlans_(),range))};}
 function validateWorkerEpExportQr(token,payload){
   requireWorker_(token);const p=wEpPlans_().find(p=>p.IdEpMangIn===String(payload&&payload.IdEpMangIn||''));
   if(!p||p.IdXuatEpMangIn)throw Error('Kế hoạch không còn chờ xuất. Vui lòng tải lại.');
@@ -27,6 +36,6 @@ function callEpWorkerApi_(action,payload,actor){
   let result;try{result=JSON.parse(response.getContentText());}catch(error){throw Error('Không đọc được phản hồi xuất thùng. Vui lòng thử lại.');}
   if(response.getResponseCode()!==200||!result.success)throw Error(result.message||'Không xử lý được yêu cầu.');return result;
 }
-function confirmWorkerEpExport(token,payload){const session=requireWorker_(token),result=callEpWorkerApi_('exportEpMangInPlan',payload,session.useName);return {...result,plans:wEpVisible_(wEpPlans_())};}
+function confirmWorkerEpExport(token,payload){const session=requireWorker_(token),range=wEpNormalizeFilter_(payload&&payload.filter),result=callEpWorkerApi_('exportEpMangInPlan',payload,session.useName);return {...result,filter:range,plans:wEpVisible_(wEpFilterPlans_(wEpPlans_(),range))};}
 function saveWorkerEpReportViaApi_(token,payload){const session=requireWorker_(token),result=callEpWorkerApi_('reportEpMangInPlan',payload,session.useName);return {...result,history:getWorkerSimplePlanHistory_(getWorkerEpMangInConfig_())};}
 function filterWorkerEpReportPlans_(plans){const rows=wEpRead_('KeHoachEpMangIn',['STT']);return plans.filter(p=>{const found=rows.filter(r=>Number(r.STT)===Number(p.STT));return found.length===1&&!wEpClosed_(found[0])&&(!found[0].IdEpMangIn||!!found[0].IdXuatEpMangIn);});}

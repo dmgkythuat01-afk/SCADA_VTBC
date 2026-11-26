@@ -1955,6 +1955,7 @@
         sessionToken = savedToken;
 
         restoreCachedApp();
+        applyQrReturnMenu();
         showApp();
 
         if (RETURNED_QR && RETURNED_LINE_ID) {
@@ -2467,8 +2468,9 @@
           taoVienToDate = res.taoVienToDate || "";
 
           const isReturnedFromQr = !!(RETURNED_QR && RETURNED_LINE_ID);
+          const isFilmExportReturn = applyQrReturnMenu();
           const shouldRestoreSelectedDate =
-            isReturnedFromQr &&
+            !isFilmExportReturn && isReturnedFromQr &&
             exportPlanDateMode === "date" &&
             exportPlanSelectedDate;
 
@@ -2602,6 +2604,7 @@
         .withFailureHandler(function(err) {
           hideLoading();
 
+          applyQrReturnMenu();
           if (plans && plans.length) {
             showApp();
             showMessage("appMessage", "error", err.message || "Không tải được dữ liệu mới. Đang hiển thị dữ liệu đã lưu tạm.");
@@ -3115,6 +3118,15 @@
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
+    }
+
+    function applyQrReturnMenu() {
+      if (String(RETURNED_LINE_ID || "").trim().startsWith("EMI_EXPORT_QR:")) {
+        currentTab = "epMangIn";
+        pendingReturnedQrAfterDateLoad = false;
+        return true;
+      }
+      return false;
     }
 
     function handleReturnedQr() {
