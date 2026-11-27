@@ -1246,6 +1246,8 @@
             <span>Kế hoạch ép màng in</span>
           </button>
 
+          <button id="menuCombo5" class="side-menu-btn" onclick="showFeaturePage('pageCombo5', this)"><span class="side-menu-icon">📦</span><span>Kế hoạch đóng thùng combo 5</span></button>
+
           <button
             id="menuDongThung"
             class="side-menu-btn"
@@ -1264,6 +1266,7 @@
 
       <main class="app-content">
         <div id="pageKhoBanThanhPham" class="feature-page"></div>
+        <div id="pageCombo5" class="feature-page"></div>
         <div id="pagePlan" class="feature-page active">
     <div class="plan-grid">
       <div class="card">
@@ -2450,6 +2453,7 @@
     function showFeaturePage(pageId, buttonEl, skipScroll) {
       if(pageId === "pageKhoBanThanhPham") ViStock.open();
       if(pageId === "pageEpMangIn") EpMangInBoxes.open();
+      if(pageId === "pageCombo5") Combo5Plans.open();
       const pages = document.querySelectorAll(".feature-page");
 
       pages.forEach(function(page) {
@@ -7779,5 +7783,6 @@
   </script>
 <?!= HtmlService.createHtmlOutputFromFile('ViStockClient').getContent(); ?>
 <?!= HtmlService.createHtmlOutputFromFile('EpMangInBoxesClient').getContent(); ?>
+<?!= HtmlService.createHtmlOutputFromFile('Combo5PlansClient').getContent(); ?>
 </body>
 </html>

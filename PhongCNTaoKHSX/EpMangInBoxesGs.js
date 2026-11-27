@@ -30,6 +30,11 @@ function epBoxReservations_(parents, details, exceptId) {
     if(holds.has(box))throw Error('Trùng giữ thùng '+box+' trong kế hoạch.');holds.set(box,id);
   });return holds;
 }
+function epBoxAllReservations_(parents,details,exceptId) {
+  const comboParents=epBoxRead_('KeHoachDongThungCombo5',['IdDongThungCombo5','phienBan','trangThai'],true).rows;
+  const comboDetails=epBoxRead_('ChiTietKeHoachDongThungCombo5',['IdDongThungCombo5','phienBan','IdThungDungVi'],true).rows;
+  return epBoxReservations_(parents.concat(comboParents.map(p=>({...p,IdEpMangIn:p.IdDongThungCombo5}))),details.concat(comboDetails.map(d=>({...d,IdEpMangIn:d.IdDongThungCombo5}))),exceptId);
+}
 function epBoxValidate_(product,quantity,ids,stocks,holds) {
   if(!epBoxText_(product))throw Error('Vui lòng chọn sản phẩm.');
   if(!Number.isSafeInteger(quantity)||quantity<=0)throw Error('Số lượng vỉ kế hoạch phải là số nguyên lớn hơn 0.');
@@ -79,7 +84,7 @@ function epBoxPlans_(tables) {
   })).sort((a,b)=>Number(b.STT)-Number(a.STT)));
 }
 function getEpMangInBoxData(token) {
-  requireAdmin_(token);const tables=epBoxTables_(),holds=epBoxReservations_(tables.parents,tables.details);
+  requireAdmin_(token);const tables=epBoxTables_(),holds=epBoxAllReservations_(tables.parents,tables.details);
   return {success:true,plans:epBoxPlans_(tables),boxes:epBoxSerialize_(epBoxStock_().filter(s=>s.soLuongViDaLap>0&&s.maSanPham).map(s=>({...s,ngaySanXuatSort:epBoxProductionDate_(s.ngaySanXuat),giuChoKeHoach:holds.get(epBoxText_(s.IdThungDungVi))||''})).sort((a,b)=>(a.ngaySanXuatSort||'9999').localeCompare(b.ngaySanXuatSort||'9999')||String(a.IdThungDungVi).localeCompare(String(b.IdThungDungVi))))};
 }
 function epBoxAssertEditable_(parent,details,stocks) {
@@ -133,8 +138,8 @@ function epBoxMutationCore_(session,payload,mode) {
       return {success:true,message:'Đã hủy kế hoạch và nhả các thùng đang giữ.',plans:epBoxPlans_()};
     }
     const product=epBoxText_(payload.maSanPham),qty=Number(payload.soLuongKeHoach),p=getSimplePlanProductByMa_(product);if(!p)throw Error('Không tìm thấy sản phẩm.');
-    const selected=epBoxValidate_(product,qty,payload.items,stocks,epBoxReservations_(pt.rows,dt.rows,parent&&parent.IdEpMangIn));
-    epBoxAssertFifo_(product,payload.items,stocks,epBoxReservations_(pt.rows,dt.rows,parent&&parent.IdEpMangIn));
+    const selected=epBoxValidate_(product,qty,payload.items,stocks,epBoxAllReservations_(pt.rows,dt.rows,parent&&parent.IdEpMangIn));
+    epBoxAssertFifo_(product,payload.items,stocks,epBoxAllReservations_(pt.rows,dt.rows,parent&&parent.IdEpMangIn));
     const id=parent&&parent.IdEpMangIn||'EMI'+Utilities.formatDate(new Date(),'Asia/Ho_Chi_Minh','yyyyMMddHHmmssSSS')+'_'+Utilities.getUuid().slice(0,8);
     const stt=parent?Number(parent.STT):Math.max(0,...pt.rows.map(p=>Number(p.STT)||0))+1;
     // Include inactive orphan revisions after a previous failed write when choosing the next revision.
@@ -146,8 +151,8 @@ function epBoxMutationCore_(session,payload,mode) {
     // lock; they must not silently convert a stale selection into a new plan.
     const freshStock=epBoxStock_(),freshParents=epBoxRead_(SHEET_KE_HOACH_EP_MANG_IN,getKeHoachEpMangInHeaders_()).rows;
     if(parent)epBoxAssertEditable_(epBoxParent_(freshParents,parent.STT),dt.rows,freshStock);
-    epBoxValidate_(product,qty,payload.items,freshStock,epBoxReservations_(freshParents,dt.rows,parent&&parent.IdEpMangIn));
-    epBoxAssertFifo_(product,payload.items,freshStock,epBoxReservations_(freshParents,dt.rows,parent&&parent.IdEpMangIn));
+    epBoxValidate_(product,qty,payload.items,freshStock,epBoxAllReservations_(freshParents,dt.rows,parent&&parent.IdEpMangIn));
+    epBoxAssertFifo_(product,payload.items,freshStock,epBoxAllReservations_(freshParents,dt.rows,parent&&parent.IdEpMangIn));
     selected.forEach(old=>{const fresh=freshStock.find(s=>s.IdThungDungVi===old.IdThungDungVi);if(Number(fresh.soLuongViDaLap)!==Number(old.soLuongViDaLap)||Number(fresh.daXuat||0)!==Number(old.daXuat||0))throw Error('Tồn thùng '+old.IdThungDungVi+' đã thay đổi. Vui lòng tải lại.');});
     const history=JSON.stringify((parent?epBoxRequests_(parent):[]).concat([{maYeuCau:request,noiDungYeuCau:signature}]));if(history.length>45000)throw Error('Kế hoạch đã có quá nhiều lần sửa. Vui lòng tạo kế hoạch mới.');
     const changes={STT:stt,maSanPham:p.maSanPham,tenSanPham:p.tenSanPham,soLuongViKeHoach:qty,IdEpMangIn:id,phienBan:revision,maYeuCau:request,thoiGianCapNhat:now,nguoiCapNhat:session.useName||'',lichSuYeuCau:history};

@@ -6,6 +6,10 @@ function epApiActor_(name,role) {
 }
 function epApiAction_(action,body) {
   if(action==='epPlanPing')return {success:true};
+  if(action==='mutateCombo5Plan'){
+    if(!['create','update','cancel'].includes(body.mode))throw Error('Thao tác kế hoạch không hợp lệ.');
+    return combo5MutationCore_(epApiActor_(body.actor,'admin'),body.payload,body.mode);
+  }
   if(action==='mutateEpMangInPlan'){
     if(!['create','update','cancel'].includes(body.mode))throw Error('Thao tác kế hoạch không hợp lệ.');
     return epBoxMutationCore_(epApiActor_(body.actor,'admin'),body.payload,body.mode);
@@ -46,7 +50,7 @@ function epWorkerExportCore_(session,payload) {
     let intent;
     if(parent.noiDungLenhXuat){intent=JSON.parse(parent.noiDungLenhXuat);if(intent.revision!==Number(parent.phienBan)||intent.plan!==parent.IdEpMangIn||intent.boxes.length!==ids.length||!intent.boxes.every(b=>ids.includes(b.id)))throw Error('Lệnh xuất chưa hoàn tất không khớp kế hoạch.');}
     else {
-      const stock=epExportStock_(),holds=epBoxReservations_(pt.rows,dt.rows);
+      const stock=epExportStock_(),holds=epBoxAllReservations_(pt.rows,dt.rows);
       epBoxValidate_(parent.maSanPham,Number(parent.soLuongViKeHoach),ids,stock,new Map([...holds].filter(([id,plan])=>plan!==parent.IdEpMangIn)));
       const now=nowText_();intent={id:'XEMI'+Utilities.formatDate(new Date(),'Asia/Ho_Chi_Minh','yyyyMMddHHmmssSSS')+'_'+Utilities.getUuid().slice(0,8),plan:parent.IdEpMangIn,revision:Number(parent.phienBan),actor:session.useName,time:now,boxes:ids.map(id=>{const s=stock.find(s=>s.IdThungDungVi===id);return {id,remaining:Number(s.soLuongViDaLap),issued:Number(s.daXuat||0),time:epExportTime_(s.thoiGianXuat),afterTime:epExportTime_(s.thoiGianXuat)||now};})};
       if(intent.boxes.some(b=>!Number.isSafeInteger(b.issued)||b.issued<0||!Number.isSafeInteger(b.issued+b.remaining)))throw Error('Số lượng vỉ không hợp lệ.');
